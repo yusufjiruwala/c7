@@ -1,0 +1,32 @@
+{
+	"sap.app": {
+		"id": "sap.f.sample.ShellBar",
+		"applicationVersion": {
+			"version": "1.0.0"
+		}
+	},
+	"sap.ui5": {
+		"rootView": {
+			"viewName": "bin.Dashboard",
+			"type": "JS",
+			"async": true
+		},
+		"dependencies": {
+			"libs": {
+				"sap.f": {},
+				"sap.m": {"lazy":true},
+				"sap.ui.layout": {}
+			}
+		},
+		"config": {
+			"sample": {
+				"stretch": true,
+				"files": [
+					"Dashboard.view.xml",
+					"Dashboard.controller.js",
+					"manifest.json"
+				]
+			}
+		}
+	}
+}

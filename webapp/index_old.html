@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+    <meta http-equiv="Pragma" content="no-cache"/>
+    <meta http-equiv="Expires" content="0"/>
+    <link rel="stylesheet" href="css/prettify.css">
+
+    <title>CHAINEL</title>
+    <script
+            id="sap-ui-bootstrap"
+            src='resources/sap-ui-core.js'
+            data-sap-ui-theme="sap_belize"
+            data-sap-ui-libs=""
+            data-sap-ui-xx-bindingSyntax="complex"
+            data-sap-ui-preload="async"
+            data-sap-ui-language="en"
+            data-sap-ui-compatVersion="edge"
+            data-sap-ui-resourceroots='{
+    "sap.ui.ce": "./",
+    "bin":"./bin"
+    }'
+    />
+    <script src="generic/UtilGen.js"></script>
+    <script src="generic/Util.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+
+    <script>
+        $(document).ready(function () {
+            $('<div class=loadingDiv>Loading libraries</div>').prependTo(document.body);
+        });
+    </script>
+
+    <script>
+
+
+        //            var oCompContainer = new sap.ui.core.ComponentContainer({
+        //                height: "100%"
+        //            });
+        //
+        //            new sap.m.Shell({
+        //                content: oCompContainer,
+        //                showLogout:false
+        //            }).placeAt("content");
+        //
+        //            var oComponent = sap.ui.component({
+        //                name: "sap.ui.ce",
+        //                manifestFirst: true,
+        //                async: true
+        //            }).then(function (oComponent) {
+        //                oCompContainer.setComponent(oComponent);
+        //            });
+
+
+        //            var app = sap.m.App("app", {
+        //                //viewName : "chainel1.Login",
+        //                type: "JS",
+        //            }).placeAt("content");
+        //            app.addPage(sap.ui.jsview("logonPage", "bin.Logon"));
+
+        var Util;
+        var UtilGen;
+        var SearchText;
+
+
+        sap.ui.getCore().attachInit(function () {
+            sap.ui.localResources("bin");
+            sap.ui.localResources("i18n");
+            UtilGen = sap.ui.require("sap/ui/ce/generic/UtilGen");
+            Util = sap.ui.require("sap/ui/ce/generic/Util");
+            SearchText = sap.ui.require("sap/ui/ce/generic/SearchText");
+            jQuery.sap.require("sap.m.library");
+
+
+            var oCompContainer = new sap.ui.core.ComponentContainer({
+                    height: "100%",
+                    settings: {
+                        id: "sap.ui.ce"
+                    }
+                }
+            );
+
+            new sap.m.Shell({
+                app: oCompContainer,
+                showLogout:false
+            }).placeAt("content");
+
+            var oComponent = sap.ui.component({
+                name: "sap.ui.ce",
+                manifestFirst: true,
+                async: true
+            }).then(function (oComponent) {
+                oCompContainer.setComponent(oComponent);
+            });
+            $("#load").text("");
+
+        })
+        ;
+
+    </script>
+
+</head>
+<body>
+<div id="load">Loading libraries First Time..</div>
+<div id="content">
+</div>
+
+</body>
+</html>
