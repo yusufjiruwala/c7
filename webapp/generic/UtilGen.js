@@ -354,7 +354,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             else
                                 _oInput.getCustomData()[0].setKey(parseFloat(val));
                         });
-                        if (fldFormat != undefined) {
+                        if (Util.nvl(fldFormat, "") != "") {
                             c.field_format = fldFormat;
                             c.attachChange(function (oEvent) {
                                 var df = new DecimalFormat(fldFormat);
@@ -408,7 +408,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                 },
                 getControlValue(comp) {
                     var customVal = "";
-                    if (comp.getCustomData().length > 0)
+                    if (comp instanceof sap.m.InputBase && comp.getCustomData != undefined && comp.getCustomData().length > 0)
                         customVal = comp.getCustomData()[0].getKey();
                     if (customVal == "NaN")
                         customVal = "";
@@ -443,23 +443,18 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             comp.addCustomData(new sap.ui.core.CustomData({key: val}))
                         else
                             comp.getCustomData()[0].setKey(parseFloat(val));
-                        comp.setValue(val);
-                        if (executeChange)
+
+                        if (comp.setText != undefined)
+                            comp.setText(val);
+
+                        if (comp.setValue != undefined)
+                            comp.setValue(val);
+
+
+                        if (executeChange && comp.hasOwnProperty("fireChange"))
                             comp.fireChange();
                         return;
-                    }
-                    if (comp instanceof sap.m.InputBase || comp instanceof sap.m.SearchField) {
-                        comp.setValue(val);
-                        // if (customVal.length > 0)
-                        if (comp.getCustomData().length == 0)
-                            comp.addCustomData(new sap.ui.core.CustomData({key: customVal}))
-                        else
-                            comp.getCustomData()[0].setKey(customVal);
-                        if (comp instanceof sap.m.InputBase && executeChange)
-                            comp.fireChange();
-                    }
-
-                    if (comp instanceof sap.m.ComboBoxBase) {
+                    } else if (comp instanceof sap.m.ComboBoxBase) {
                         comp.setSelectedItem(this.getIndexByKey(comp, val));
                         if (comp.getCustomData().length == 0)
                             comp.addCustomData(new sap.ui.core.CustomData({key: customVal}))
@@ -469,8 +464,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         if (executeChange)
                             comp.fireChange();
 
-                    }
-                    if (comp instanceof sap.m.Text) {
+                    } else if (comp instanceof sap.m.Text) {
                         comp.setText(val);
                         // if (customVal.length > 0)
                         if (comp.getCustomData().length == 0)
@@ -479,8 +473,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             comp.getCustomData()[0].setKey(customVal);
 
 
-                    }
-                    if (comp instanceof sap.m.DatePicker) {
+                    } else if (comp instanceof sap.m.DatePicker) {
 
                         if (this.nvl(pVal, "").length == 0)
                             comp.setDateValue(null);
@@ -490,13 +483,23 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         if (executeChange)
                             comp.fireChange();
 
-                    }
-                    if (comp instanceof sap.m.CheckBox) {
+                    } else if (comp instanceof sap.m.CheckBox) {
                         if (comp.trueValues != undefined)
                             (val == comp.trueValues[0] ? comp.setSelected(true) : comp.setSelected(false));
                         if (executeChange)
                             comp.fireSelect();
 
+                    } else if (comp instanceof sap.m.InputBase || comp instanceof sap.m.SearchField) {
+                        comp.setValue(val);
+                        // if (customVal.length > 0)
+                        if (comp.getCustomData().length == 0)
+                            comp.addCustomData(new sap.ui.core.CustomData({key: customVal}))
+                        else
+                            comp.getCustomData()[0].setKey(customVal);
+                        if (comp instanceof sap.m.InputBase && executeChange)
+                            comp.fireChange();
+                    } else if (comp != undefined && comp.hasOwnProperty("value")) {
+                        comp.value = pVal;
                     }
 
 
@@ -819,7 +822,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
 
                             }
 
-                            if (cx.eOther != undefined && cx.eOther.length > 0) {
+                            if (cx.eOther != undefined && (cx.eOther.length > 0 || cx.whenValidate != undefined)) {
                                 cx.eValidateColumn = function (evtx) {
                                     var sett = sap.ui.getCore().getModel("settings").getData();
                                     var sdf = new simpleDateFormat(sett["ENGLISH_DATE_FORMAT"]);
@@ -844,11 +847,20 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                                     }
                                     if (clx < 0) return;
                                     var cx = columns[clx].tableCol;
-                                    var evl = cx.eOther.replace(/:newValue/g, "\"'" + newValue + "'\"");
-                                    evl = evl.replace(/:nwValue/g, "\"" + newValue + "\"");
-                                    if (!eval(evl))
-                                        this.requestFocus();
+                                    if (Util.nvl(cx.eOther, "") != "") {
+                                        var evl = cx.eOther.replace(/:newValue/g, "\"'" + newValue + "'\"");
+                                        evl = evl.replace(/:nwValue/g, "\"" + newValue + "\"");
 
+                                        if (!eval(evl))
+                                            evtx.getSource().focus();
+                                    }
+                                    if (cx.whenValidate != undefined)
+                                        if (!cx.whenValidate(table, currentRowoIndexContext, cx, table.indexOfRow(row), column_no))
+                                            evtx.getSource().focus();
+
+                                    if (cx.eventCalc != undefined)
+                                        if (!cx.eventCalc(qv, cx, table.indexOfRow(row), true))
+                                            evtx.getSource().focus();
 
                                 }
                             }
@@ -880,6 +892,8 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                                     //// end getting visible column no
 
                                     var row = evtx.getSource().getParent();
+                                    var table = evtx.getSource().getParent().getParent(); // get table control.
+                                    var column_no = evtx.getSource().getParent().indexOfCell(evtx.getSource());
                                     var sq = cx.mSearchSQL;
                                     var lk = Util.nvl(cx.mLookUpCols, "").split(",");
                                     var rt = Util.nvl(cx.mRetValues, "").split(",");
@@ -898,6 +912,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                                     };
                                     Util.show_list(sq, lk, rt, function (data) {
                                             // console.log(data);
+
                                             if (rt.length == 0)
                                                 return;
                                             var oModel = tbl.getModel();
@@ -916,6 +931,14 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                                                 oModel.setProperty(currentRowoIndexContext.sPath + "/" + rts[0], data[rts[1]], undefined, true);
                                                 if (cx.mColName == rts[0])
                                                     input.fireChange({value: data[rts[1]]});
+
+                                                if (cx.whenValidate != undefined)
+                                                    if (!cx.whenValidate(table, currentRowoIndexContext, cx, table.indexOfRow(row), column_no))
+                                                        evtx.getSource().focus();
+
+                                                if (cx.eventCalc != undefined)
+                                                    if (!cx.eventCalc(qv, cx, table.indexOfRow(row), true))
+                                                        evtx.getSource().focus();
                                             }
                                             return true;
                                         }, "100%", "100%", undefined, false, undefined, pms
@@ -924,8 +947,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                                 }
                                 ;
                             }
-                        } //for (var col in dtx)
-// moving all visible column in starting of mLcTb
+                        }
                         for (var col in qv.mLctb.cols)
                             if (qv.mLctb.cols[col].mHideCol)
                                 invisibleCol.push(qv.mLctb.cols[col]);
@@ -949,6 +971,68 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     var sdf = new simpleDateFormat(sett["ENGLISH_DATE_FORMAT"]);
 
                     var sq1 = "insert into " + tblName;
+                    var sq2 = "";
+                    var sq3 = "";
+                    for (var c in mLctb.cols) {
+                        // only add to insert which is visible but even if hidden but added in colValues then add it.
+                        if (ov && mLctb.cols[c].mHideCol && !Util.nvl(colValues, []).hasOwnProperty(mLctb.cols[c].mColName))
+                            continue;
+                        var val = Util.nvl(mLctb.getFieldValue(rowno, mLctb.cols[c].mColName), "");
+                        // if any value to be override by colValues object
+                        if (colValues != undefined && colValues.hasOwnProperty(mLctb.cols[c].mColName))
+                            val = colValues[mLctb.cols[c].mColName];
+
+                        if (excludeCols != undefined && excludeCols.indexOf(mLctb.cols[c].mColName) <= -1)
+                            sq2 += (sq2.length > 0 ? "," : "") + mLctb.cols[c].mColName;
+                        if (mLctb.cols[c].getMUIHelper().display_format == "SHORT_DATE_FORMAT") // if date then to_date() in sql
+                            val = Util.toOraDateString(val);
+                        else if (mLctb.cols[c].getMUIHelper().data_type == "DATE" && mLctb.cols[c].getMUIHelper().display_format != "SHORT_DATE_FORMAT")
+                            try {
+                                val = (val != "" ? Util.toOraDateTimeString(new Date(val)) : "");
+                            } catch (er) {
+                            }
+                        else {
+                            val = "'" + val + "'";
+                        }
+                        // if number then val variable should have number value to store in database.
+                        if (excludeCols != undefined && excludeCols.indexOf(mLctb.cols[c].mColName) <= -1
+                            && mLctb.cols[c].getMUIHelper().data_type == "NUMBER") {
+                            if (colValues != undefined && colValues.hasOwnProperty(mLctb.cols[c].mColName))
+                                val = (Util.nvl(Util.nvl(colValues[mLctb.cols[c].mColName], val), "") + "").replace(/[^\d\.],/g, '').replace(/,/g, '');
+                            else
+                                val = (Util.nvl(Util.nvl(mLctb.getFieldValue(rowno, mLctb.cols[c].mColName), val), "") + "").replace(/[^\d\.],/g, '').replace(/,/g, '');
+                            var dfs = Util.nvl(mLctb.cols[c].getMUIHelper().display_format, "NONE");
+                            var df;
+                            if (Util.nvl(mLctb.cols[c].getMUIHelper().display_format, "NONE") == "QTY_FORMAT")
+                                dfs = sett["FORMAT_QTY_1"];
+                            if (Util.nvl(mLctb.cols[c].getMUIHelper().display_format, "NONE") == "MONEY_FORMAT")
+                                dfs = sett["FORMAT_MONEY_1"];
+                            if (dfs != "NONE") {
+                                df = new DecimalFormat(dfs);
+                                val = parseFloat(df.formatBack(val.replace(/'/g, '')))
+                            }
+                        }
+                        // exclude col
+                        if (excludeCols != undefined && excludeCols.indexOf(mLctb.cols[c].mColName) <= -1)
+                            sq3 += (sq3.length > 0 ? "," : "") + Util.nvl(val, 'null');
+                    }
+                    for (var key in colValues)
+                        if (mLctb.getColPos(key) < 0) {
+                            sq2 += (sq2.length > 0 ? "," : "") + key;
+                            sq3 += (sq3.length > 0 ? "," : "") + Util.nvl(colValues[key], 'null');
+                        }
+
+
+                    return sq1 + "(" + sq2 + ") values (" + sq3 + ")";
+
+                },
+
+                getUpdateRowString: function (mLctb, tblName, rowno, excludeCols, colValues, onlyVisibleCol) {
+                    var ov = Util.nvl(onlyVisibleCol, false);
+                    var sett = sap.ui.getCore().getModel("settings").getData();
+                    var sdf = new simpleDateFormat(sett["ENGLISH_DATE_FORMAT"]);
+
+                    var sq1 = "update " + tblName + " set ";
                     var sq2 = "";
                     var sq3 = "";
                     for (var c in mLctb.cols) {
@@ -993,12 +1077,12 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     }
                     for (var key in colValues)
                         if (mLctb.getColPos(key) < 0) {
-                            sq2 += (sq2.length > 0 ? "," : "") + key;
-                            sq3 += (sq3.length > 0 ? "," : "") + Util.nvl(colValues[key], 'null');
+                            sq2 += (sq2.length > 0 ? "," : "") + key + "=" + Util.nvl(colValues[key], 'null');
+                            // sq3 += (sq3.length > 0 ? "," : "") + Util.nvl(colValues[key], 'null');
                         }
 
 
-                    return sq1 + "(" + sq2 + ") values (" + sq3 + ")";
+                    return sq1 + "(" + sq2 + " where " + w;
 
                 }
                 ,

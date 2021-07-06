@@ -16,8 +16,25 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             this.masterRows = [];
         }
 
+        LocalTableData.RowStatus = {
+            INSERTED: "INSERTED",
+            UPDATED: "UPDATED",
+            DELETED: "DELETED",
+            QUERY: "QUERY",
+        };
         LocalTableData.prototype.constructor = LocalTableData;
 
+
+        LocalTableData.prototype.updateRecStatus = function (status, recno) {
+            if (LocalTableData.RowStatus[status] == undefined)
+                return;
+            if (Util.nvl(recno, -1) == -1)
+                for (var i = 0; i < this.rows.length; i++)
+                    this.rows[i].rowStatus = status;
+            else
+                this.rows[recno].rowStatus = status;
+
+        };
         LocalTableData.prototype.getColPos = function (cn) {
             for (var i = 0; i < this.cols.length; i++)
                 if (this.cols[i].mColName.toUpperCase() == cn.toUpperCase())
@@ -147,8 +164,11 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
                 for (var key in this.dataJson.data[rn]) {
                     if (key == "_rowid") continue;
                     var cp = this.getColPos(key);
-                    if (this.cols[cp].mUIHelper.data_type == "DATE")
-                        r.cells[cp].setValue(new Date(this.dataJson.data[rn][key]));
+                    // if (this.cols[cp].mUIHelper.data_type == "DATE") {
+                    //     var sdf = new simpleDateFormat(this.cols[cp].mUIHelper.display_format);
+                    //     (this.dataJson.data[rn][key] != null ? r.cells[cp].setValue(sdf.format(this.dataJson.data[rn][key])) : r.cells[cp].setValue(null));
+                    // }
+                    // else
                     r.cells[cp].setValue(this.dataJson.data[rn][key]);
                 }
                 this.rows.push(r);
@@ -206,7 +226,7 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
                     rstr = "";
                     for (var c in this.cols) {
                         rstr += (rstr.length == 0 ? "" : ",") + '"' +
-                            this.cols[c].mColName.replace(/\//g, "___") + '":' + Util.getParsedJsonValue(this.rows[r].cells[c].getValue());
+                            this.cols[c].mColName.replace(/\//g, "___") + '":' + ((Util.getParsedJsonValue(this.rows[r].cells[c].getValue()) + "").replace(/\\/g, "\\\\"));
                     }
                     rstr += (rstr.length == 0 ? "" : ",") + '"_rowid":"' + r + '"';
                     tmpstr += (r == 0 ? "" : ",") + "{" + rstr + "}";

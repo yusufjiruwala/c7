@@ -774,10 +774,10 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
 
                 if (!rv)
                     return (typeof vl == "number" ? vl :
-                        '"' + Util.nvl(vl, "").replace(/\"/g, "'").replace(/\n/, "\\r").replace(/\r/, "\\r").replace(/\\/g, "\\\\").trim() + '"');
+                        '"' + Util.nvl(vl, "") + "".replace(/\"/g, "'").replace(/\n/, "\\r").replace(/\r/, "\\r").replace(/\\/g, "\\\\").trim() + '"');
 
                 return (typeof vl == "number" ? vl :
-                    '' + Util.nvl(vl, "").replace(/\"/g, "'").replace(/\n/, "\\r").replace(/\r/, "\\r").replace(/\\/g, "\\\\").trim() + '');
+                    '' + Util.nvl(vl, "") + "".replace(/\"/g, "'").replace(/\n/, "\\r").replace(/\r/, "\\r").replace(/\\/g, "\\\\").trim() + '');
 
             },
             setLanguageModel: function (view) {
@@ -1122,7 +1122,7 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 return sp[no - 1];
             },
             // navigates by enter, ------- dontEnterFocus on object to not focus on pressing enter
-            navEnter: function (flds) {
+            navEnter: function (flds, lastObjNext) {
                 if (flds == undefined || flds.length <= 0) return;
                 var fldsids = [];
                 var flds2 = [];
@@ -1133,23 +1133,63 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                     }
 
                 for (var i = 0; i < flds2.length; i++) {
-                    flds2[i].$().on("keydown", function (event) {
-                        var cf = fldsids.indexOf(event.currentTarget.id);
-                        if (cf < 0) return;
-                        var nx = (cf + 1 >= flds2.length ? 0 : cf + 1);
-                        var pr = (cf - 1 < 0 ? flds2.length - 1 : cf - 1);
-                        if (event.keyCode == 13 || event.code == "ArrowDown")
+                    flds2[i].addEventDelegate({
+                        onsapenter: function (event) {
+                            var cf = fldsids.indexOf(event.currentTarget.id);
+                            if (cf < 0) return;
+                            var nx = cf;
+                            if (cf + 1 >= flds2.length && lastObjNext != undefined) {
+                                lastObjNext(flds2[cf]);
+                                return;
+                            }
+                            else
+                                nx = (cf + 1 >= flds2.length ? 0 : cf + 1);
                             setTimeout(function () {
                                 flds2[nx].focus();
+                                (flds2[nx].$().find("input")[0]).select();
+                                // cntrl.select();
                             });
-
-                        if (event.code == "ArrowUp")
+                        },
+                        onsapdown: function (event) {
+                            var cf = fldsids.indexOf(event.currentTarget.id);
+                            if (cf < 0) return;
+                            var nx = (cf + 1 >= flds2.length ? 0 : cf + 1);
+                            var pr = (cf - 1 < 0 ? flds2.length - 1 : cf - 1);
+                            // var cntrl=($(event.currentTarget).find("input")[0]);
                             setTimeout(function () {
-                                flds2[pr].focus();
-                            })
-
+                                flds2[nx].focus();
+                                (flds2[nx].$().find("input")[0]).select();
+                                // cntrl.select();
+                            });
+                        },
+                        onsapup: function (event) {
+                            var cf = fldsids.indexOf(event.currentTarget.id);
+                            if (cf < 0) return;
+                            var nx = (cf - 1 < 0 ? flds2.length - 1 : cf - 1);
+                            setTimeout(function () {
+                                flds2[nx].focus();
+                                (flds2[nx].$().find("input")[0]).select();
+                            });
+                        }
                     });
+
+                    // flds2[i].$().on("keydown", function (event) {
+                    //
+                    // });
                 }
+            },
+
+            extractNumber: function (pvr, df) {
+                var vr = this.nvl(pvr, "");
+                if (vr == "")
+                    return null;
+                var neg = (vr.toString().startsWith("-") ? "-" : "");
+                var val = vr.toString().replace(/[^\d\.]/g, '').replace(/,/g, '');
+                if (df != undefined)
+                    val = parseFloat(neg + (df.formatBack(val)));
+                else
+                    val = parseFloat("" + neg + val);
+                return val;
             }
         };
 

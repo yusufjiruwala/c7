@@ -624,6 +624,10 @@ body {
     color: red !important;
 }
 
+.redText .sapMInputBaseInner {
+    color: red !important;
+}
+
 .blueButton .sapMBtnInner {
     background: #00a4eb;
     color: white;

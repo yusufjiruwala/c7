@@ -60,7 +60,13 @@ sap.ui.jsfragment("bin.forms.lg.Req", {
                 that.printTaxInv();
             }
         });
-
+        this.cmdPrDr = new sap.m.Button({
+            icon: "sap-icon://print",
+            text: "Draft Invoice",
+            press: function () {
+                that.printSel("D");
+            }
+        });
         (this.view.byId("reqCmdPost") != undefined ? this.view.byId("reqCmdPost").destroy() : null);
 
 

@@ -4,7 +4,7 @@ sap.ui.jsfragment("bin.forms.gl.currency", {
         var that = this;
         this.oController = oController;
         this.view = oController.getView();
-        this.qryStr = "";
+        this.qryStr = Util.nvl(oController.code, "");
         this.timeInLong = (new Date()).getTime();
         this.joApp = new sap.m.SplitApp({mode: sap.m.SplitAppMode.HideMode});
         this.vars = {};
@@ -78,7 +78,7 @@ sap.ui.jsfragment("bin.forms.gl.currency", {
                                 accno: {
                                     colname: "code",
                                     data_type: "string",
-                                    class_name: "TEXTFIELD",
+                                    class_name: FormView.ClassTypes.TEXTFIELD,
                                     title: "Code",
                                     title2: "Code",
                                     canvas: "default_canvas",
@@ -94,7 +94,7 @@ sap.ui.jsfragment("bin.forms.gl.currency", {
                                 name: {
                                     colname: "name",
                                     data_type: "string",
-                                    class_name: "TEXTFIELD",
+                                    class_name: FormView.ClassTypes.TEXTFIELD,
                                     title: "Name",
                                     title2: "Name",
                                     canvas: "default_canvas",
@@ -110,7 +110,7 @@ sap.ui.jsfragment("bin.forms.gl.currency", {
                                 name2: {
                                     colname: "_name2",
                                     data_type: "string",
-                                    class_name: "COMBOBOX",
+                                    class_name: FormView.ClassTypes.COMBOBOX,
                                     title: "Name2",
                                     title2: "Name2",
                                     canvas: "default_canvas",
@@ -134,7 +134,24 @@ sap.ui.jsfragment("bin.forms.gl.currency", {
                                 }
                             }
 
-                        }
+                        },
+                        // {
+                        //     type: "query",
+                        //     name: "qry2",
+                        //     showType: FormView.QueryShowType.QUERYVIEW,
+                        //     applyCol: "C7.CURR",
+                        //     addRowOnEmpty: true,
+                        //     dml: "select *from CURRENCY where code=':code'",
+                        //     delete_before_update: "delete from currency where code=':code';",
+                        //     where_clause: " code=':code' ",
+                        //     update_exclude_fields: ['code'],
+                        //     insert_exclude_fields: [],
+                        //     insert_default_values: {"NAME": ":name"},
+                        //     update_default_values: {},
+                        //     table_name: "CURRENCY",
+                        //
+                        //
+                        // }
                     ],
                     canvas: [],
                     commands: [
@@ -198,7 +215,7 @@ sap.ui.jsfragment("bin.forms.gl.currency", {
                             ],  // [{colname:'code',width:'100',return_field:'pac' }]
                             sql: "select code,name from currency_master",
                             afterSelect: function (data) {
-                                that2.frm.loadData("qry1", "view");
+                                that2.frm.loadData(undefined, "view");
                                 // that2.frm.objs["cmdEdit"].obj.getPressed(false);
                                 return true;
                             }
@@ -248,8 +265,13 @@ sap.ui.jsfragment("bin.forms.gl.currency", {
     }
     ,
     loadData: function () {
-        this.frm.setFieldValue("pac", "KWD");
-        this.frm.loadData("qry1");
+        // this.frm.setFieldValue("pac", "KWD");
+        // this.frm.loadData("qry1");
+
+        this.frm.setFieldValue('pac', Util.nvl(this.qryStr), "");
+        this.frm.setQueryStatus(undefined, Util.nvl(this.oController.status, FormView.RecordStatus.NEW));
+        if (this.qryStr != "")
+            this.frm.loadData(undefined, this.oController.status);
 
 
     }

@@ -16,7 +16,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             this.afterDelRow = undefined;
             this.parent = undefined;
             this.queryType = 'table';
-
+            this.editable = true;
             //specific for tree..
             this.mode = sap.ui.table.SelectionMode.MultiToggle;
             this.mColParent = "";
@@ -29,9 +29,9 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
             this.mColLstGroup = "";
             this.mColLstGroupNm = "";
-
+            this.eventCalc = undefined;
             this.mapNodes = {};
-
+            this.when_validate_field = undefined;
             (sap.ui.getCore().byId(this.tableId + "table") != undefined ? sap.ui.getCore().byId(this.tableId + "table").destroy() : null);
             this.mTable = new sap.ui.table.Table(this.tableId + "table", {
                 visibleRowCountMode: sap.ui.table.VisibleRowCountMode.Auto,
@@ -359,13 +359,18 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
         };
         QueryView.prototype.deleteRow = function (idx, dontReload) {
+            if (!this.editable)
+                return;
             if (this.mLctb.rows.length > 0)
                 this.updateDataToTable();
             var idx = this.mLctb.deleteRow(idx);
+
             if (Util.nvl(dontReload, false) == false) {
                 this.updateDataToControl();
-
+                if (this.eventCalc != undefined)
+                    this.eventCalc(this, undefined, idx, false);
             }
+
             return idx;
 
         };
@@ -436,14 +441,15 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                         width: "100%",
                         src: "{" + this.mLctb.cols[i].mColName.replace(/\//g, "___") + "}",
                         enabled: this.mLctb.cols[i].mEnabled,
-                        showValueHelp: (ssql != "" ? true : false)
+                        showValueHelp: (ssql != "" ? true : false),
                     }, Util.nvl(cc.getMUIHelper().data_type, "").toLowerCase(), f);
                 else
                     o = new colClass({
                         // "value": "{" + this.mLctb.cols[i].mColName.replace(/\//g, "___") + "}",
                         "codeValue": "{" + this.mLctb.cols[i].mColName.replace(/\//g, "___") + "}",
                         textAlign: Util.getAlignTable(a),
-                        enabled: this.mLctb.cols[i].mEnabled
+                        enabled: this.mLctb.cols[i].mEnabled,
+
                     });
 
                 if (colClass == SelectText) {
@@ -461,27 +467,127 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     o.setLookupModel(new sap.ui.model.json.JSONModel(dtxx));
                 }
                 if (o instanceof sap.m.InputBase) {
+                    o.addEventDelegate({
+                        onsapenter: function (event) {
+                            var _input = event.srcControl;
+                            var rowno = that.getControl().indexOfRow(_input.getParent());
+                            var colno = _input.getParent().indexOfCell(_input);
+                            var totalRows = that.getControl().getModel().getData().length;
+                            var firstVis = that.getControl().getFirstVisibleRow();
+                            var dispRows = that.getControl().getRows().length;
+
+
+                            if (that.getControl().getRows()[rowno].getCells()[colno + 1] != undefined) {
+                                colno++;
+                                var cell = that._nextFocusableCell(rowno, colno);
+                                cell.focus();
+                                cell.$().find("input")[0].select();
+                                //that.getControl().getRows()[rowno].getCells()[colno].focus();
+                            } else if (firstVis + rowno + 1 < totalRows && rowno < dispRows) {
+                                rowno++;
+                                setTimeout(function () {
+                                    if (rowno >= dispRows) {
+                                        that.getControl().setFirstVisibleRow(firstVis + 1);
+                                        // that.getControl().getRows()[dispRows - 1].getCells()[0].focus();
+                                        var cell = that._nextFocusableCell(dispRows - 1, 0);
+                                        cell.focus();
+                                        cell.$().find("input")[0].select();
+
+                                    } else {
+                                        var cell = that._nextFocusableCell(rowno, 0);
+                                        cell.focus();
+                                        cell.$().find("input")[0].select();
+
+                                    }
+                                    // that.getControl().getRows()[rowno].getCells()[0].focus();
+                                });
+                            }
+                            else if (that.editable && firstVis + rowno + 1 == totalRows && rowno < dispRows) {
+                                var rn = that.addRow();
+                                rowno++;
+                                setTimeout(function () {
+                                    if (rowno >= dispRows) {
+                                        that.getControl().setFirstVisibleRow(firstVis + 1);
+                                        var cell = that._nextFocusableCell(dispRows - 1, 0);
+                                        cell.focus();
+                                        cell.$().find("input")[0].select();
+
+
+                                        // that.getControl().getRows()[dispRows - 1].getCells()[0].focus();
+                                    } else {
+                                        var cell = that._nextFocusableCell(rowno, 0);
+                                        cell.focus();
+                                        cell.$().find("input")[0].select();
+
+                                    }
+                                    // that.getControl().getRows()[rowno].getCells()[0].focus();
+                                });
+
+                            }
+                            // } else {
+                            //     var rn = that.addRow();
+                            //     that.getControl().getRows()[rn].getCells()[0].focus();
+                            // }
+
+                        }
+
+                    });
+
+                    o.attachBrowserEvent("keyup", function (evt) {
+                        if (evt.keyCode == 46 && evt.ctrlKey) {
+                            var rowno = that.getControl().indexOfRow(this.getParent());
+                            var colno = this.getParent().indexOfCell(this);
+                            var totalRows = that.getControl().getModel().getData().length;
+                            var firstVis = that.getControl().getFirstVisibleRow();
+                            that.deleteRow(firstVis + rowno);
+
+                        }
+                    });
                     o.attachBrowserEvent("keydown", function (evt) {
                         if (evt.key == "Escape") {
                             that.getControl().focus();
                         }
+
                         if (evt.key == "ArrowDown") {
                             var rowno = that.getControl().indexOfRow(this.getParent());
                             var colno = this.getParent().indexOfCell(this);
+                            var totalRows = that.getControl().getModel().getData().length;
+                            var firstVis = that.getControl().getFirstVisibleRow();
+                            var dispRows = that.getControl().getRows().length;
 
                             if (rowno < that.getControl().getRows().length - 1) {
                                 rowno++;
-                                that.getControl().getRows()[rowno].getCells()[colno].focus();
+                                setTimeout(function () {
+                                    if (rowno >= dispRows) {
+                                        that.getControl().setFirstVisibleRow(firstVis + 1);
+                                        that.getControl().getRows()[dispRows - 1].getCells()[colno].focus();
+                                    } else
+                                        that.getControl().getRows()[rowno].getCells()[colno].focus();
+                                });
+
+                            } else if (firstVis + rowno + 1 <= totalRows && rowno < dispRows) {
+                                rowno++;
+                                setTimeout(function () {
+                                    if (rowno >= dispRows) {
+                                        that.getControl().setFirstVisibleRow(firstVis + 1);
+                                        that.getControl().getRows()[dispRows - 1].getCells()[colno].focus();
+                                    } else
+                                        that.getControl().getRows()[rowno].getCells()[colno].focus();
+                                });
 
                             }
+
                         }
                         if (evt.key == "ArrowUp") {
                             var rowno = that.getControl().indexOfRow(this.getParent());
                             var colno = this.getParent().indexOfCell(this);
-
+                            var firstVis = that.getControl().getFirstVisibleRow();
                             if (rowno > 0) {
                                 rowno--;
                                 that.getControl().getRows()[rowno].getCells()[colno].focus();
+                            } else if (firstVis > 0) {
+                                that.getControl().setFirstVisibleRow(firstVis - 1);
+                                that.getControl().getRows()[0].getCells()[colno].focus();
                             }
                         }
                         if (evt.key == "F5") {
@@ -528,6 +634,8 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 if (cc.eValidateColumn != undefined && (o instanceof sap.m.InputBase)) {
                     o.attachChange(null, cc.eValidateColumn);
                 }
+                if (this.eventCalc != undefined)
+                    cc.eventCalc = this.eventCalc;
 
 
                 if (cc.eValidateColumn != undefined && (o instanceof sap.m.Button)) {
@@ -627,6 +735,10 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             if (this.mOnAfterLoad != undefined)
                 this.mOnAfterLoad(this);
 
+            if (this.eventCalc != undefined)
+                this.eventCalc(this, undefined, -1, false);
+
+
             this.scroll = setInterval(function () {
                 that.colorRows();
                 $("#" + that.getControl().getId() + "-vsb").off("scroll");
@@ -637,6 +749,23 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
         }
         ;
+        QueryView.prototype._nextFocusableCell = function (rowno, colno) {
+            //that.getControl().getRows()[rowno].getCells()[colno].focus()
+            // write here code to find next inputable cell.
+            var cell = this.getControl().getRows()[rowno].getCells()[colno];
+            var cn = colno;
+            while (!(cell instanceof sap.m.InputBase)) {
+                if (cell instanceof sap.m.InputBase) break;
+                if (cell == undefined) break;
+                cn++;
+                cell = this.getControl().getRows()[rowno].getCells()[cn];
+            }
+            if (cell == undefined)
+                cell = this.getControl().getRows()[rowno].getCells()[colno];
+            return cell;
+
+
+        };
 
         QueryView.prototype._sort = function (pCol, updateMR) {
             this.mLctb.rows.sort(function (a, b) {
@@ -791,7 +920,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                             this.mLctb.getColByName(vv).getMUIHelper().display_format === "SHORT_DATE_FORMAT") {
                             if (Util.nvl(o[i][v], "").length > 0) {
                                 var dt = new Date(o[i][v]);
-                                o[i][v] = sf.format(dt); //dt;
+                                o[i][v] = dt;//sf.format(dt)
                             } else
                                 o[i][v] = null;
                         }
@@ -832,7 +961,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     if (t != undefined && this.mLctb.getColByName(t).getMUIHelper().display_format === "SHORT_DATE_FORMAT") {
                         if (Util.nvl(o[i][t], "").length > 0) {
                             var dt = new Date(o[i + 1][t]);
-                            nxt = sf.format(dt);
+                            nxt = dt;//sf.format(dt);
                         }
                     }
                     if (t != undefined && this.mLctb.getColByName(t).getMUIHelper().display_format === "MONEY_FORMAT")
@@ -948,7 +1077,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     if (this.mLctb.cols[k].getMUIHelper().data_type == "DATE" &&
                         this.mLctb.cols[k].getMUIHelper().display_format == "SHORT_DATE_FORMAT") {
                         var dt = new Date(vl);
-                        vl = sf.format(dt);
+                        vl = dt;// sf.format(dt);
                     }
 
 
@@ -998,6 +1127,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             var oModel = this.getControl().getModel();
             var rowCount = this.getControl().getVisibleRowCount(); //number of visible rows
             var rowStart = this.getControl().getFirstVisibleRow(); //starting Row index
+            // var fixRow = this.getControl().getFixedBottomRowCount();
             var cellAdd = 0;
             var groupedAdd = 0;
             if (this.mLctb.cols[0].mGrouped) {
@@ -1022,7 +1152,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 if (this.mLctb.cols[i].mHideCol)
                     ++cellAdd;
             var currentRowContext;
-            for (var i = 0; i < rowCount - 1; i++) {
+            for (var i = 0; i < rowCount; i++) {
                 if (this.getControl().getRows()[i] == undefined || this.getControl().getRows()[i].getCells()[0] == undefined)
                     continue;
                 // if (rowCount > this.mLctb.rows.length)
@@ -1094,6 +1224,9 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                         this.getControl().getRows()[i].getCells()[j - cellAdd].$().css("background-size", cellValue + " 100%");
                         //this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().css("background-size", cellValue+"%");
                     }
+
+                    if (this.getControl().getRows()[i].getCells()[j - cellAdd] instanceof sap.m.InputBase)
+                        this.getControl().getRows()[i].getCells()[j - cellAdd].setEditable(this.editable);
                 }
                 var cellValue = oModel.getProperty(this.mLctb.cols[0].mColName, currentRowContext);
 

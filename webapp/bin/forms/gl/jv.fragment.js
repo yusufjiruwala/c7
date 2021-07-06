@@ -4,14 +4,16 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
         var that = this;
         this.oController = oController;
         this.view = oController.getView();
-        this.qryStr = "";
-        this.joApp = new sap.m.NavContainer({mode: sap.m.SplitAppMode.HideMode});
+        this.qryStr = Util.nvl(oController.code, "");
+        this.timeInLong = (new Date()).getTime();
+        this.joApp = new sap.m.SplitApp({mode: sap.m.SplitAppMode.HideMode});
         this.vars = {
             keyfld: -1,
             flag: 1,  // 1=closed,2 opened,
             vou_code: 1,
             type: 1
         };
+
         // this.pgDetail = new sap.m.Page({showHeader: false});
 
         this.bk = new sap.m.Button({
@@ -25,278 +27,443 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
             showHeader: false,
             content: []
         });
-        this.listPage = new sap.m.Page({
-            showHeader: false,
-            content: []
-        });
         this.createView();
         this.loadData();
-        this.joApp.addPage(this.mainPage);
+        this.joApp.addDetailPage(this.mainPage);
         // this.joApp.addDetailPage(this.pgDetail);
         this.joApp.to(this.mainPage, "show");
         return this.joApp;
     },
     createView: function () {
         var that = this;
+        var sett = sap.ui.getCore().getModel("settings").getData();
         var that2 = this;
+        var thatForm = this;
         var view = this.view;
-
+        var fullSpan = "XL8 L8 M8 S12";
+        var codSpan = "XL3 L3 M3 S12";
+        var sumSpan = "XL2 L2 M2 S12";
+        var dmlSq = "select acvoucher2.*,descr2 acname from acvoucher2 " +
+            " where vou_code=" + this.vars.vou_code + " " +
+            " and type=" + this.vars.type + " " +
+            " and acvoucher2.keyfld=':keyfld' order by acvoucher2.pos";
+        Util.destroyID("cmdA" + this.timeInLong, this.view);
         UtilGen.clearPage(this.mainPage);
-        var fe = [];
-        this.frm = this.createViewHeader();
-        this.qv = new QueryView("tblPODetails" + this.timeInLong);
-        that.qv.getControl().view = this;
-        this.qv.getControl().addStyleClass("sapUiSizeCondensed");
-        this.qv.getControl().setSelectionMode(sap.ui.table.SelectionMode.Single);
-        this.qv.getControl().setFixedBottomRowCount(0);
-        this.qv.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
-        this.qv.getControl().setVisibleRowCount(7);
+        this.frm;
+        var js = {
+                form: {
+                    events: {
+                        afterLoadQry: function (qry) {
+
+                        },
+                        beforeLoadQry: function (qry, sql) {
+
+                            return sql;
+                        },
+                        afterSaveQry: function (qry) {
+
+                        },
+                        afterSaveForm: function (frm) {
+                            frm.loadData(undefined, FormView.RecordStatus.NEW);
+                        },
+                        beforeSaveQry: function (qry, sql, rowno) {
+                            if (qry.name == "qry1") {
+                                var totdeb = qry.formview.getFieldValue("totaldebit");
+                                var totcr = qry.formview.getFieldValue("totalcredit");
+                                if (totdeb < 0 || totcr < 0)
+                                    FormView.err("Total cant be less than zero !");
+                                if (totdeb + totcr == 0)
+                                    FormView.err("Total cant be zero !");
+                                if (totdeb != totcr)
+                                    FormView.err("Total is not matched !");
 
 
-        this.frm.getToolbar().addContent(this.bk);
+                            }
+                            if (qry.name == "qry1" && qry.status == FormView.RecordStatus.NEW) {
+                                var kfld = Util.getSQLValue("select nvl(max(keyfld),0)+1 from acvoucher1");
+                                qry.formview.setFieldValue("qry1.keyfld", kfld, kfld, true);
+                            }
+                            if (qry.name == "qry2") {
+                                var ld = qry.obj.mLctb;
+                                var chld = Util.getSQLValue("select childcount from acaccount where accno=" + Util.quoted(ld.getFieldValue(rowno, "ACCNO")));
+                                if (chld == undefined || (typeof chld == "string" && chld == "") || chld > 0)
+                                    FormView.err(ld.getFieldValue(rowno, "ACCNO") + " not a valid a/c !");
+                            }
+                            return sql;
+                        },
+                        afterNewRow: function (qry, idx, ld) {
+                            if (qry.name == "qry2") {
+                                var td = Util.extractNumber(thatForm.frm.getFieldValue('totDiff'));
+                                if (td > 0)
+                                    ld.setFieldValue(idx, "FCCREDIT", td);
+                                else
+                                    ld.setFieldValue(idx, "FCDEBIT", Math.abs(td));
+
+                            }
+                            if (qry.name == "qry1") {
+                                var kfld = Util.getSQLValue("select nvl(max(keyfld),0)+1 from acvoucher1");
+                                qry.formview.setFieldValue("qry1.keyfld", kfld, kfld, true);
+
+                                var vno = Util.getSQLValue("select nvl(max(no),0)+1 " +
+                                    " from acvoucher1 where vou_code=" + thatForm.vars.vou_code + " and " +
+                                    " type=" + thatForm.vars.type);
+
+                                qry.formview.setFieldValue("qry1.no", vno, vno, true);
+                                qry.formview.setFieldValue("qry1.vou_date", new Date(), new Date(), true);
 
 
-        Util.destroyID("poCmdSave" + this.timeInLong, this.view);
-        this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdSave" + this.timeInLong), {
-            icon: "sap-icon://save",
-            text: "Save",
-            press: function () {
-                that.save_data();
-            }
-        }));
+                            }
 
-        Util.destroyID("poCmdDel" + this.timeInLong, this.view);
-        this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdDel" + this.timeInLong), {
-            icon: "sap-icon://delete",
-            text: "Delete",
-            press: function () {
-                that.delete_data();
-            }
-        }));
 
-        Util.destroyID("poCmdList" + this.timeInLong, this.view);
-        this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdList" + this.timeInLong), {
-            icon: "sap-icon://list",
-            text: "List",
-            press: function () {
-                that.show_list();
-            }
-        }));
-        this.frm.getToolbar().addContent(new sap.m.ToolbarSpacer());
-        Util.destroyID("poCmdEdit" + this.timeInLong, this.view);
-        this.frm.getToolbar().addContent(new sap.m.ToggleButton(this.view.createId("poCmdEdit" + this.timeInLong), {
-            icon: "sap-icon://edit",
-            text: "Edit",
-            pressed: false,
-            press: function () {
-                if (this.getPressed()) {
-                    that2.setFormEditable();
+                        }
+
+                    },
+                    parameters: [
+                        {
+                            para_name: "pac",
+                            data_type: FormView.DataType.String,
+                            value: ""
+                        }
+                    ],
+                    db: [
+                        {
+                            type: "query",
+                            name: "qry1",
+                            dml: "select *from acvoucher1 where keyfld=:pac",
+                            where_clause: " keyfld=':keyfld' ",
+                            update_exclude_fields: ['keyfld'],
+                            insert_exclude_fields: [],
+                            insert_default_values: {
+                                "PERIODCODE": Util.quoted(sett["CURRENT_PERIOD"]),
+                                "VOU_CODE": this.vars.vou_code,
+                                "TYPE": this.vars.type,
+                                "CREATDT": "sysdate",
+                                "FLAG": 1,
+                                "USERNM": Util.quoted(sett["LOGON_USER"])
+                            },
+                            update_default_values: {},
+                            table_name: "ACVOUCHER1",
+                            edit_allowed: true,
+                            insert_allowed: true,
+                            delete_allowed: false,
+                            fields: {
+                                keyfld: {
+                                    colname: "keyfld",
+                                    data_type: FormView.DataType.Number,
+                                    class_name: FormView.ClassTypes.LABEL,
+                                    title: "Key ID",
+                                    title2: "",
+                                    canvas: "default_canvas",
+                                    display_width: codSpan,
+                                    display_align: "ALIGN_CENTER",
+                                    display_style: "",
+                                    display_format: "",
+                                    other_settings: {},
+                                    edit_allowed: false,
+                                    insert_allowed: false,
+                                    require: true
+                                },
+                                no: {
+                                    colname: "no",
+                                    data_type: FormView.DataType.Number,
+                                    class_name: FormView.ClassTypes.TEXTFIELD,
+                                    title: "No",
+                                    title2: "No",
+                                    canvas: "default_canvas",
+                                    display_width: codSpan,
+                                    display_align: "ALIGN_RIGHT",
+                                    display_style: "",
+                                    display_format: "",
+                                    other_settings: {},
+                                    edit_allowed: false,
+                                    insert_allowed: true,
+                                    require: true
+                                },
+                                vou_date: {
+                                    colname: "vou_date",
+                                    data_type: FormView.DataType.Date,
+                                    class_name: FormView.ClassTypes.DATEFIELD,
+                                    title: "@Vou Date",
+                                    title2: "",
+                                    canvas: "default_canvas",
+                                    display_width: codSpan,
+                                    display_align: "ALIGN_RIGHT",
+                                    display_style: "",
+                                    display_format: "",
+                                    other_settings: {},
+                                    list: undefined,
+                                    edit_allowed: true,
+                                    insert_allowed: true,
+                                    require: true,
+                                },
+                                descr: {
+                                    colname: "descr",
+                                    data_type: FormView.DataType.String,
+                                    class_name: FormView.ClassTypes.TEXTFIELD,
+                                    title: "Descr",
+                                    title2: "",
+                                    canvas: "default_canvas",
+                                    display_width: fullSpan,
+                                    display_align: "ALIGN_RIGHT",
+                                    display_style: "",
+                                    display_format: "",
+                                    other_settings: {},
+                                    edit_allowed: true,
+                                    insert_allowed: true,
+                                    require: true
+                                },
+                            }
+
+                        },
+                        {
+                            type: "query",
+                            name: "qry2",
+                            showType: FormView.QueryShowType.QUERYVIEW,
+                            applyCol: "C7.JV",
+                            addRowOnEmpty: true,
+                            dml: dmlSq,
+                            edit_allowed: true,
+                            insert_allowed: true,
+                            delete_allowed: false,
+                            delete_before_update: "delete from acvoucher2 where keyfld=':qry1.keyfld';",
+                            where_clause: " keyfld=':keyfld' ",
+                            update_exclude_fields: ['keyfld'],
+                            insert_exclude_fields: ["ACNAME"],
+                            insert_default_values: {
+                                descr2: ":ACNAME",
+                                "KEYFLD": ":qry1.keyfld",
+                                "NO": ":qry1.no",
+                                "VOU_DATE": ":qry1.vou_date",
+                                "PERIODCODE": sett["CURRENT_PERIOD"],
+                                "VOU_CODE": this.vars.vou_code,
+                                "TYPE": this.vars.type,
+                                "CREATDT": "sysdate",
+                                "FLAG": 1,
+                            },
+                            update_default_values: {descr2: ":ACNAME"},
+                            table_name: "ACVOUCHER2",
+                            when_validate_field: function (table, currentRowoIndexContext, cx, rowno, colno) {
+                                var sett = sap.ui.getCore().getModel("settings").getData();
+                                var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
+                                var oModel = currentRowoIndexContext.oModel;
+                                var damt = parseFloat(oModel.getProperty(currentRowoIndexContext.sPath + '/FCDEBIT').replace(/[^\d\.],/g, '').replace(/,/g, ''));
+                                var camt = parseFloat(oModel.getProperty(currentRowoIndexContext.sPath + '/FCCREDIT').replace(/[^\d\.],/g, '').replace(/,/g, ''));
+                                if (cx.mColName == "FCDEBIT" && damt < 0)
+                                    FormView.err("Less than 0 not allowed !");
+                                if (cx.mColName == "FCCREDIT" && camt < 0)
+                                    FormView.err("Less than 0 not allowed !");
+                                if (cx.mColName == "FCDEBIT" && damt > 0)
+                                    oModel.setProperty(currentRowoIndexContext.sPath + '/FCCREDIT', df.format(0));
+                                else if (cx.mColName == "FCCREDIT" && camt > 0)
+                                    oModel.setProperty(currentRowoIndexContext.sPath + '/FCDEBIT', df.format(0));
+                                // if (cx.mColName == "ACCNO")
+                                //     sap.m.MessageToast.show(".....selected acc");
+
+                                return true;
+                            },
+                            eventCalc: function (qv, cx, rowno, reAmt) {
+                                var sett = sap.ui.getCore().getModel("settings").getData();
+                                var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
+
+                                if (reAmt)
+                                    qv.updateDataToTable();
+
+                                var ld = qv.mLctb;
+                                var sumDr = 0;
+                                var sumCr = 0;
+
+                                for (var i = 0; i < ld.rows.length; i++) {
+                                    sumDr += Util.nvl(Util.extractNumber(ld.getFieldValue(i, "FCDEBIT"), df), 0);
+                                    sumCr += Util.nvl(Util.extractNumber(ld.getFieldValue(i, "FCCREDIT"), df), 0);
+                                }
+                                thatForm.frm.setFieldValue('totaldebit', df.format(sumDr));
+                                thatForm.frm.setFieldValue('totalcredit', df.format(sumCr));
+                                thatForm.frm.setFieldValue('totDiff', df.format(sumDr - sumCr));
+
+
+                            },
+                            summary: {
+                                totdebit: {
+                                    colname: "totaldebit",
+                                    data_type: FormView.DataType.Number,
+                                    class_name: FormView.ClassTypes.TEXTFIELD,
+                                    title: "Total DR",
+                                    title2: "Total DR",
+                                    canvas: "default_canvas",
+                                    display_width: sumSpan,
+                                    display_align: "ALIGN_RIGHT",
+                                    display_style: "",
+                                    display_format: sett["FORMAT_MONEY_1"],
+                                    other_settings: {},
+                                    edit_allowed: false,
+                                    insert_allowed: false,
+                                    require: true
+                                },
+                                totcredit: {
+                                    colname: "totalcredit",
+                                    data_type: FormView.DataType.Number,
+                                    class_name: FormView.ClassTypes.TEXTFIELD,
+                                    title: "Total CR",
+                                    title2: "   Total CR",
+                                    canvas: "default_canvas",
+                                    display_width: sumSpan,
+                                    display_align: "ALIGN_RIGHT",
+                                    display_style: "",
+                                    display_format: "",
+                                    other_settings: {},
+                                    edit_allowed: false,
+                                    insert_allowed: false,
+                                    require: true
+                                },
+                                totDiff: {
+                                    colname: "totDiff",
+                                    data_type: FormView.DataType.Number,
+                                    class_name: FormView.ClassTypes.TEXTFIELD,
+                                    title: "Difference ",
+                                    title2: "Difference",
+                                    canvas: "default_canvas",
+                                    display_width: sumSpan,
+                                    display_align: "ALIGN_RIGHT",
+                                    display_style: "redText",
+                                    display_format: "",
+                                    other_settings: {},
+                                    edit_allowed: false,
+                                    insert_allowed: false,
+                                    require: true
+                                },
+                            }
+
+                        }
+                    ],
+                    canvas: [],
+                    commands: [
+                        {
+                            name: "cmdSave",
+                            canvas: "default_canvas",
+                            onPress: function (e) {
+                                // var ac = that2.frm.getFieldValue("accno");
+                                // var ac = that2.frm.parseString("select from acaccount where accno=':pac'");
+                                // var sv = that2.frm.getSQLUpdateString("qry1", undefined, ['code'], " CODE=':code' ");
+                                // console.log(sv);
+                                // sap.m.MessageToast.show("Saved...", {
+                                //     my: sap.ui.core.Popup.Dock.RightBottom,
+                                //     at: sap.ui.core.Popup.Dock.RightBottom
+                                // });
+
+                                return true;
+                            }
+                        },
+                        {
+                            name: "cmdDel",
+                            canvas: "default_canvas",
+                        }, {
+                            name: "cmdEdit",
+                            canvas: "default_canvas",
+                        },
+                        {
+                            name: "cmdNew",
+                            canvas: "default_canvas",
+                            title: "New Curr"
+                        }, {
+                            name: "cmdList",
+                            canvas: "default_canvas",
+                            list_name: "list1"
+                        },
+                        {
+                            name: "cmdClose",
+                            canvas: "default_canvas",
+                            title: "Close",
+                            obj: new sap.m.Button({
+                                icon: "sap-icon://decline",
+                                press: function () {
+                                    that2.joApp.backFunction();
+                                }
+                            })
+                        }
+                    ],
+                    lists: [
+                        {
+                            name: 'list1',
+                            title: "S",
+                            list_type: "sql",
+                            cols: [
+                                {
+                                    colname: 'NO',
+                                },
+                                {
+                                    colname: "VOU_DATE",
+                                },
+                                {
+                                    colname: 'KEYFLD',
+                                    return_field: "pac",
+                                },
+                                {
+                                    colname: 'DR_AMOUNT'
+                                },
+                            ],  // [{colname:'code',width:'100',return_field:'pac' }]
+                            sql: "select no,TO_CHAR(vou_date,'DD/MM/RRRR') VOU_DATE ,descr,keyfld ,DEBAMT DEBAMT" +
+                            " from acvoucher1 where vou_code=" + that2.vars.vou_code +
+                            " and type=" + that2.vars.type + " order by acvoucher1.vou_date desc,no desc",
+                            afterSelect: function (data) {
+                                that2.frm.loadData(undefined, "view");
+                                that2.frm.loadData(undefined, "view");
+                                return true;
+                            }
+                        }
+                    ]
+
                 }
-                else
-                    UtilGen.setFormDisableForEditing(that2.frm);
-
-
             }
-        }));
+        ;
+        this.frm = new FormView(this.mainPage);
+        this.frm.view = view;
+        this.frm.pg = this.mainPage;
+        this.frm.parseForm(js);
+        this.frm.createView();
 
-        Util.destroyID("poCmdNew" + this.timeInLong, this.view);
-        this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdNew" + this.timeInLong), {
-            icon: "sap-icon://add-document",
-            text: "New",
-            press: function () {
-                that2.qryStr = "";
-                that2.oController.status = "new";
-                that2.loadData();
-            }
-        }));
-
-        // that.createScrollCmds(this.frm.getToolbar());
-
-        (this.view.byId("poMsgInv" + this.timeInLong) != undefined ? this.view.byId("poMsgInv" + this.timeInLong).destroy() : null);
-        this.frm.getToolbar().addContent(new sap.m.Text(view.createId("poMsgInv" + this.timeInLong), {text: ""}).addStyleClass("redText blinking"));
-        this.frm.getToolbar().addContent(new sap.m.Title({text: "Journal Voucher"}));
-
-
-        var sc = new sap.m.ScrollContainer();
-
-        sc.addContent(this.frm);
-
-        sc.addContent(UtilGen.addDelRowCmd(this.qv));
-        sc.addContent(this.qv.getControl());
-
-
-        this.mainPage.addContent(sc);
-        this.createViewFooter(sc);
-
-        setTimeout(function () {
-            $($(".sapUiFormResGrid , .sapUiFormToolbar")[0]).addClass("greyTB");
-            $(".sapUiFormResGrid , .sapUiFormToolbar").addClass("greyTB")
-        }, 500);
-
+        // this.mainPage.addContent(sc);
 
     },
     setFormEditable: function () {
-        var that2 = this;
-        if (that2.qryStr == "") {
-            that2.av1.no.setEditable(true);
-        } else
-            that2.av1.no.setEditable(false);
 
-        that2.av1.no.setEditable(true);
-        that2.av1.vou_date.setEditable(true);
-        that2.av1.descr.setEditable(true);
-
-    },
-
-    createViewFooter: function (sc) {
-        var that = this;
-        var sett = sap.ui.getCore().getModel("settings").getData();
-        this.o2 = {};
-        var fe = [];
-        this.o2.dramt = UtilGen.addControl(fe, "DR Amount", sap.m.Input, "Cs" + this.timeInLong + "_",
-            {
-                editable: false,
-                layoutData: new sap.ui.layout.GridData({span: "XL2 L2 M2 S12"})
-            }, "number", sett["FORMAT_MONEY_1"], this.view);
-        this.o2.cramt = UtilGen.addControl(fe, "@CR Amount", sap.m.Input, "Cs" + this.timeInLong + "_",
-            {
-                editable: false,
-                layoutData: new sap.ui.layout.GridData({span: "XL2 L2 M2 S12"})
-            }, "number", sett["FORMAT_MONEY_1"], this.view);
-
-        this.o2.dramt.addStyleClass("yellow");
-        this.o2.cramt.addStyleClass("yellow");
-        var frm = UtilGen.formCreate("", true, fe, undefined, undefined, [1, 1, 1]);
-        frm.setToolbar(undefined);
-        frm.destroyToolbar();
-        sc.addContent(frm);
-    },
+    }
+    ,
 
     createViewHeader: function () {
         var that = this;
         var fe = [];
         var titSpan = "XL2 L4 M4 S12";
-        var fullSpan = "XL8 L8 M8 S12";
         var codSpan = "XL3 L2 M2 S12";
-        this.av1 = {};
-        this.av1.keyfld = UtilGen.addControl(fe, "Key Id", sap.m.Input, "Cs" + this.timeInLong + "_",
-            {
-                enabled: false,
-                layoutData: new sap.ui.layout.GridData({span: codSpan}),
-            }, "string", undefined, this.view);
-
-        this.av1.no = UtilGen.addControl(fe, "No", sap.m.Input, "Cs" + this.timeInLong + "_",
-            {
-                enabled: true,
-                layoutData: new sap.ui.layout.GridData({span: codSpan}),
-            }, "number", undefined, this.view);
-
-        this.av1.vou_date = UtilGen.addControl(fe, "@Vou date", sap.m.DatePicker, "Cs" + this.timeInLong + "_",
-            {
-                enabled: true,
-                layoutData: new sap.ui.layout.GridData({span: codSpan}),
-            }, "date", undefined, this.view);
-        this.av1.descr = UtilGen.addControl(fe, "Descr", sap.m.Input, "Cs" + this.timeInLong + "_",
-            {
-                enabled: true,
-                layoutData: new sap.ui.layout.GridData({span: fullSpan}),
-            }, "string", undefined, this.view);
 
 
+        // this.cs = {};
+        // this.cs.code = UtilGen.addControl(fe, "Code", sap.m.Input, "Cs" + this.timeInLong + "_",
+        //     {
+        //         enabled: true,
+        //         layoutData: new sap.ui.layout.GridData({span: codSpan}),
+        //     }, "string", undefined, this.view);
+        // this.cs.title = UtilGen.addControl(fe, "@Title", sap.m.Input, "cs" + this.timeInLong + "_",
+        //     {
+        //         enabled: true,
+        //         layoutData: new sap.ui.layout.GridData({span: titSpan}),
+        //     }, "string", undefined, this.view);
+        //
+        //
         // return UtilGen.formCreate("", true, fe);
-        return UtilGen.formCreate("", true, fe, undefined, undefined, [1, 1, 1]);
+        // return UtilGen.formCreate("", true, fe, undefined, undefined, [1, 1, 1]);
 
-    },
+    }
+    ,
     loadData: function () {
+        // this.frm.setFieldValue("pac", "KWD");
+        // this.frm.loadData("qry1");
 
-        var view = this.view;
-        var that = this;
-        var apPosted = "";
-        var sett = sap.ui.getCore().getModel("settings").getData();
-
-        // UtilGen.setControlValue(this.o1.oname, "FR", "FR", true);
-        this.view.byId("poMsgInv" + this.timeInLong).setText("");
-        this.view.byId("poCmdSave" + this.timeInLong).setEnabled(true);
-        this.view.byId("poCmdDel" + this.timeInLong).setEnabled(true);
-
-        this.av1.no.setEnabled(true);
-
-        if (this.qryStr == "") {
-            that.setFormEditable();
-            UtilGen.resetDataJson(this.av1);
-            UtilGen.setControlValue(this.av1.vou_date, new Date());
-            var n = Util.getSQLValue("select no " +
-                "from  acvoucher1 where vou_code=" + this.vars.vou_code + " and type= " + this.vars.type);
-            var k = Util.getSQLValue("select nvl(max(keyfld),0)+1 " +
-                "from  acvoucher1");
-            UtilGen.setControlValue(this.av1.keyfld, k, k, true);
-            UtilGen.setControlValue(this.av1.no, n, n, true);
-        } else {
-            var dt = Util.execSQL("select *from acvoucher1 where KEYFLD=" + Util.quoted(this.qryStr));
-            if (dt.ret = "SUCCESS" && dt.data.length > 0) {
-                if (dt.ret = "SUCCESS" && dt.data.length > 0) {
-                    var dtx = JSON.parse("{" + dt.data + "}").data;
-                    UtilGen.loadDataFromJson(this.av1, dtx[0], true);
-                    this.av1.no.setEnabled(false);
-                    if (dtx[0].FLAG == 2)
-                        apPosted = "Posted"
-
-                }
-            }
+        this.frm.setFieldValue('pac', Util.nvl(this.qryStr), "");
+        this.frm.setQueryStatus(undefined, Util.nvl(this.oController.status, FormView.RecordStatus.NEW));
+        if (this.qryStr != "")
+            this.frm.loadData(undefined, this.oController.status);
 
 
-        }
-
-        this.view.byId("poMsgInv" + this.timeInLong).setText(apPosted + " JV # " + this.qryStr);
-        this.loadData_details();
-
-        if (!this.fromStatus) {
-            this.do_status();
-        } else this.fromStatus = undefined;
-
-
-    },
-    loadData_details: function () {
-        var that = this;
-        var sq = "select acvoucher2.*,descr acname from acvoucher2 " +
-            " where vou_code=" + this.vars.vou_code + " " +
-            " and type=" + this.vars.type + " " +
-            " and keyfld=" + Util.quoted(this.qryStr);
-        this.qv.getControl().setEditable(true);
-        Util.doAjaxJson("sqlmetadata", {sql: sq}, false).done(function (data) {
-            if (data.ret == "SUCCESS") {
-                that.qv.setJsonStrMetaData("{" + data.data + "}");
-                UtilGen.applyCols("C7.JV", that.qv, that);
-                that.qv.mLctb.parse("{" + data.data + "}", true);
-                if (that.qv.mLctb.rows.length == 0)
-                    that.qv.addRow();
-                // var c = that.qv.mLctb.getColPos("ORD_REFER");
-                // that.qv.mLctb.cols[c].beforeSearchEvent = function (sq, ctx, model) {
-                //     // var rfr = model.getProperty(ctx.sPath + "/ORD_REFER");
-                //     // var s = sq.replace("where", " where cost_item= " + Util.quoted(rfr) + " and ");
-                //     return sq;
-                // };
-                var c = that.qv.mLctb.getColPos("ACCNO");
-                that.qv.mLctb.cols[c].onSearchSelection = function (ctx, model, data) {
-                    var chld = Util.getSQLValue("select childcount from acaccount where accno=" + Util.quoted(data.ACCNO));
-                    if (chld > 0) {
-                        sap.m.MessageToast.show("Err ! , Parent a/c selection is not allowed ! ", {
-                            // my: sap.ui.core.Popup.Dock.LeftBottom, at: sap.ui.core.Popup.Dock.CenterCenter
-                            // duration: 4000
-                        });
-                        var oMessageToastDOM = $('#content').parent().find('.sapMMessageToast');
-                        oMessageToastDOM.css('color', "red");
-                        return false;
-                    }
-                    return true;
-                };
-
-                that.qv.loadData();
-                // that.do_summary(true);
-                // that.setItemSql();
-
-            }
-        });
     }
     ,
     validateSave: function () {
@@ -307,22 +474,11 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
     save_data: function () {
     }
     ,
-    show_list: function () {
-        var that = this;
-        var sq = "select KEYFLD,descr||'-'||NO DESCR,vou_date from " +
-            " acvoucher1 where vou_code=" + this.vars.vou_code + " and type= " + this.vars.type + " " +
-            " ";
-        Util.showSearchList(sq, "DESCR", "KEYFLD", function (valx, val) {
-            that.oController.status = "view";
-            that.qryStr = valx;
-            that.loadData();
-        });
-    },
-    do_status: function () {
+    get_emails_sel: function () {
 
     }
-})
-;
+
+});
 
 
 

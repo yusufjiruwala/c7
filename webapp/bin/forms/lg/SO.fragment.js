@@ -282,7 +282,6 @@ sap.ui.jsfragment("bin.forms.lg.SO", {
                 that.changeCurrency();
 
             }
-
         }
         else {
             var dt = Util.execSQL("select *from order1 where ord_code=" + this.vars.ord_code + " and ord_no=" + Util.quoted(this.qryStrPO));

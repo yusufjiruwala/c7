@@ -95,7 +95,6 @@ sap.ui.jsfragment("bin.forms.clinic.SO", {
         sc.addContent(this.frm);
 
 
-
         sc.addContent(this.qv.getControl());
         this.pgPO.addContent(sc);
         this.createViewFooter(sc);
@@ -429,7 +428,7 @@ sap.ui.jsfragment("bin.forms.clinic.SO", {
                 defaultValues["ORD_PRICE"] = this.qv.mLctb.getFieldValue(i, "FC_PRICE");
                 defaultValues["ORD_ALLQTY"] = this.qv.mLctb.getFieldValue(i, "ORD_PKQTY");
 
-                s1 += (UtilGen.getInsertRowString(this.qv.mLctb, "order2", i, ["AMOUNT", "DESCR2", "DISCP", "LC_AMOUNT","DNAME"], defaultValues, true) + ";");
+                s1 += (UtilGen.getInsertRowString(this.qv.mLctb, "order2", i, ["AMOUNT", "DESCR2", "DISCP", "LC_AMOUNT", "DNAME"], defaultValues, true) + ";");
             }
             k = "begin " + sqCustInsert + " " + k + s1 + " end; ";
         } else {
@@ -450,7 +449,7 @@ sap.ui.jsfragment("bin.forms.clinic.SO", {
                 defaultValues["ORD_PRICE"] = this.qv.mLctb.getFieldValue(i, "FC_PRICE");
                 defaultValues["ORD_ALLQTY"] = this.qv.mLctb.getFieldValue(i, "ORD_PKQTY");
 
-                s1 += (UtilGen.getInsertRowString(this.qv.mLctb, "order2", i, ["AMOUNT", "DESCR2", "DISCP", "LC_AMOUNT","DNAME"], defaultValues, true) + ";");
+                s1 += (UtilGen.getInsertRowString(this.qv.mLctb, "order2", i, ["AMOUNT", "DESCR2", "DISCP", "LC_AMOUNT", "DNAME"], defaultValues, true) + ";");
             }
             k = "begin " + sqCustInsert + " " + k + s1 + " end; ";
         }
