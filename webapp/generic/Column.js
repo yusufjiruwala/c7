@@ -47,6 +47,8 @@ sap.ui.define(["./DataCell"], function (DataCell) {
         this.mSearchColChildCount = "";
         this.whenValidate = undefined;
         this.eventCalc = undefined;
+        this.commandLink = undefined;
+        this.commandLinkClick = undefined;
 
     }
 

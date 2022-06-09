@@ -3,7 +3,6 @@ package com.controller;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -22,7 +21,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
@@ -36,7 +36,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -76,6 +75,12 @@ public class UserRoute {
 
 	@Autowired
 	private Batches batches;
+
+	private ResultSet lastRsSave = null;
+
+	private String saveQryPlsql = "";
+
+	private Timer saveQryTimer = new Timer(true);
 
 	@RequestMapping("/connect")
 	public String connectDB() {
@@ -1012,18 +1017,96 @@ public class UserRoute {
 
 		if (ssql.toUpperCase().startsWith("SELECT")) {
 			rs = qe.executeRS();
+			this.lastRsSave = rs;
 			ret = utils.getJSONsqlMetaData(rs, con, "", "");
+			if (params.get("saveQryName") != null) {
+				saveTempQry(rs, params.get("saveQryName"));
+			}
 		} else {
 			qe.execute();
 		}
+
 		qe.close();
 		if (rs != null) {
 			if (rs.getStatement() != null)
 				rs.getStatement().close();
 			rs.close();
 		}
-
 		return ret;
+	}
+
+	private void saveTempQry(ResultSet rs, String nm) {
+		String sq = "begin delete from temporary where idno=878787 and usernm='" + instanceInfo.sessionId + "_" + nm
+				+ "';";
+		String sq1 = " insert into temporary (idno,usernm,";
+		String cols = "";
+		String vals = "";
+		String plsql = "";
+
+		try {
+			ResultSetMetaData rsm = rs.getMetaData();
+			for (int i = 0; i < rsm.getColumnCount(); i++)
+				cols += (cols.length() > 0 ? "," : "") + "field" + (i + 1);
+
+			rs.beforeFirst();
+			while (rs.next()) {
+				vals = "878787,'" + instanceInfo.sessionId + "_" + nm + "'";
+				for (int i = 0; i < rsm.getColumnCount(); i++)
+					vals += (vals.length() > 0 ? "," : "") + "'" + rs.getString(i + 1) + "'";
+				plsql += sq1 + cols + ") values (" + vals + ");";
+			}
+			plsql = sq + plsql + " end; ";
+			this.saveQryPlsql = plsql;
+			System.out.println(this.saveQryPlsql);
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+//		if (this.saveQryTimer!=null) {
+		this.saveQryTimer.cancel();
+		this.saveQryTimer.purge();
+
+//		}
+
+		TimerTask tt = new TimerTask() {
+
+			@Override
+			public void run() {
+				try {
+					System.out.println("Saving qry " + nm);
+					QueryExe.execute(UserRoute.this.saveQryPlsql, instanceInfo.getmDbc().getDbConnection());
+					instanceInfo.getmDbc().getDbConnection().commit();
+					System.out.println("End Saving qry " + nm);
+					UserRoute.this.lastRsSave = null;
+					Timer tm = new Timer(true);
+					String removingSql = "delete from temporary where idno=878787 and usernm='" + instanceInfo.sessionId
+							+ "_" + nm + "'";
+					tm.schedule(new TimerTask() {
+						
+						@Override
+						public void run() {
+							try {
+														
+								QueryExe.execute(removingSql, instanceInfo.getmDbc().getDbConnection());
+								instanceInfo.getmDbc().getDbConnection().commit();
+								System.out.println("Removing saved query "+nm);
+							} catch (SQLException e) {
+								e.printStackTrace();
+							}
+							
+
+						}
+					}, 600 * 1000);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+
+		this.saveQryTimer = new Timer(true);
+		this.saveQryTimer.schedule(tt, 1 * 1000);
+		System.gc();
 	}
 
 	private String getSubRepJson(String repname, String id) throws Exception {

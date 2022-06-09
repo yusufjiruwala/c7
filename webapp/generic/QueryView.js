@@ -6,7 +6,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             var that = this;
             this.mJsonString = "";
             this.tableId = tableId;
-            this.mViewSettings = {}
+            this.mViewSettings = {};
             this.colMerged = false;
             this.mOnAfterLoad = null;
             this.lastSelIndex = -1;
@@ -14,9 +14,14 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             this.onselect = undefined;
             this.onAddRow = undefined;
             this.afterDelRow = undefined;
+            this.beforeDelRow = undefined;
             this.parent = undefined;
             this.queryType = 'table';
-            this.editable = true;
+
+            this.editable = false;
+            this.insertable = false;
+            this.deletable = false;
+
             //specific for tree..
             this.mode = sap.ui.table.SelectionMode.MultiToggle;
             this.mColParent = "";
@@ -56,6 +61,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     sap.m.MessageToast.show(that.mTable.getSelectedIndices().length + " selected");
                 }
             });
+            this.mTable.qv = this;
             // purpose    :   creating alternative tree control..
             (sap.ui.getCore().byId(this.tableId + "tree") != undefined ? sap.ui.getCore().byId(this.tableId + "tree").destroy() : null);
             this.mTree = new sap.ui.table.TreeTable(this.tableId + "tree", {
@@ -66,7 +72,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 fixedBottomRowCount: 0,
                 // mode: sap.m.ListMode.SingleSelectMaster
             });
-
+            this.mTree.qv = this;
             (sap.ui.getCore().byId(this.tableId + "list") != undefined ? sap.ui.getCore().byId(this.tableId + "list").destroy() : null);
             this.mList = new sap.m.List(this.tableId + "list", {});
 
@@ -163,11 +169,12 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             this.mLctb.parseCol(strJson);
 
             this.setTreeColsType();
-            this.switchType("table");
+
             if (this.mColParent != undefined && this.mColParent.length > 0)
                 this.switchType("tree");
-            if (this.mColLstGroup != undefined && this.mColLstGroup.length > 0)
+            else if (this.mColLstGroup != undefined && this.mColLstGroup.length > 0)
                 this.switchType("list");
+            else this.switchType("table");
 
 
         };
@@ -186,12 +193,12 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
             this.setTreeColsType();
 
-            this.switchType("table");
 
             if (this.mColParent != undefined && this.mColParent.length > 0)
                 this.switchType("tree");
-            if (this.mColLstGroup != undefined && this.mColLstGroup.length > 0)
+            else if (this.mColLstGroup != undefined && this.mColLstGroup.length > 0)
                 this.switchType("list");
+            else this.switchType("table");
 
             //this.mJosnObject = this.mLctb.getData();
 
@@ -207,12 +214,12 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
         //     }
         // };
         QueryView.prototype.setTreeColsType = function () {
-            this.mColParent = "";
-            this.mColTitle = "";
-            this.mColCode = "";
-            this.mColLevel = "";
-            this.mColChild = "";
-            this.mColPath = "";
+            this.mColParent = Util.nvl(this.mColParent, "");
+            this.mColTitle = Util.nvl(this.mColTitle, "");
+            this.mColCode = Util.nvl(this.mColCode, "");
+            this.mColLevel = Util.nvl(this.mColLevel, "");
+            this.mColChild = Util.nvl(this.mColChild, "");
+            this.mColPath = Util.nvl(this.mColPath, "");
 
             for (var i = 0; i < this.mLctb.cols.length; i++) {
                 if (this.mLctb.cols[i].mQtreeType == "CODE")
@@ -323,6 +330,8 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
         };
 
         QueryView.prototype.addRow = function (dontReload) {
+            if (!this.insertable)
+                return;
             if (this.mLctb.rows.length > 0)
                 this.updateDataToTable();
 
@@ -342,6 +351,8 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
         };
 
         QueryView.prototype.insertRow = function (idx, dontReload) {
+            if (!this.insertable)
+                return;
             if (this.mLctb.rows.length > 0)
                 this.updateDataToTable();
             var idx = this.mLctb.insertRow(idx);
@@ -361,9 +372,24 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
         QueryView.prototype.deleteRow = function (idx, dontReload) {
             if (!this.editable)
                 return;
+            if (!this.deletable)
+                return;
+
             if (this.mLctb.rows.length > 0)
                 this.updateDataToTable();
+            var dt = {};
+            for (var i = 0; i < this.mLctb.cols.length; i++)
+                dt[this.mLctb.cols[i].mColName] = this.mLctb.getFieldValue(idx, this.mLctb.cols[i].mColName);
+
+
+            if (this.beforeDelRow != undefined)
+                this.beforeDelRow(idx, this.mLctb, dt);
+
             var idx = this.mLctb.deleteRow(idx);
+
+            if (this.afterDelRow != undefined)
+                this.afterDelRow(this.mLctb, dt);
+
 
             if (Util.nvl(dontReload, false) == false) {
                 this.updateDataToControl();
@@ -403,8 +429,8 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             var dt = Util.nvl(this.buildJsonData(), []);
             var cc = null;
             // purpose    : settiong columns ,  format, alignment , multilable,
-
-            for (var i = 0; i < this.mLctb.cols.length; i++) {
+            var colx = 0;
+            for (var i = colx; i < this.mLctb.cols.length; i++) {
                 cc = this.mLctb.cols[i];
                 var a = cc.getMUIHelper().display_align;
                 var f = cc.getMUIHelper().display_format;
@@ -442,6 +468,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                         src: "{" + this.mLctb.cols[i].mColName.replace(/\//g, "___") + "}",
                         enabled: this.mLctb.cols[i].mEnabled,
                         showValueHelp: (ssql != "" ? true : false),
+                        maxLines: 1,
                     }, Util.nvl(cc.getMUIHelper().data_type, "").toLowerCase(), f);
                 else
                     o = new colClass({
@@ -541,6 +568,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                             var firstVis = that.getControl().getFirstVisibleRow();
                             that.deleteRow(firstVis + rowno);
 
+
                         }
                     });
                     o.attachBrowserEvent("keydown", function (evt) {
@@ -630,6 +658,62 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                         //
                         // o.setModel(new sap.ui.model.json.JSONModel(dtx));
                     }
+                }
+                if (cc.commandLinkClick != undefined) {
+                    o.addStyleClass("linkLabel");
+                    o.attachBrowserEvent("click", function (oEvent) {
+                        var rowno = that.getControl().indexOfRow(this.getParent());
+                        var firstVis = that.getControl().getFirstVisibleRow();
+                        var clno = this.getParent().indexOfCell(this); // colno
+                        var cls = this.getParent().getParent().getColumns(); //all columns
+                        var tm = -1;
+                        var clx = -1;
+                        for (clx in cls) {
+                            if (cls[clx].getVisible()) tm++;
+                            if (tm == clno) {
+                                break;
+                            }
+                        }
+                        if (clx < 0) return;
+                        var cx = cls[clx].tableCol;
+                        if (cx.commandLinkClick != undefined)
+                            cx.commandLinkClick(this, firstVis + rowno, clno, that.mLctb);
+                    });
+                }
+                if (Util.nvl(cc.commandLink, "") != "") {
+                    o.addStyleClass("linkLabel");
+                    o.attachBrowserEvent("click", function (oEvent) {
+                        var rowno = that.getControl().indexOfRow(this.getParent());
+                        var firstVis = that.getControl().getFirstVisibleRow();
+                        var clno = this.getParent().indexOfCell(this); // colno
+                        var cls = this.getParent().getParent().getColumns(); //all columns
+                        var tm = -1;
+                        var clx = -1;
+                        for (clx in cls) {
+                            if (cls[clx].getVisible()) tm++;
+                            if (tm == clno) {
+                                break;
+                            }
+                        }
+                        if (clx < 0) return;
+                        var cx = cls[clx].tableCol;
+                        var th = this;
+                        var str = cx.commandLink;
+                        var lst = str.match(/:[a-zA-Z0-9_.]*/gi);
+                        var sst = str;
+                        var rn = firstVis + rowno;
+                        for (var i = 0; i < Util.nvl(lst, []).length; i++) {
+                            var vl = that.mLctb.getFieldValue(rn, lst[i].replaceAll(':', ''));
+                            if (vl instanceof Date)
+                                vl = Util.toOraDateTimeString(vl);
+
+                            sst = sst.replaceAll(lst[i], vl);
+                        }
+
+                        sap.m.MessageToast.show(sst);
+                        UtilGen.execCmd(sst, that.getControl().view, this, undefined);
+                    });
+
                 }
                 if (cc.eValidateColumn != undefined && (o instanceof sap.m.InputBase)) {
                     o.attachChange(null, cc.eValidateColumn);
@@ -732,6 +816,11 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
             if (this.mLctb.cols.length > 0 && this.mLctb.cols[0].mGrouped)
                 this.getControl().getColumns()[0].setVisible(false);
+
+            if (this.mLctb.cols.length > 0 && this.mLctb.cols[1].mGrouped)
+                this.getControl().getColumns()[1].setVisible(false);
+
+
             if (this.mOnAfterLoad != undefined)
                 this.mOnAfterLoad(this);
 
@@ -1123,11 +1212,13 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
 
         QueryView.prototype.colorRows = function () {
+            var that = this;
             if (this.mLctb.cols.length <= 0) return;
             var oModel = this.getControl().getModel();
             var rowCount = this.getControl().getVisibleRowCount(); //number of visible rows
             var rowStart = this.getControl().getFirstVisibleRow(); //starting Row index
-            // var fixRow = this.getControl().getFixedBottomRowCount();
+            var fixRow = this.getControl().getFixedBottomRowCount();
+            var totRows = oModel.getData().length;
             var cellAdd = 0;
             var groupedAdd = 0;
             if (this.mLctb.cols[0].mGrouped) {
@@ -1157,7 +1248,12 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     continue;
                 // if (rowCount > this.mLctb.rows.length)
                 //     continue;
-                currentRowContext = this.getControl().getContextByIndex(rowStart + i);
+
+                if (fixRow > 0 && i == rowCount - 1)
+                    currentRowContext = this.getControl().getContextByIndex(totRows);
+                else
+                    currentRowContext = this.getControl().getContextByIndex(rowStart + i);
+
                 (this.getControl().getRows()[i]).$().removeClass("yellow");
                 (this.getControl().getRows()[i]).$().removeClass("qrGroup");
                 this.getControl().getRows()[i].getCells()[0].$().parent().parent().removeAttr("colspan");
@@ -1184,10 +1280,12 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 for (var j = 0 + cellAdd; j < cellsCount; j++)
                     if (this.getControl().getRows()[i].getCells()[j - cellAdd] != undefined) {
                         // removing any class...
+                        this.getControl().getRows()[i].getCells()[j - cellAdd].setVisible(true);
                         this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeClass("yellow");
                         this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeClass("qrGroup");
                         this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeClass("qtSecondLevel");
                         this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeClass("qtFirstLevel");
+                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeAttr("colspan");
                         this.getControl().getRows()[i].getCells()[j - cellAdd].$().attr("style", this.b4_cf_val);
                         this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().attr("style", Util.nvl(this.b4_cf_val1[j - cellAdd], ""));
                         // column formatting...
@@ -1230,6 +1328,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 }
                 var cellValue = oModel.getProperty(this.mLctb.cols[0].mColName, currentRowContext);
 
+
                 if (cellValue != undefined && (cellValue + "").startsWith(String.fromCharCode(4095))) {
                     for (var k = 0 + cellAdd; k < cellsCount; k++) {
                         var cv = oModel.getProperty(this.mLctb.cols[(k - cellAdd) + groupedAdd].mColName, currentRowContext);
@@ -1243,8 +1342,59 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
                 if (cellValue != undefined && (cellValue + "").startsWith(String.fromCharCode(4094))) {
                     this.getControl().getRows()[i].getCells()[0].$().addClass("qrGroup");
-                    this.getControl().getRows()[i].getCells()[0].$().parent().parent().attr("colspan", (cellAdd + 1) + "");
+                    this.getControl().getRows()[i].getCells()[1].$().addClass("qrGroup");
+                    // this.getControl().getRows()[i].getCells()[0].$().parent().parent().attr("colspan", (cellAdd + 1) + "");
+                    for (var k = 1 + cellAdd; k < cellsCount; k++) {
+                        // this.getControl().getRows()[i].getCells()[k - cellAdd].$().parent().parent().attr("width", "0px");
+                        // this.getControl().getRows()[i].getCells()[k - cellAdd].setVisible(false);
+                    }
+                    // this.getControl().getRows()[i].removeCell(this.getControl().getRows()[i].getCells().length - 1);
+
+                    if (Util.nvl(this.mLctb.cols[0].commandLinkClick, undefined) != undefined) {
+                        if (!this.getControl().getRows()[i].getCells()[0].hasStyleClass("linkLabel")) {
+                            this.getControl().getRows()[i].getCells()[0].addStyleClass("linkLabel");
+                        }
+                    }
+                    if (Util.nvl(this.mLctb.cols[0].commandLinkClick, undefined) != undefined ||
+                        Util.nvl(this.mLctb.cols[0].commandLink, "") != "") {
+                        if (!this.getControl().getRows()[i].getCells()[0].hasStyleClass("linkLabel")) {
+                            this.getControl().getRows()[i].getCells()[0].addStyleClass("linkLabel");
+                            this.getControl().getRows()[i].getCells()[0].attachBrowserEvent("click", function (oEvent) {
+                                var rowno = that.getControl().indexOfRow(this.getParent());
+                                var firstVis = that.getControl().getFirstVisibleRow();
+                                var clno = 0; // colno
+                                var cls = this.getParent().getParent().getColumns(); //all columns
+                                var tm = -1;
+                                var clx = 0;
+
+                                var cx = cls[clx].tableCol;
+                                var th = this;
+                                var str = cx.commandLink;
+                                var clk = cx.commandLinkClick;
+                                var lst = str.match(/:[a-zA-Z0-9_.]*/gi);
+                                var sst = str;
+                                var rn = firstVis + rowno;
+                                if (clk == undefined)
+                                    for (var i = 0; i < Util.nvl(lst, []).length; i++) {
+                                        var vl = that.mLctb.getFieldValue(rn, lst[i].replaceAll(':', ''));
+                                        if (vl instanceof Date)
+                                            vl = Util.toOraDateTimeString(vl);
+
+                                        sst = sst.replaceAll(lst[i], vl);
+                                    }
+                                else
+
+
+                                    sap.m.MessageToast.show(sst);
+                                UtilGen.execCmd(sst, that.getControl().view, this, undefined);
+                            });
+                        }
+
+                    }
+
+
                 }
+
 
                 if (this.mColLevel != "") {
                     var cellValue2 = oModel.getProperty(this.mColLevel, currentRowContext);
@@ -1267,121 +1417,124 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             this.mLctb.resetData();
         };
 
+
         QueryView.prototype.printHtml = function (view, iadd) {
             // return if mLctb have no data
             var that = this;
-            if (this.mLctb.cols.length <= 0) return;
-            if (this.queryType == "tree") {
-                this.printHtmlTree(view, iadd);
-                return;
-            }
-            var h = "", dt = "", rs = "";           // table header data
 
-            var sett = sap.ui.getCore().getModel("settings").getData();
-            var oData = this.getControl().getModel().getData();
-            var tmpv1 = "", tmpv2 = "", tmpv3 = "", classadd = "", styleadd = "";
-            var colData = view.colData;  // columns and other info...
-            var cellValue = "";
-            var rowid = -1;
-            var cf = "";   //  conditional format css..
-            var grouped = this.mLctb.cols[0].mGrouped;
-            var cnt = 0;
-            // purpose  :  header will show parameters, report title, etc..
-            h = ""
-            cnt == 0;
-            var rep = (view.byId("txtSubGroup") != undefined ? view.byId("txtSubGroup").getValue() : "");
-            var company = "<div class='company'>" + sett["COMPANY_NAME"] + "</div> " +
-                "<div class='reportTitle'>" + view.reportsData.report_info.report_name +
-                " - " + rep.substr(0, rep.indexOf(" - ")) + "</div>";
-            if (Util.nvl(view.reportsData.report_info.report_other, "") != "")
-                company += "<div class='reportTitle'>" + view.reportsData.report_info.report_other + "</div>";
-            var dtitle = "";
-            var tmp = "";
-            var cnt = 0;
-            // purpose   :  adding parameters on top of the page
-            var vl = "";
-            var ia = Util.nvl(iadd, "para");
-            for (var i = 0; i < Util.nvl(colData.parameters, "").length; i++) {
-                if (view.colData.parameters[i].PARA_DATATYPE === "BOOLEAN")
-                    vl = (view.byId("para_" + ia + i).getSelected() ? "TRUE" : "FALSE");
-                else if (view.colData.parameters[i].PARA_DATATYPE === "GROUP")
-                    vl = Util.nvl(view.byId("para_" + ia + i).getSelectedButton().getCustomData()[0].getKey());
-                else
-                    vl = Util.nvl(view.byId("para_" + ia + i).getValue(), "");
-
-                tmp += "<td class='paraLabel'>" + colData.parameters[i].PARA_DESCRARB + ":</td>" +
-                    "<td class='paraText'>" + Util.nvl(Util.htmlEntities(vl), "-") + "</td>";
-                if (i > 0 && i % 3 == 0) {
-                    dtitle += "<tr>" + tmp + "</tr>";
-                    tmp = "";
-                }
-
-            }
-
-            // table header and also for colSPan of parent label, supported by only 2 row.
-
-            var hCol = "";
-            var cs = []; // colspans in array for first row
-            var nxtSpan = 0;
-            var hasSpan = false;
-            var hs = 1;
-            for (var c in this.col) {
-                cnt++;
-                if (cnt - 1 == 0 && grouped) continue;
-                if (cnt - 1 === this.col.length) continue;
-                if (!this.col[c].getVisible()) continue;
-                if (nxtSpan > 1) {
-                    cs[c] = "";
-                    if (this.col[c].getMultiLabels().length > 1)
-                        tmpv1 = this.col[c].getMultiLabels()[1].getText();
-                    else
-                        tmpv1 = this.col[c].getMultiLabels()[0].getText();
-                    tmpv2 = "\"text-align:Center\"";
-                    h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
-                    nxtSpan--;
-                    continue;
-                }
-                hs = this.col[c].getHeaderSpan()[0];
-                if (hs > 1) {
-                    cs[c] = "<th style=\"text-align: center;\" colspan=\"" + hs + "\">" + this.col[c].getMultiLabels()[0].getText() + "</th>";
-                    hasSpan = true;
-                    nxtSpan = hs;
-                    tmpv1 = this.col[c].getMultiLabels()[1].getText();
-                    tmpv2 = "\"text-align:Center\"";
-                    h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
-
-                }
-                else {
-                    cs[c] = "<th colspan=\"1\"></th>";
-                    if (this.col[c].getMultiLabels().length > 1)
-                        tmpv1 = this.col[c].getMultiLabels()[1].getText();
-                    else
-                        tmpv1 = this.col[c].getMultiLabels()[0].getText();
-                    tmpv2 = "\"text-align:Center\"";
-                    h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
-                    hs--;
-                }
-
-            }
-
-            for (var x in cs)
-                hCol += cs[x];
-
-
-            hCol = "<tr>" + hCol + "</tr>";
-
-            h = "<thead>" + (hasSpan ? hCol : "") +
-                "<tr>" + h + "</tr></thead>";
-
-            // getting data in table..
-            var t;
-            for (var i = 0; i < oData.length; i++) {
-                rs = this._getRowData(i, oData);
-                dt += rs;
-            }
-            dt = "<tbody>" + dt + "</tbody>";
-            h = company + "<table class='paras paras'>" + dtitle + "</table>" +
-                "<table>" + h + dt + "</table>"
+            // if (this.mLctb.cols.length <= 0) return;
+            // if (this.queryType == "tree") {
+            //     this.printHtmlTree(view, iadd);
+            //     return;
+            // }
+            // var h = "", dt = "", rs = "";           // table header data
+            //
+            // var sett = sap.ui.getCore().getModel("settings").getData();
+            // var oData = this.getControl().getModel().getData();
+            // var tmpv1 = "", tmpv2 = "", tmpv3 = "", classadd = "", styleadd = "";
+            // var colData = view.colData;  // columns and other info...
+            // var cellValue = "";
+            // var rowid = -1;
+            // var cf = "";   //  conditional format css..
+            // var grouped = this.mLctb.cols[0].mGrouped;
+            // var cnt = 0;
+            // // purpose  :  header will show parameters, report title, etc..
+            // h = ""
+            // cnt == 0;
+            // var rep = (view.byId("txtSubGroup") != undefined ? view.byId("txtSubGroup").getValue() : "");
+            // var company = "<div class='company'>" + sett["COMPANY_NAME"] + "</div> " +
+            //     "<div class='reportTitle'>" + view.reportsData.report_info.report_name +
+            //     " - " + rep.substr(0, rep.indexOf(" - ")) + "</div>";
+            // if (Util.nvl(view.reportsData.report_info.report_other, "") != "")
+            //     company += "<div class='reportTitle'>" + view.reportsData.report_info.report_other + "</div>";
+            // var dtitle = "";
+            // var tmp = "";
+            // var cnt = 0;
+            // // purpose   :  adding parameters on top of the page
+            // var vl = "";
+            // var ia = Util.nvl(iadd, "para");
+            // for (var i = 0; i < Util.nvl(colData.parameters, "").length; i++) {
+            //     if (view.colData.parameters[i].PARA_DATATYPE === "BOOLEAN")
+            //         vl = (view.byId("para_" + ia + i).getSelected() ? "TRUE" : "FALSE");
+            //     else if (view.colData.parameters[i].PARA_DATATYPE === "GROUP")
+            //         vl = Util.nvl(view.byId("para_" + ia + i).getSelectedButton().getCustomData()[0].getKey());
+            //     else
+            //         vl = Util.nvl(view.byId("para_" + ia + i).getValue(), "");
+            //
+            //     tmp += "<td class='paraLabel'>" + colData.parameters[i].PARA_DESCRARB + ":</td>" +
+            //         "<td class='paraText'>" + Util.nvl(Util.htmlEntities(vl), "-") + "</td>";
+            //     if (i > 0 && i % 3 == 0) {
+            //         dtitle += "<tr>" + tmp + "</tr>";
+            //         tmp = "";
+            //     }
+            //
+            // }
+            //
+            // // table header and also for colSPan of parent label, supported by only 2 row.
+            //
+            // var hCol = "";
+            // var cs = []; // colspans in array for first row
+            // var nxtSpan = 0;
+            // var hasSpan = false;
+            // var hs = 1;
+            // for (var c in this.col) {
+            //     cnt++;
+            //     if (cnt - 1 == 0 && grouped) continue;
+            //     if (cnt - 1 === this.col.length) continue;
+            //     if (!this.col[c].getVisible()) continue;
+            //     if (nxtSpan > 1) {
+            //         cs[c] = "";
+            //         if (this.col[c].getMultiLabels().length > 1)
+            //             tmpv1 = this.col[c].getMultiLabels()[1].getText();
+            //         else
+            //             tmpv1 = this.col[c].getMultiLabels()[0].getText();
+            //         tmpv2 = "\"text-align:Center\"";
+            //         h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
+            //         nxtSpan--;
+            //         continue;
+            //     }
+            //     hs = this.col[c].getHeaderSpan()[0];
+            //     if (hs > 1) {
+            //         cs[c] = "<th style=\"text-align: center;\" colspan=\"" + hs + "\">" + this.col[c].getMultiLabels()[0].getText() + "</th>";
+            //         hasSpan = true;
+            //         nxtSpan = hs;
+            //         tmpv1 = this.col[c].getMultiLabels()[1].getText();
+            //         tmpv2 = "\"text-align:Center\"";
+            //         h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
+            //
+            //     }
+            //     else {
+            //         cs[c] = "<th colspan=\"1\"></th>";
+            //         if (this.col[c].getMultiLabels().length > 1)
+            //             tmpv1 = this.col[c].getMultiLabels()[1].getText();
+            //         else
+            //             tmpv1 = this.col[c].getMultiLabels()[0].getText();
+            //         tmpv2 = "\"text-align:Center\"";
+            //         h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
+            //         hs--;
+            //     }
+            //
+            // }
+            //
+            // for (var x in cs)
+            //     hCol += cs[x];
+            //
+            //
+            // hCol = "<tr>" + hCol + "</tr>";
+            //
+            // h = "<thead>" + (hasSpan ? hCol : "") +
+            //     "<tr>" + h + "</tr></thead>";
+            //
+            // // getting data in table..
+            // var t;
+            // for (var i = 0; i < oData.length; i++) {
+            //     rs = this._getRowData(i, oData);
+            //     dt += rs;
+            // }
+            // dt = "<tbody>" + dt + "</tbody>";
+            // h = company + "<table class='paras paras'>" + dtitle + "</table>" +
+            //     "<table>" + h + dt + "</table>"
+            var h = this.getHTMLTable(view, iadd);
             var newWin = window.open("");
             newWin.document.write(h);
             $("<link>", {rel: "stylesheet", href: "css/print.css"}).appendTo(newWin.document.head);
@@ -1391,7 +1544,128 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
         };
 
 
-        QueryView.prototype.printHtmlTree = function (view, iadd) {
+        QueryView.prototype.getHTMLTable = function (view, iadd, addTitle) {
+            var that = this;
+
+            if (this.mLctb.cols.length <= 0) return;
+            if (this.queryType == "tree") {
+                var ht = this.printHtmlTree(view, iadd, addTitle);
+                return ht;
+            }
+            var h = "", dt = "", rs = "";           // table header data
+
+            var sett = sap.ui.getCore().getModel("settings").getData();
+            var oData = this.getControl().getModel().getData();
+            var tmpv1 = "", tmpv2 = "", tmpv3 = "", classadd = "", styleadd = "";
+            var colData = view.colData;  // columns and other info...
+            var cellValue = "";
+            var rowid = -1;
+            var cf = "";   //  conditional format css..
+            var grouped = this.mLctb.cols[0].mGrouped;
+            var cnt = 0;
+            // purpose  :  header will show parameters, report title, etc..
+            h = ""
+            cnt == 0;
+            if (addTitle) {
+                var rep = (view.byId("txtSubGroup") != undefined ? view.byId("txtSubGroup").getValue() : "");
+                var company = "<div class='company'>" + sett["COMPANY_NAME"] + "</div> " +
+                    "<div class='reportTitle'>" + view.reportsData.report_info.report_name +
+                    " - " + rep.substr(0, rep.indexOf(" - ")) + "</div>";
+
+                if (Util.nvl(view.reportsData.report_info.report_other, "") != "")
+                    company += "<div class='reportTitle'>" + view.reportsData.report_info.report_other + "</div>";
+            }
+            var dtitle = "";
+            var tmp = "";
+            var cnt = 0;
+            // purpose   :  adding parameters on top of the page
+            var vl = "";
+            var ia = Util.nvl(iadd, "para");
+            for (var i = 0; i < Util.nvl(colData.parameters, "").length; i++) {
+                if (view.colData.parameters[i].PARA_DATATYPE === "BOOLEAN")
+                    vl = (view.byId("para_" + ia + i).getSelected() ? "TRUE" : "FALSE");
+                else if (view.colData.parameters[i].PARA_DATATYPE === "GROUP")
+                    vl = Util.nvl(view.byId("para_" + ia + i).getSelectedButton().getCustomData()[0].getKey());
+                else
+                    vl = Util.nvl(view.byId("para_" + ia + i).getValue(), "");
+
+                tmp += "<td class='paraLabel'>" + colData.parameters[i].PARA_DESCRARB + ":</td>" +
+                    "<td class='paraText'>" + Util.nvl(Util.htmlEntities(vl), "-") + "</td>";
+                if (i > 0 && i % 3 == 0) {
+                    dtitle += "<tr>" + tmp + "</tr>";
+                    tmp = "";
+                }
+
+            }
+
+            // table header and also for colSPan of parent label, supported by only 2 row.
+
+            var hCol = "";
+            var cs = []; // colspans in array for first row
+            var nxtSpan = 0;
+            var hasSpan = false;
+            var hs = 1;
+            for (var c in this.col) {
+                cnt++;
+                if (cnt - 1 == 0 && grouped) continue;
+                if (cnt - 1 === this.col.length) continue;
+                if (!this.col[c].getVisible()) continue;
+                if (nxtSpan > 1) {
+                    cs[c] = "";
+                    if (this.col[c].getMultiLabels().length > 1)
+                        tmpv1 = this.col[c].getMultiLabels()[1].getText();
+                    else
+                        tmpv1 = this.col[c].getMultiLabels()[0].getText();
+                    tmpv2 = "\"text-align:Center\"";
+                    h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
+                    nxtSpan--;
+                    continue;
+                }
+                hs = this.col[c].getHeaderSpan()[0];
+                if (hs > 1) {
+                    cs[c] = "<th style=\"text-align: center;\" colspan=\"" + hs + "\">" + this.col[c].getMultiLabels()[0].getText() + "</th>";
+                    hasSpan = true;
+                    nxtSpan = hs;
+                    tmpv1 = this.col[c].getMultiLabels()[1].getText();
+                    tmpv2 = "\"text-align:Center\"";
+                    h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
+
+                }
+                else {
+                    cs[c] = "<th colspan=\"1\"></th>";
+                    if (this.col[c].getMultiLabels().length > 1)
+                        tmpv1 = this.col[c].getMultiLabels()[1].getText();
+                    else
+                        tmpv1 = this.col[c].getMultiLabels()[0].getText();
+                    tmpv2 = "\"text-align:Center\"";
+                    h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
+                    hs--;
+                }
+
+            }
+
+            for (var x in cs)
+                hCol += cs[x];
+
+
+            hCol = "<tr>" + hCol + "</tr>";
+
+            h = "<thead>" + (hasSpan ? hCol : "") +
+                "<tr>" + h + "</tr></thead>";
+
+            // getting data in table..
+            var t;
+            for (var i = 0; i < oData.length; i++) {
+                rs = this._getRowData(i, oData);
+                dt += rs;
+            }
+            dt = "<tbody>" + dt + "</tbody>";
+            h = company + "<table class='paras paras'>" + dtitle + "</table>" +
+                "<table>" + h + dt + "</table>";
+            return h;
+        };
+
+        QueryView.prototype.printHtmlTree = function (view, iadd, addTitle) {
             // return if mLctb have no data
             var that = this;
             if (this.mLctb.cols.length <= 0) return;
@@ -1408,12 +1682,23 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             var grouped = this.mLctb.cols[0].mGrouped;
             var cnt = 0;
             // purpose  :  header will show parameters, report title, etc..
-            h = ""
+            h = "";
             cnt == 0;
-            var rep = view.byId("txtSubGroup").getValue();
-            var company = "<div class='company'>" + sett["COMPANY_NAME"] + "</div> " +
-                "<div class='reportTitle'>" + view.reportsData.report_info.report_name +
-                " - " + rep.substr(0, rep.indexOf(" - ")) + "</div>";
+            var company = "";
+            if (addTitle) {
+                var rep = (view.byId("txtSubGroup") != undefined ? view.byId("txtSubGroup").getValue() : "");
+                company = "<div class='company'>" + sett["COMPANY_NAME"] + "</div> " +
+                    "<div class='reportTitle'>" + view.reportsData.report_info.report_name +
+                    " - " + rep.substr(0, rep.indexOf(" - ")) + "</div>";
+
+                if (Util.nvl(view.reportsData.report_info.report_other, "") != "")
+                    company += "<div class='reportTitle'>" + view.reportsData.report_info.report_other + "</div>";
+            }
+
+            // var rep = view.byId("txtSubGroup").getValue();
+            // var company = "<div class='company'>" + sett["COMPANY_NAME"] + "</div> " +
+            //     "<div class='reportTitle'>" + view.reportsData.report_info.report_name +
+            //     " - " + rep.substr(0, rep.indexOf(" - ")) + "</div>";
 
             var dtitle = "";
             var tmp = "";
@@ -1502,13 +1787,9 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             }
             dt = "<tbody>" + dt + "</tbody>";
             h = company + "<table class='paras paras'>" + dtitle + "</table>" +
-                "<table>" + h + dt + "</table>"
-            var newWin = window.open("");
-            newWin.document.write(h);
-            $("<link>", {rel: "stylesheet", href: "css/print.css"}).appendTo(newWin.document.head);
-            setTimeout(function () {
-                newWin.print();
-            }, 1000);
+                "<table>" + h + dt + "</table>";
+            return h;
+
         };
 
 

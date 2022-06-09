@@ -544,7 +544,12 @@ body {
     cursor: pointer;
 }
 
-.sapMGT:hover:not(.sapMGTPressActive) {
+.linkLabel:hover {
+    color: hotpink !important;
+    cursor: pointer !important;
+}
+
+.dbTile .sapMGT:hover:not(.sapMGTPressActive) {
     box-shadow: 0px 0px 0px #888888 !important;
     background: cyan !important;
     cursor: pointer;
@@ -628,6 +633,10 @@ body {
     color: red !important;
 }
 
+.smallFont {
+    font-size: x-small;
+}
+
 .blueButton .sapMBtnInner {
     background: #00a4eb;
     color: white;
@@ -636,6 +645,10 @@ body {
 .blueButton .sapMBtnInner:hover {
     background: #00a4eb;
     color: yellow;
+}
+
+.darkBlueText {
+    color: #0854a0
 }
 
 .blinking {
@@ -669,3 +682,31 @@ body {
     color: white;
 
 }
+
+.reportTable {
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+.reportTable .sapUiTableCell {
+    box-sizing: border-box;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+.reportTable .sapUiTableHeaderRow {
+    background-color: #e8e8e8;
+!important;
+}
+
+.reportTable .sapUiTableRowFirstFixedBottom {
+    background-color: #f9f9f9;
+!important;
+}
+
+.reportTable .sapUiTableSelectAllCheckBox::after, .sapUiTableRowSelectionCell::after {
+    border: 0 !important;
+    background-color: white !important;
+}
+
+

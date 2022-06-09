@@ -1024,11 +1024,15 @@ public class utils {
 		// else
 		if (val == null)
 			tmp1 += "null";
-		else
+		else {
 			tmp1 += ((val instanceof Number) ? nvl(val, "null") + ""
-					: "\"" + decodeEscape(StringEscapeUtils.escapeJson((nvl(val, "").replaceAll("\"", ""))) + "\""));
+					: "\"" + StringEscapeUtils.escapeJson(nvl(val, ""))+"\"");
 
+//			tmp1 += ((val instanceof Number) ? nvl(val, "null") + ""
+//					: "\"" + decodeEscape(StringEscapeUtils.escapeJson((nvl(val, "").replaceAll("\"", ""))) + "\""));
+		}
 		tmp1 += (includeBracket ? "}" : "");
+
 		return tmp1;
 	}
 

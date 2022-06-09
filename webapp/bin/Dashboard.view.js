@@ -481,7 +481,7 @@ sap.ui.jsview('bin.Dashboard', {
                                 that.tileExe(this);
 
                             }
-                        })
+                        }).addStyleClass("dbTile")
                     };
                     secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].tiles[dtx[i].TILE_ID].tileObj["dtx"] = dtx[i];
                     secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].tiles[dtx[i].TILE_ID].tileObj.addStyleClass("mytilex");
@@ -609,7 +609,6 @@ sap.ui.jsview('bin.Dashboard', {
         var pg1 = this.pg1[ix];
         if (pg1 != undefined)
             this.app.toDetail(pg1, "baseSlide");
-
 
 
     },

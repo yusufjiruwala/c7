@@ -99,7 +99,7 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
             },
             doAjaxJson: function (path,
                                   content,
-                                  async) {
+                                  async, saveQryName) {
                 var params = {
                     url: this.ajaxPre + path,
                     context: this,
@@ -115,6 +115,9 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 if (content) {
                     params["data"] = JSON.stringify(content);
                 }
+                if (saveQryName) {
+                    params["saveQryName"] = JSON.stringify(saveQryName);
+                }
                 // console.log(content);
                 return jQuery.ajax(params);
             },
@@ -126,6 +129,9 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 return ret;
             },
             nvl: function (val1, val2) {
+                if (typeof val1 == "function")
+                    return val1;
+
                 return ((val1 == null || val1 == undefined || val1.length == 0) ? val2 : val1);
             },
             nvlObjToStr: function (val1, val2) {
@@ -774,11 +780,36 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
 
                 if (!rv)
                     return (typeof vl == "number" ? vl :
-                        '"' + Util.nvl(vl, "") + "".replace(/\"/g, "'").replace(/\n/, "\\r").replace(/\r/, "\\r").replace(/\\/g, "\\\\").trim() + '"');
+                        '"' + Util.nvl(vl, "").replace(/\\n/g, "\\n")
+                            .replace(/\\/g, "\\\\")
+                            .replace(/\\'/g, "\\'")
+                            .replace(/"/g, '\\"')
+                            .replace(/\\&/g, "\\&")
+                            .replace(/\\r/g, "\\r")
+                            .replace(/\\t/g, "\\t")
+                            .replace(/\\b/g, "\\b")
+                            .replace(/\\f/g, "\\f")
+                            .trim() + '"');
 
                 return (typeof vl == "number" ? vl :
-                    '' + Util.nvl(vl, "") + "".replace(/\"/g, "'").replace(/\n/, "\\r").replace(/\r/, "\\r").replace(/\\/g, "\\\\").trim() + '');
+                    '' + Util.nvl(vl, "").replace(/\\n/g, "\\n")
+                        .replace(/\\/g, "\\\\")
+                        .replace(/\\'/g, "\\'")
+                        .replace(/"/g, '\\"')
+                        .replace(/\\&/g, "\\&")
+                        .replace(/\\r/g, "\\r")
+                        .replace(/\\t/g, "\\t")
+                        .replace(/\\b/g, "\\b")
+                        .replace(/\\f/g, "\\f")
+                        .trim() + '');
 
+                // if (!rv)
+                //     return (typeof vl == "number" ? vl :
+                //         '"' + Util.nvl(vl, "") + "".replace(/\"/g, "'").replace(/\n/, "\\r").replace(/\r/, "\\r").replace(/\\/g, "\\\\").trim() + '"');
+                //
+                // return (typeof vl == "number" ? vl :
+                //     '' + Util.nvl(vl, "") + "".replace(/\"/g, "'").replace(/\n/, "\\r").replace(/\r/, "\\r").replace(/\\/g, "\\\\").trim() + '');
+                //
             },
             setLanguageModel: function (view) {
                 var ResourceModel = sap.ui.model.resource.ResourceModel;
@@ -844,6 +875,7 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 var qv = new QueryView("searchTbl" + tm);
                 qv.getControl().setFixedBottomRowCount(0);
                 qv.getControl().addStyleClass("sapUiSizeCondensed");
+
                 if (fnOnselect != undefined) {
                     qv.getControl().attachRowSelectionChange(undefined, function () {
                         fnOnselect();
@@ -854,12 +886,21 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                         var flts = [];
                         var val = event.getParameter("newValue");
                         for (var i in qv.mLctb.cols) {
-                            if (flcol != undefined && flcol.indexOf(qv.mLctb.cols[i].mColName) > -1)
-                                flts.push(new sap.ui.model.Filter({
-                                    path: qv.mLctb.cols[i].mColName,
-                                    operator: sap.ui.model.FilterOperator.Contains,
-                                    value1: val
-                                }));
+                            if (flcol != undefined && flcol.indexOf(qv.mLctb.cols[i].mColName) > -1) {
+                                if (qv.mLctb.cols[i].getMUIHelper().data_type == "string")
+                                    flts.push(new sap.ui.model.Filter({
+                                        path: qv.mLctb.cols[i].mColName,
+                                        operator: sap.ui.model.FilterOperator.Contains,
+                                        value1: val
+                                    }));
+                                if (qv.mLctb.cols[i].getMUIHelper().data_type == "NUMBER")
+                                    flts.push(new sap.ui.model.Filter({
+                                        path: qv.mLctb.cols[i].mColName,
+                                        operator: sap.ui.model.FilterOperator.EQ,
+                                        value1: val
+                                    }));
+
+                            }
                         }
                         var f = new sap.ui.model.Filter({
                             filters: flts,
@@ -908,6 +949,7 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                         qv.getControl().setSelectionMode(sap.ui.table.SelectionMode.Single);
                     }
                     qv.getControl().setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
+                    qv.getControl().setFirstVisibleRow(0);
                     return qv;
                 }
 

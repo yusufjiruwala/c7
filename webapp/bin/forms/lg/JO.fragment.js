@@ -304,6 +304,7 @@ sap.ui.jsfragment("bin.forms.lg.JO", {
 
                 }
             }));
+
             this.frmJO.getToolbar().addContent(new sap.m.Button({
                 icon: "sap-icon://print", press: function () {
                     that.save_data(false);

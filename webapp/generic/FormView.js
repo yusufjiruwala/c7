@@ -71,6 +71,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
             // "SEARCHFIELD": "SearchText",
             "SEARCHFIELD": "sap.m.SearchField",
             "LABEL": "sap.m.Text",
+            "LINK": "sap.m.Link",
             "ICON": "sap.ui.core.Icon"
         };
         FormView.ObjTypes = {
@@ -99,7 +100,6 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
 
         FormView.create = function (pg) {
             var q = new FormView(pg);
-
             q.parentPage = pg;
             return q;
         };
@@ -168,6 +168,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                 qr.eventCalc = Util.nvl(qrys[i].eventCalc, undefined);
                 qr.edit_allowed = Util.nvl(qrys[i].edit_allowed, true);
                 qr.insert_allowed = Util.nvl(qrys[i].insert_allowed, true);
+                qr.delete_allowed = Util.nvl(qrys[i].delete_allowed, true);
                 qr.fields = {};
                 qr.summary = {};
                 qr.obj = undefined;
@@ -314,10 +315,8 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                 lst.obj = undefined;
                 lst.mLctb = undefined;
                 lst.afterSelect = Util.nvl(lsts[i].afterSelect, undefined);
-
                 this.form.lists.push(lst);
                 this.objs[lsts[i].name] = lst;
-
 
             }
 
@@ -399,8 +398,11 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                     qr.obj.getControl().setFixedBottomRowCount(0);
                     qr.obj.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
                     qr.obj.getControl().setVisibleRowCount(7);
+                    qr.obj.insertable = qr.insert_allowed;
+                    qr.obj.deletable = qr.delete_allowed;
                     thatForm.loadQueryView(qr, true);
                     scrollObjs.push(qr.obj.getControl());
+
                     if (this.firstObj == undefined)
                         this.firstObj = qr.obj.getControl();
                     qr.obj.onAddRow = function (idx, ld) {
@@ -409,6 +411,20 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                         }
 
                     };
+                    qr.obj.beforeDelRow = function (idx, ld, dt) {
+                        if (thatForm.form.events.hasOwnProperty("beforeDelRow")) {
+                            thatForm.form.events.afterNewRow(qr, idx, ld, dt);
+                        }
+
+                    };
+                    qr.obj.afterDelRow = function (ld, dt) {
+                        if (thatForm.form.events.hasOwnProperty("afterDelRow")) {
+                            thatForm.form.events.afterDelRow(qr, ld, dt);
+                        }
+
+                    };
+
+
                     qr.sumObj = undefined;
                     var flds = this.form.db[q].summary;
                     var fe = []
@@ -434,7 +450,6 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                     qr.sumObj.setToolbar(undefined);
                     qr.sumObj.destroyToolbar();
                     scrollObjs.push(qr.sumObj);
-
                 }
 
             }
@@ -464,7 +479,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
 
             }
 
-
+            // focus on first object after showing form
             this.pg.addContent(this.sc);
             for (var i in scrollObjs)
                 this.sc.addContent(scrollObjs[i]);
@@ -1064,12 +1079,15 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                     if (!this.validate_data(qryObj))
                         return false;
                     if (qryObj.showType == FormView.QueryShowType.FORM) {
+                        if (this.form.events.hasOwnProperty("beforeSaveQry")) {
+                            var er=this.form.events.beforeSaveQry(qryObj, qryObj.update_default_values)
+                            if (er!="")
+                                this.err();
+                        }
                         sq2 = this.getSQLUpdateString(qryObj,
                             qryObj.update_default_values,
                             qryObj.update_exclude_fields,
                             qryObj.where_clause);
-                        if (this.form.events.hasOwnProperty("beforeSaveQry"))
-                            sq2 = this.form.events.beforeSaveQry(qryObj, sq2, -1);
                         sq2 = this.parseString(sq2) + ";";
                     }
                     else if (qryObj.showType == FormView.QueryShowType.QUERYVIEW) {
@@ -1146,8 +1164,6 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                 for (var o in qrys) {
                     qryObj = qrys[o];
                     thatForm.loadData(qryObj, FormView.RecordStatus.VIEW);
-                    if (thatForm.form.events.hasOwnProperty("afterSaveQry"))
-                        thatForm.form.events.afterSaveQry(qryObj);
                 }
                 if (thatForm.form.events.hasOwnProperty("afterSaveForm"))
                     thatForm.form.events.afterSaveForm(thatForm);

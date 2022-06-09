@@ -226,7 +226,7 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
                     rstr = "";
                     for (var c in this.cols) {
                         rstr += (rstr.length == 0 ? "" : ",") + '"' +
-                            this.cols[c].mColName.replace(/\//g, "___") + '":' + ((Util.getParsedJsonValue(this.rows[r].cells[c].getValue()) + "").replace(/\\/g, "\\\\"));
+                            this.cols[c].mColName.replace(/\//g, "___") + '":' + ((Util.getParsedJsonValue(this.rows[r].cells[c].getValue()) + "")/*.replace(/\\/g, "\\\\")*/);
                     }
                     rstr += (rstr.length == 0 ? "" : ",") + '"_rowid":"' + r + '"';
                     tmpstr += (r == 0 ? "" : ",") + "{" + rstr + "}";
@@ -385,6 +385,41 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
         LocalTableData.prototype.getSummaryOf = function (colName, sumType) {
             var cp = this.getColPos(fieldName);
         };
+
+        LocalTableData.prototype.parseColValues = function (sq3, rowno, sett) {
+
+            var mLctb = this;
+            var sq = sq3;
+            for (var c in mLctb.cols) {
+                if (sq.indexOf(":" + mLctb.cols[c].mColName) >= 0) {
+                    var vl3 = mLctb.getFieldValue(rowno, mLctb.cols[c].mColName);
+                    if (mLctb.cols[c].getMUIHelper().display_format == "SHORT_DATE_FORMAT")
+                        vl3 = Util.toOraDateString(vl3);
+                    else if (mLctb.cols[c].getMUIHelper().data_type == "DATE" && mLctb.cols[c].getMUIHelper().display_format != "SHORT_DATE_FORMAT")
+                        vl3 = (vl3 != "" ? Util.toOraDateTimeString(new Date(vl3)) : "");
+                    else if (mLctb.cols[c].getMUIHelper().data_type == "NUMBER") {
+                        var dfs = Util.nvl(mLctb.cols[c].getMUIHelper().display_format, "NONE");
+                        var df;
+                        if (Util.nvl(mLctb.cols[c].getMUIHelper().display_format, "NONE") == "QTY_FORMAT")
+                            dfs = sett["FORMAT_QTY_1"];
+                        if (Util.nvl(mLctb.cols[c].getMUIHelper().display_format, "NONE") == "MONEY_FORMAT")
+                            dfs = sett["FORMAT_MONEY_1"];
+                        if (dfs != "NONE") {
+                            df = new DecimalFormat(dfs);
+                            vl3 = parseFloat(df.formatBack(vl3.replace(/'/g, '')));
+                        }
+                    } else
+                        vl3 = "" + vl3 + "";
+
+                    var re = new RegExp(":" + mLctb.cols[c].mColName, 'g');
+                    sq = sq.replace(re, vl3);
+                }
+
+            }
+            return sq;
+
+        };
+
         return LocalTableData;
 
     })

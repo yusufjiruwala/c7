@@ -54,10 +54,9 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                 form: {
                     events: {
                         afterLoadQry: function (qry) {
-
+                            qry.formview.setFieldValue("pac", qry.formview.getFieldValue("keyfld"));
                         },
                         beforeLoadQry: function (qry, sql) {
-
                             return sql;
                         },
                         afterSaveQry: function (qry) {
@@ -66,8 +65,10 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                         afterSaveForm: function (frm) {
                             frm.loadData(undefined, FormView.RecordStatus.NEW);
                         },
-                        beforeSaveQry: function (qry, sql, rowno) {
+                        beforeSaveQry: function (qry, df, rowno) {
+
                             if (qry.name == "qry1") {
+
                                 var totdeb = qry.formview.getFieldValue("totaldebit");
                                 var totcr = qry.formview.getFieldValue("totalcredit");
                                 if (totdeb < 0 || totcr < 0)
@@ -76,12 +77,14 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                     FormView.err("Total cant be zero !");
                                 if (totdeb != totcr)
                                     FormView.err("Total is not matched !");
-
+                                df["DRAMT"]=totdeb;
+                                df["CRAMT"]=totcr;
 
                             }
                             if (qry.name == "qry1" && qry.status == FormView.RecordStatus.NEW) {
                                 var kfld = Util.getSQLValue("select nvl(max(keyfld),0)+1 from acvoucher1");
                                 qry.formview.setFieldValue("qry1.keyfld", kfld, kfld, true);
+                                qry.formview.setFieldValue("pac", qry.formview.getFieldValue("keyfld"));
                             }
                             if (qry.name == "qry2") {
                                 var ld = qry.obj.mLctb;
@@ -89,16 +92,28 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 if (chld == undefined || (typeof chld == "string" && chld == "") || chld > 0)
                                     FormView.err(ld.getFieldValue(rowno, "ACCNO") + " not a valid a/c !");
                             }
-                            return sql;
+                            return "";
                         },
                         afterNewRow: function (qry, idx, ld) {
                             if (qry.name == "qry2") {
-                                var td = Util.extractNumber(thatForm.frm.getFieldValue('totDiff'));
-                                if (td > 0)
-                                    ld.setFieldValue(idx, "FCCREDIT", td);
-                                else
-                                    ld.setFieldValue(idx, "FCDEBIT", Math.abs(td));
 
+                                if (ld.rows.length == 1) {
+                                    ld.setFieldValue(0, "FCDEBIT", 0);
+                                    ld.setFieldValue(0, "FCCREDIT", 0);
+                                    ld.setFieldValue(0, "DEBIT", 0);
+                                    ld.setFieldValue(0, "CREDIT", 0);
+                                    ld.setFieldValue(0, "DESCR", qry.formview.getFieldValue("qry1.descr"));
+                                } else {
+                                    var td = Util.extractNumber(thatForm.frm.getFieldValue('totDiff'));
+
+
+                                    if (td > 0)
+                                        ld.setFieldValue(idx, "FCCREDIT", td);
+                                    else
+                                        ld.setFieldValue(idx, "FCDEBIT", Math.abs(td));
+
+
+                                }
                             }
                             if (qry.name == "qry1") {
                                 var kfld = Util.getSQLValue("select nvl(max(keyfld),0)+1 from acvoucher1");
@@ -109,13 +124,22 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                     " type=" + thatForm.vars.type);
 
                                 qry.formview.setFieldValue("qry1.no", vno, vno, true);
-                                qry.formview.setFieldValue("qry1.vou_date", new Date(), new Date(), true);
+                                qry.formview.setFieldValue("qry1.vou_date", new Date(new Date().toDateString()), new Date(new Date().toDateString()), true);
 
 
                             }
 
 
-                        }
+                        },
+                        beforeDelRow: function (qry, idx, ld, data) {
+
+                        },
+                        afterDelRow: function (qry, ld, data) {
+                            if (qry.insert_allowed && ld.rows.length == 0)
+                                qry.obj.addRow();
+
+                        },
+
 
                     },
                     parameters: [
@@ -224,13 +248,13 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                             dml: dmlSq,
                             edit_allowed: true,
                             insert_allowed: true,
-                            delete_allowed: false,
+                            delete_allowed: true,
                             delete_before_update: "delete from acvoucher2 where keyfld=':qry1.keyfld';",
                             where_clause: " keyfld=':keyfld' ",
                             update_exclude_fields: ['keyfld'],
                             insert_exclude_fields: ["ACNAME"],
                             insert_default_values: {
-                                descr2: ":ACNAME",
+                                "DESCR2": ":ACNAME",
                                 "KEYFLD": ":qry1.keyfld",
                                 "NO": ":qry1.no",
                                 "VOU_DATE": ":qry1.vou_date",
@@ -238,9 +262,15 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 "VOU_CODE": this.vars.vou_code,
                                 "TYPE": this.vars.type,
                                 "CREATDT": "sysdate",
+                                "DEBIT": ":FCDEBIT",
+                                "CREDIT": ":FCCREDIT",
                                 "FLAG": 1,
                             },
-                            update_default_values: {descr2: ":ACNAME"},
+                            update_default_values: {
+                                "DESCR2": ":ACNAME",
+                                "DEBIT": ":FCDEBIT",
+                                "CREDIT": ":FCCREDIT",
+                            },
                             table_name: "ACVOUCHER2",
                             when_validate_field: function (table, currentRowoIndexContext, cx, rowno, colno) {
                                 var sett = sap.ui.getCore().getModel("settings").getData();
@@ -248,6 +278,12 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 var oModel = currentRowoIndexContext.oModel;
                                 var damt = parseFloat(oModel.getProperty(currentRowoIndexContext.sPath + '/FCDEBIT').replace(/[^\d\.],/g, '').replace(/,/g, ''));
                                 var camt = parseFloat(oModel.getProperty(currentRowoIndexContext.sPath + '/FCCREDIT').replace(/[^\d\.],/g, '').replace(/,/g, ''));
+                                var des = Util.nvl(oModel.getProperty(currentRowoIndexContext.sPath + '/DESCR'), "");
+                                if (cx.mColName == "ACCNO" && des == "") {
+
+                                    oModel.setProperty(currentRowoIndexContext.sPath + "/DESCR", that.frm.getFieldValue("qry1.descr"));
+                                }
+
                                 if (cx.mColName == "FCDEBIT" && damt < 0)
                                     FormView.err("Less than 0 not allowed !");
                                 if (cx.mColName == "FCCREDIT" && camt < 0)
@@ -363,7 +399,7 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                         {
                             name: "cmdNew",
                             canvas: "default_canvas",
-                            title: "New Curr"
+                            title: "New JV"
                         }, {
                             name: "cmdList",
                             canvas: "default_canvas",
@@ -384,7 +420,7 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                     lists: [
                         {
                             name: 'list1',
-                            title: "S",
+                            title: "List of JVs",
                             list_type: "sql",
                             cols: [
                                 {
@@ -400,6 +436,10 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 {
                                     colname: 'DR_AMOUNT'
                                 },
+                                {
+                                    colname: 'DESCR'
+                                },
+
                             ],  // [{colname:'code',width:'100',return_field:'pac' }]
                             sql: "select no,TO_CHAR(vou_date,'DD/MM/RRRR') VOU_DATE ,descr,keyfld ,DEBAMT DEBAMT" +
                             " from acvoucher1 where vou_code=" + that2.vars.vou_code +

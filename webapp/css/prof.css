@@ -1,0 +1,2467 @@
+/*!
+ * professionalreports - v11.9.3 - 2021-06-20
+ * Copyright (c) 2021 Intuit Inc. All rights reserved. Unauthorized reproduction is a violation of applicable law. This material contains certain confidential and proprietary information and trade secrets of Intuit Inc.
+ *
+ */
+b, strong {
+    font-weight: 600
+}
+
+em {
+    font-style: italic
+}
+
+.professionalreports {
+    background-color: #f4f5f8;
+    min-width: 1070px;
+    height: 100%;
+    background: -webkit-linear-gradient(#f4f5f8, #f4f5f8);
+    background: linear-gradient(#f4f5f8, #f4f5f8);
+    transform: translateZ(0)
+}
+
+.professionalreports .row-hightlight {
+    animation: bgFlash 2s linear forwards;
+    -ms-animation: bgFlash 2s linear forwards;
+    -webkit-animation: bgFlash 2s linear forwards
+}
+
+@-webkit-keyframes bgFlash {
+    0% {
+        opacity: .5
+    }
+    30% {
+        background-color: #e1f4bf;
+        opacity: 1
+    }
+    to {
+        opacity: 1
+    }
+}
+
+@-moz-keyframes bgFlash {
+    0% {
+        opacity: .5
+    }
+    30% {
+        background-color: #e1f4bf;
+        opacity: 1
+    }
+    to {
+        opacity: 1
+    }
+}
+
+@-o-keyframes bgFlash {
+    0% {
+        opacity: .5
+    }
+    30% {
+        background-color: #e1f4bf;
+        opacity: 1
+    }
+    to {
+        opacity: 1
+    }
+}
+
+@keyframes bgFlash {
+    0% {
+        opacity: .5
+    }
+    30% {
+        background-color: #e1f4bf;
+        opacity: 1
+    }
+    to {
+        opacity: 1
+    }
+}
+
+.professionalreports #graphContainer {
+    margin-top: -80px;
+    position: relative
+}
+
+.professionalreports .stage.stage-default {
+    height: 220px;
+    padding: 15px 30px 10px 20px;
+    margin-bottom: 15px
+}
+
+.professionalreports .stage.stage-default.graph {
+    min-height: 220px;
+    height: auto
+}
+
+.professionalreports .stage.stage-default .stage-content {
+    min-width: 1200px
+}
+
+.professionalreports .stage.stage-default .stage-content .applyBtn {
+    border-left: 1px solid #ccc;
+    padding-left: 25px;
+    margin-left: 5px;
+    height: 60px
+}
+
+.professionalreports .stage.stage-default .stage-content .applyBtn button {
+    margin-top: 12px
+}
+
+.professionalreports .stage.stage-default .stage-content .gstnFileBtn, .professionalreports .stage.stage-default .stage-content .gstnUploadBtn {
+    margin-left: 20px
+}
+
+.professionalreports .stage.stage-default .pulltab:focus {
+    border: 1px solid #365ebe
+}
+
+.professionalreports .stage.stage-close {
+    height: 140px !important
+}
+
+.professionalreports .stage .bold {
+    font-size: 12px
+}
+
+.professionalreports .stage .bold:focus {
+    color: #365ebe
+}
+
+.professionalreports .forcedHide {
+    display: none !important
+}
+
+.professionalreports .ellipsis {
+    max-width: 200px
+}
+
+.professionalreports .helpLabel {
+    color: #365ebe
+}
+
+.professionalreports .helpLabel:hover {
+    cursor: pointer;
+    text-decoration: underline
+}
+
+.professionalreports .freezeWidthAndScroll {
+    width: 100%;
+    min-width: 970px
+}
+
+.professionalreports .display-tabs {
+    margin-top: 10px;
+    margin-bottom: 10px
+}
+
+.professionalreports .display-tabs ha-tab {
+    background-color: transparent
+}
+
+.professionalreports .display-tabs ha-tab:focus {
+    background-color: #eceef1;
+    outline: 1px solid blue;
+    outline: 5px auto -webkit-focus-ring-color
+}
+
+.professionalreports .display-tabs .ha-tabs-content {
+    display: none
+}
+
+.professionalreports .option .stageHeader {
+    padding-left: 10px;
+    margin-bottom: 20px
+}
+
+.professionalreports .option .stageHeader .periodWidth {
+    max-width: 70%
+}
+
+.professionalreports .option .stageHeader .auxTopMargin {
+    margin-top: 24px
+}
+
+.professionalreports .option .backBtn {
+    font-size: 12px
+}
+
+.professionalreports .option .backBtn .back-to-reports:focus {
+    color: #365ebe
+}
+
+.professionalreports .option .fieldRow {
+    margin-top: 10px
+}
+
+.professionalreports .option .extraFieldMargin {
+    margin-top: 17px;
+    margin-bottom: -5px
+}
+
+.professionalreports .option .groupByLabel {
+    margin-top: 10px
+}
+
+.professionalreports .option .selectorLabel {
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: middle
+}
+
+.professionalreports .option .selector {
+    width: 200px
+}
+
+.professionalreports .option .periodLabel {
+    display: inline;
+    margin-right: 10px
+}
+
+.professionalreports .option .auxAccount {
+    vertical-align: top;
+    display: inline
+}
+
+.professionalreports .option .auxAccount .auxAccountLabel {
+    display: inline;
+    margin-left: 3px
+}
+
+.professionalreports .option .auxAccount .auxSelector {
+    display: inline-block;
+    width: 200px;
+    vertical-align: middle
+}
+
+.professionalreports .option .auxAccount .auxOptionItem {
+    margin-left: 10px;
+    display: inline-block;
+    vertical-align: middle
+}
+
+.professionalreports .option .auxAccount .addAttachmentsCheckbox {
+    margin-left: 15px
+}
+
+.professionalreports .option .inputSmall {
+    width: 175px
+}
+
+.professionalreports .option .dateFieldSmall {
+    margin-right: 10px;
+    width: 140px
+}
+
+.professionalreports .option .checkBoxMargin {
+    margin-right: 5px
+}
+
+.professionalreports .option .labelStyle {
+    font-weight: 400
+}
+
+.professionalreports .option .checkBoxStyle {
+    border-left: 1px solid #8d9096;
+    padding-left: 10px;
+    margin-left: 10px
+}
+
+.professionalreports .option .fieldMargin {
+    margin-left: 10px
+}
+
+.professionalreports .option .fieldMarginRight {
+    margin-right: 10px
+}
+
+.professionalreports .option .fieldSection {
+    vertical-align: top;
+    margin-top: 20px
+}
+
+.professionalreports .option .subFieldRow {
+    margin-left: 25px
+}
+
+.professionalreports .option .separator {
+    width: 85%;
+    border: 0 none;
+    border-top: 1px solid #c7c7c7;
+    margin-top: 15px;
+    margin-left: 0
+}
+
+.professionalreports .option .section {
+    display: inline-block;
+    width: 200px
+}
+
+.professionalreports .option .sectionSmall {
+    display: inline-block;
+    width: 100px
+}
+
+.professionalreports .option .topAlign {
+    vertical-align: top
+}
+
+.professionalreports .option .negativenum .dijitButtonText {
+    color: red
+}
+
+.professionalreports .option .optionItem {
+    margin-right: 10px;
+    display: inline-block;
+    vertical-align: top
+}
+
+.professionalreports .option .rowOptionItem {
+    margin-top: 10px;
+    display: inline-block;
+    vertical-align: top
+}
+
+.professionalreports .option .displayHelpDataStyle {
+    border-width: 0 0 1px;
+    border-style: dotted;
+    display: inline-block
+}
+
+.professionalreports .option .displayHelpDataStyle:hover {
+    color: #365ebe;
+    cursor: pointer
+}
+
+.professionalreports .option .displayHelpDataStyle:focus {
+    color: #365ebe
+}
+
+.professionalreports .page-actions {
+    margin: 0;
+    padding: 10px 20px;
+    text-align: right;
+    width: 100%;
+    min-height: 60px
+}
+
+.professionalreports .page-content {
+    margin: 0;
+    text-align: center;
+    width: 100%
+}
+
+.professionalreports .page-content .widerView {
+    width: 125%
+}
+
+.professionalreports .page-content .hi:focus, .professionalreports .page-content .hi:hover {
+    color: #0098cd
+}
+
+.professionalreports .page-content .pencilIcon {
+    cursor: pointer;
+    font-size: 20px;
+    margin-left: 12px
+}
+
+.professionalreports .page-content .gearIcon {
+    font-size: 22px;
+    cursor: pointer;
+    margin-left: 5px
+}
+
+.professionalreports .page-content .reportGridContainer {
+    display: inline-block;
+    margin-left: 1%;
+    margin-right: 1%;
+    margin-bottom: 40px;
+    min-width: 50%
+}
+
+.professionalreports .page-content .reportGridContainer .resetColumn {
+    color: #365ebf;
+    cursor: pointer;
+    text-align: left
+}
+
+.professionalreports .page-content .reportGridContainer .stickyReportHeader {
+    position: fixed;
+    z-index: 1 !important
+}
+
+.professionalreports .page-content .reportGridContainer .report {
+    margin-top: 15px
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    border: 1px solid #e3eaf3;
+    background-color: #fff;
+    border-bottom: none
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv {
+    padding: 10px
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction {
+    display: inline;
+    color: #6e8ba8;
+    margin: 0 8px 0 0;
+    cursor: pointer
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction:focus, .professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction:hover {
+    color: #0098cd
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction:focus .downArrow, .professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction:hover .downArrow {
+    border-top-color: #0098cd
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction .statusBadge {
+    margin: 1em auto;
+    padding-left: 4px
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction .statusBadge:focus, .professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction .statusBadge:hover {
+    cursor: text
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction .feedback {
+    font-size: 13px
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .downArrow {
+    margin-left: -1px
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .rightDiv {
+    padding: 10px
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .rightDiv .downArrow {
+    margin-top: -3px
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .rightDiv .pencilIcon:focus .downArrow {
+    border-top-color: #0098cd
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .downArrow {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: -4px;
+    border-top: 6px solid #7090ab;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent
+}
+
+.professionalreports .page-content .reportGridContainer .reportToolBar .downArrow:hover {
+    border-top-color: #0098cd
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea {
+    background-color: #fff;
+    border: 1px solid #e3eaf3;
+    padding: 0 15px 25px;
+    display: inline-block;
+    text-align: left;
+    width: 100%
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .logoSelect input {
+    margin-right: 5px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .staticTextTable {
+    display: table;
+    margin-top: 20px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .staticTextTable .staticTextCell {
+    display: table-cell;
+    font-style: italic;
+    font-size: 11px;
+    padding-right: 10px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .minHeight {
+    min-height: 100px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .focusable-text:focus, .professionalreports .page-content .reportGridContainer .reportArea .focusable-text:focus .pencilIcon {
+    color: #0098cd
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader {
+    width: 100%;
+    margin-bottom: 7px;
+    padding: 25px 0 10px;
+    position: relative
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .logoPosition {
+    position: absolute
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .logoContainer {
+    display: inline;
+    margin-right: 15px;
+    float: left;
+    min-width: 100px;
+    min-height: 100px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .logoContainer .logo {
+    vertical-align: top;
+    padding: 1px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .logoContainer.border {
+    border: 1px solid #ccc
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .companyNameRow {
+    margin-bottom: 1px;
+    margin-top: 15px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .companyNameRow .companyName {
+    display: inline;
+    font-size: 22px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .companyNameRow .companyNameInput {
+    width: 400px;
+    margin-top: -15px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .companyNameRow .pencilIcon {
+    vertical-align: inherit;
+    margin: 0 -21px 0 0
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .titleRow {
+    margin: 15px 0 10px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .titleRow .reportName {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 700
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .titleRow .reportNameInput {
+    margin-top: -8px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .dateRangeRow {
+    font-size: 14px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .companyInfoHeaderRow {
+    text-transform: uppercase;
+    margin-top: -8px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .companyInfoHeaderRow div {
+    font-weight: 700;
+    margin-top: 2px;
+    margin-bottom: 2px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportHeader .companyInfoHeaderRow div span {
+    margin-left: 5px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-expando-icon {
+    width: 8px;
+    height: 8px;
+    display: inline-block;
+    float: none !important;
+    margin-right: 5px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .ui-icon-triangle-1-e {
+    border-top: 4px solid transparent;
+    border-right: none;
+    border-bottom: 4px solid transparent;
+    border-left: 4px solid gray
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .ui-icon-triangle-1-se {
+    border-top: 4px solid gray;
+    border-right: 4px solid transparent;
+    border-bottom: none;
+    border-left: 4px solid transparent
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .ui-icon {
+    width: 0 !important;
+    height: 0 !important;
+    vertical-align: middle;
+    content: "";
+    background-color: transparent
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-scroller {
+    overflow-x: hidden
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header {
+    color: #000;
+    background-color: #fff;
+    border-bottom: 1px solid #6e6b6b;
+    border-top: 1px solid #6e6b6b;
+    border-radius: 0;
+    margin-top: 5px;
+    box-shadow: 0 0 0 5px #fff
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .dgrid-resize-header-container {
+    position: static
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .dgrid-resize-handle {
+    position: relative;
+    float: right;
+    height: 50px;
+    margin-bottom: -80px;
+    margin-top: -20px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .dgrid-row-table {
+    height: 30px;
+    border: none;
+    transform: translateZ(0)
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .dgrid-row-table .dgrid-spacer-row {
+    border-bottom: none
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .dgrid-row-table .dgrid-spacer-row .dgrid-cell {
+    border: none !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .dgrid-row-table .dgrid-spacer-row .dgrid-resize-header-container {
+    height: 0 !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .dgrid-row-table .cell, .professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .dgrid-row-table .dgrid-cell {
+    color: #000;
+    border-left: 1px dotted #c7c7c7;
+    font-weight: 700;
+    font-size: 11px;
+    transition: none !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .dgrid-row-table .parentColumn {
+    border-bottom: 1px solid #6e6b6b;
+    text-align: center
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .firstParentColumn, .professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .firstParentColumn .dgrid-resize-header-container {
+    height: 50px !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-header .firstColumn {
+    border-right: 1px dotted #c7c7c7
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-content {
+    display: inline-block
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .cell, .professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-cell {
+    font-size: 13px;
+    border: none
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .emptyCell {
+    display: none !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-row-table {
+    transform: translateZ(0);
+    border-bottom: 0 none;
+    padding: 0 !important;
+    font-size: 100%
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .hideExpandIcon .dgrid-expando-icon {
+    display: none !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .red {
+    color: #e31b23
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .black {
+    color: #404040
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid a:hover {
+    color: #365ebf
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .displayHelpDataStyle:hover {
+    color: #365ebe;
+    cursor: pointer;
+    border-width: 0 0 1px;
+    border-style: dotted
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .left {
+    text-align: left
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .wrap {
+    word-wrap: break-word;
+    word-break: break-all
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .wrap a {
+    text-decoration: none;
+    border-bottom: 1px solid transparent
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .wrap a:hover {
+    border-bottom: 1px solid #365ebf
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .right {
+    text-align: right
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .center {
+    text-align: center
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .collapsedHeader {
+    border-bottom: 1px solid #ccc !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .totalRow {
+    border-top: 1px solid #ccc !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .grandTotalRow {
+    border-top: 1px solid #ccc !important;
+    border-bottom-style: double !important;
+    border-bottom-color: #000 !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .grandTotalRow .dgrid-expando-icon {
+    width: 0;
+    margin: 0 !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .topSummary .dgrid-expando-icon {
+    width: 8px;
+    margin: 0 !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-tree-container .dgrid-loading, .professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-tree-container .dgrid-preload {
+    display: none
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-row .dgrid-row-table {
+    min-height: 30px;
+    height: auto !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-cell {
+    min-height: 28px;
+    height: auto !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .underline {
+    border-bottom: 1px solid #c7c7c7 !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGrid .dgrid-column-0-0 {
+    height: 100% !important;
+    background: #fff
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid {
+    display: table
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .tableRow {
+    display: table-row;
+    height: auto !important;
+    min-height: 30px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .tableRow .v1 {
+    height: auto
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .native-dgrid-tree-container {
+    display: contents
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .native-dgrid-nonheader-row {
+    display: table
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid.reportsGridCompact .tableRow {
+    height: 20px !important;
+    min-height: 20px;
+    transform: translateZ(0)
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid.reportsGridCompact .tableRow.v1 {
+    height: 20px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid.reportsGridCompact .pad {
+    padding-right: 23px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid.reportsGridCompact .headerRow {
+    height: 40px !important;
+    margin-top: 5px;
+    box-shadow: 0 0 0 5px #fff;
+    background: #fff
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid.reportsGridCompact .headerRow .cell {
+    border-top: 1px solid #6e6b6b !important;
+    border-bottom: 1px solid #6e6b6b !important;
+    vertical-align: middle;
+    color: #000;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 12px;
+    transition: none !important;
+    border-left: 1px dotted #c7c7c7 !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid.reportsGridCompact .headerRow .firstColumn {
+    border-left: none !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid.reportsGridCompact .headerRow .withTooltip {
+    text-decoration: underline dotted
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .resize-element {
+    width: 10px;
+    height: 20px;
+    float: right;
+    right: 0;
+    bottom: 0;
+    position: sticky;
+    cursor: col-resize
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .disable-user-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .cell {
+    display: table-cell;
+    padding: 8px;
+    padding-right: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .emptyCell.cell {
+    display: table-cell !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .border-bottom {
+    border-bottom: 1px solid #c7c7c7
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .headerRow {
+    height: 40px !important;
+    margin-top: 5px;
+    box-shadow: 0 0 0 5px #fff;
+    background: #fff
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .headerRow.v1 {
+    display: inline-block
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .nativeGrid .headerRow .cell {
+    border-top: 1px solid #6e6b6b !important;
+    border-bottom: 1px solid #6e6b6b !important;
+    border-left: 1px dotted #c7c7c7 !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .tbreakGrid {
+    display: inline-block;
+    margin-right: 25px;
+    margin-left: 25px;
+    vertical-align: top;
+    width: 45%
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .tbreakGrid .dgrid-header, .professionalreports .page-content .reportGridContainer .reportArea .tbreakGrid .dgrid-scroller {
+    overflow-x: scroll !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGridCompact .dgrid-row .dgrid-row-table {
+    height: 20px !important;
+    min-height: 20px !important
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .reportsGridCompact .cell, .professionalreports .page-content .reportGridContainer .reportArea .reportsGridCompact .dgrid-cell {
+    min-height: 27px !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .notesArea {
+    margin-top: 20px;
+    height: 120px;
+    font-size: 12px;
+    resize: none
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .subScript {
+    display: block;
+    margin-top: 5px;
+    padding-bottom: 5px;
+    font-size: 1.2rem;
+    line-height: 1.2rem;
+    color: #999
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .notesLabel {
+    white-space: pre-wrap;
+    display: inline;
+    font-size: 12px;
+    font-weight: 400;
+    font-family: Helvetica, Arial, sans-serif
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .footer {
+    width: 100%;
+    font-size: 12px;
+    margin-top: 30px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .footer .footerOption {
+    display: inline-block;
+    margin-right: 5px
+}
+
+.professionalreports .page-content .reportGridContainer .reportArea .empty-grid {
+    text-align: center;
+    padding-top: 5px
+}
+
+.professionalreports .page-content .reportGridContainer .toggleReportExperience {
+    background-color: #f4f5f8;
+    display: inline-block;
+    padding: 10px 20px
+}
+
+.professionalreports .page-content .reportGridContainer .toggleReportExperience div {
+    display: inline-block
+}
+
+.professionalreports .page-content .reportGridContainer .toggleReportExperience .switchReportState {
+    color: #0098cd;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.professionalreports .page-content .reportGridContainer .left {
+    text-align: left
+}
+
+.professionalreports .page-content .reportGridContainer .right {
+    text-align: right
+}
+
+.professionalreports .page-content .reportGridContainer .center {
+    text-align: center
+}
+
+.professionalreports .page-content .reportGridContainer .notesSection {
+    position: relative;
+    width: auto
+}
+
+.professionalreports .page-content .reportGridContainer .clearBtn {
+    position: absolute;
+    right: 9px;
+    top: -35px;
+    cursor: pointer
+}
+
+.professionalreports .page-content .reportGridContainer .dgrid-row .dgrid-row-table:hover .dgrid-column-0-0 {
+    background-color: #eceef1
+}
+
+.professionalreports .page-content .selectedFilterContainer {
+    width: 50%;
+    font-size: 14px;
+    text-align: left;
+    margin-top: 15px
+}
+
+.professionalreports .page-content .selectedFilterContainer .selectedFilter {
+    display: inline-block;
+    margin-right: 10px
+}
+
+.professionalreports .page-content .selectedFilterContainer .selectedFilter .selectedFilterLabel {
+    display: inline-block;
+    margin-right: 5px
+}
+
+.professionalreports .page-content .selectedFilterContainer .removeIcon {
+    cursor: pointer;
+    color: #6f6f6f;
+    height: 14px
+}
+
+.professionalreports .page-content .filtersLabel {
+    margin-right: 10px;
+    display: inline-block
+}
+
+.professionalreports .page-content #reportSearchContainer {
+    position: -webkit-sticky;
+    position: sticky;
+    bottom: 0;
+    left: 60%;
+    width: 400px;
+    height: 100px;
+    max-height: 130px;
+    background: #fff;
+    border: 1px solid #d4d7dc;
+    border-radius: 3px;
+    box-shadow: 3px 3px 3px #d4d7dc;
+    margin: 28px 40px 20px
+}
+
+.professionalreports .page-content .reportSearch {
+    font-family: Helvetica, Arial, sans-serif
+}
+
+.professionalreports .page-content .reportSearch .labelDisplay {
+    display: flex;
+    float: left;
+    margin-top: 30px;
+    margin-left: 10px
+}
+
+.professionalreports .page-content .reportSearch .searchResultDisplay {
+    display: flex;
+    float: left;
+    margin-left: 10px;
+    max-width: 130px;
+    text-align: left
+}
+
+.professionalreports .page-content .reportSearch .searchResultDisplay .searchResult {
+    margin-top: 5px;
+    padding-right: 130px;
+    margin-left: 30px
+}
+
+.professionalreports .page-content .reportSearch .display {
+    display: inline-block
+}
+
+.professionalreports .page-content .reportSearch .alignSearchInput {
+    vertical-align: middle;
+    padding-top: 5px;
+    padding-bottom: 10px;
+    margin-right: 10px
+}
+
+.professionalreports .page-content .reportSearch .input {
+    width: 300px;
+    margin-top: 10px
+}
+
+.professionalreports .page-content .reportSearch .input:after {
+    content: none
+}
+
+.professionalreports .page-content .reportSearch .resultNavigator {
+    float: right
+}
+
+.professionalreports .page-content .reportSearch .prev {
+    margin-bottom: 10px;
+    margin-left: 10px
+}
+
+.professionalreports .page-content .reportSearch .next {
+    margin-bottom: 10px;
+    float: right;
+    margin-right: 30px;
+    margin-left: 10px
+}
+
+.professionalreports .page-content .reportSearch .label {
+    margin-bottom: 9px;
+    min-width: 50px;
+    display: inline-block;
+    margin-left: 5px;
+    margin-right: 5px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.professionalreports .page-content .reportSearch .assistantText {
+    font-size: 14px;
+    font-style: italic;
+    font-weight: 300
+}
+
+.professionalreports .page-content .reportSearch .searchResultCount {
+    font-size: 16px;
+    font-style: normal;
+    margin-left: 10px
+}
+
+.form-popover.rowsColumnsDisplayTooltip {
+    min-width: 200px;
+    outline: 0;
+    padding: 0
+}
+
+.form-popover.rowsColumnsDisplayTooltip .dijitTooltipConnector {
+    display: none
+}
+
+.form-popover.rowsColumnsDisplayTooltip .dijitTooltipContainer {
+    padding: 15px
+}
+
+.form-popover.rowsColumnsDisplayTooltip .dijitTooltipContainer input {
+    outline: 0
+}
+
+.form-popover.rowsColumnsDisplayTooltip .dijitTooltipContainer .checkBoxMargin {
+    margin-right: 5px
+}
+
+.form-popover.rowsColumnsDisplayTooltip .dijitTooltipContainer .fieldRow {
+    margin-top: 10px
+}
+
+.form-popover.rowsColumnsDisplayTooltip .dijitTooltipContainer .labelStyle {
+    font-weight: 400
+}
+
+.form-popover.rowsColumnsDisplayTooltip .dijitTooltipContainer .subFieldRow {
+    margin-left: 25px
+}
+
+.form-popover.rowsColumnsDisplayTooltip .dijitTooltipContainer {
+    width: 200px
+}
+
+.form-popover.periodComparisonTooltip {
+    outline: 0;
+    padding: 0
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipConnector {
+    display: none
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer {
+    padding: 15px
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer input {
+    outline: 0
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer .checkBoxMargin {
+    margin-right: 5px
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer .fieldRow {
+    margin-top: 10px
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer .labelStyle {
+    font-weight: 400
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer .subFieldRow {
+    margin-left: 25px
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer .separator {
+    border: 0 none;
+    border-top: 1px solid #c7c7c7;
+    margin-top: 15px;
+    margin-left: 0
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer .table {
+    margin-top: 12px
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer .table .tableCell {
+    height: 30px;
+    width: 135px
+}
+
+.form-popover.periodComparisonTooltip .dijitTooltipContainer .table .marginTop {
+    margin-top: 8px
+}
+
+.form-popover.saveasDialog {
+    width: 325px
+}
+
+.form-popover.saveasDialog .dijitTooltipContainer {
+    padding: 20px;
+    padding-top: 0
+}
+
+.form-popover.saveasDialog .dijitTooltipConnector {
+    right: 10px
+}
+
+.form-popover.saveasDialog a {
+    margin-top: 10px
+}
+
+.form-popover.saveasDialog button {
+    margin-left: 10px
+}
+
+.form-popover.saveasDialog .sectionTitle {
+    color: #404040;
+    margin-bottom: 10px;
+    margin-top: 17px;
+    font-size: 14px
+}
+
+.form-popover.saveasDialog .dijitComboBox, .form-popover.saveasDialog .input {
+    width: 65%
+}
+
+.form-popover.saveasDialog .extraMargin {
+    margin-top: 10px
+}
+
+.form-popover.saveasDialog .extraMargin:focus > a {
+    text-decoration: underline
+}
+
+.form-popover.saveasDialog .shareWithCommunityContainer {
+    margin-top: 20px
+}
+
+.form-popover.saveasDialog .shareWithCommunityContainer label > span {
+    vertical-align: middle
+}
+
+.form-popover.saveasDialog .shareWithCommunityContainer p.footer {
+    margin-top: 5px;
+    font-size: .9em;
+    color: #6e8ba8;
+    color: #6b6c72
+}
+
+.reportsPrintDialog {
+    height: 85% !important;
+    width: 90% !important;
+    overflow: scroll
+}
+
+.reportsPrintDialog .dijitDialogTitleBar {
+    width: 100% !important
+}
+
+.reportsPrintDialog .dijitDialogTitleBar .dijitDialogCloseIcon {
+    margin-right: 15px;
+    margin-top: 15px
+}
+
+.reportsPrintDialog .dijitDialogPaneContent {
+    height: 85% !important;
+    width: 96% !important
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents {
+    margin-bottom: 20px;
+    max-height: 850px !important
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .printSettings {
+    position: relative;
+    display: inline-block;
+    background-color: #f7f9fb;
+    width: 30% !important;
+    height: 100% !important;
+    min-height: 300px;
+    padding: 0 30px 0 20px !important
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .printSettings .title {
+    padding: 20px 0 15px
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .printSettings .option {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 12px
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .printSettings .option .optionItem {
+    float: right;
+    width: 63%
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .printSettings .option .label {
+    display: inline-block;
+    margin-top: 7px
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .printSettings .option .feedback-text {
+    margin-left: 1em
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .printSettings .option .info-link {
+    margin-left: .5em
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .printSettings .statusBadge {
+    margin: 1em auto
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .pdfContent {
+    display: inline-block;
+    height: 100% !important;
+    width: 70% !important;
+    float: right
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .contents .pdfContent iframe {
+    height: 100% !important
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .buttons {
+    padding-right: 20px
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .buttons .extraButtons {
+    width: 100% !important;
+    text-align: right !important;
+    padding-right: 5px !important
+}
+
+.reportsPrintDialog .dijitDialogPaneContent .refreshButton {
+    margin-top: 30px;
+    float: right
+}
+
+.professionalReportsTooltip {
+    outline: none
+}
+
+.professionalReportsTooltip .errorBox {
+    margin-top: 10px;
+    margin-bottom: 10px
+}
+
+.professionalReportsTooltip .dijitTooltipContainer {
+    min-width: 160px;
+    border: 1px solid #c7c7c7;
+    border-bottom: 3px solid rgba(0, 0, 0, .15);
+    border-radius: 2px;
+    box-shadow: none;
+    padding: 0
+}
+
+.professionalReportsTooltip.dijitTooltipBelow {
+    padding-top: 5px;
+    padding-right: 0
+}
+
+.professionalReportsTooltip.dijitTooltipBelow .dijitTooltipConnector {
+    right: 13px;
+    left: 18px;
+    width: 10px;
+    height: 10px;
+    border-color: #c7c7c7;
+    border-width: 1px 0 0 1px;
+    border-style: solid;
+    background: #fff;
+    -webkit-transform: rotate(45deg);
+    transform: rotate(45deg)
+}
+
+.professionalReportsTooltip .sortTooltipContent {
+    padding: 15px 12px
+}
+
+.professionalReportsTooltip .settingsTooltipContent {
+    padding: 15px 12px;
+    min-width: 160px
+}
+
+.professionalReportsTooltip .settingsTooltipContent .chevronIcon {
+    font-size: 20px;
+    vertical-align: middle;
+    margin-right: 3px;
+    color: #365ebf
+}
+
+.professionalReportsTooltip .exportTooltipContent {
+    width: 200px
+}
+
+.professionalReportsTooltip .exportTooltipContent .exportTable {
+    width: 100%;
+    margin-top: 4px
+}
+
+.professionalReportsTooltip .exportDiv {
+    cursor: pointer;
+    border-width: 0 1px;
+    height: auto;
+    padding: 2px 2px 2px 10px;
+    border-style: solid;
+    line-height: 1.7em;
+    border-color: #fff
+}
+
+.professionalReportsTooltip .exportDiv:hover {
+    background-color: #365ebf;
+    border-color: #fff;
+    color: #fff
+}
+
+.professionalReportsTooltip .exportDiv:focus {
+    color: #0098cd
+}
+
+.professionalReportsTooltip .checkBoxDiv {
+    margin: 10px 10px 0 0
+}
+
+.professionalReportsTooltip .checkBoxDiv .checkBox {
+    margin-right: 5px
+}
+
+.professionalReportsTooltip span.fieldRowCheckBoxDiv {
+    margin: 10px 10px 0 0;
+    display: inline-block
+}
+
+.professionalReportsTooltip span.fieldRowCheckBoxDiv .checkBox {
+    margin-right: 5px
+}
+
+.professionalReportsTooltip .black {
+    color: #000
+}
+
+.professionalReportsTooltip .checkBoxContainer {
+    width: 450px
+}
+
+.professionalReportsTooltip .link {
+    cursor: pointer
+}
+
+.professionalReportsTooltip .rightAligned {
+    float: right
+}
+
+.professionalReportsTooltip .blue {
+    color: #365ebf
+}
+
+.professionalReportsTooltip .marginTop {
+    margin-top: 10px
+}
+
+.graphHelpTooltip .assistantMainNode {
+    width: 400px
+}
+
+.graphHelpTooltip .assistantMainNode .graph-tooltip-icon {
+    background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMTQ1cHgiIGhlaWdodD0iNTFweCIgdmlld0JveD0iMCAwIDE0NSA1MSIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KICAgIDwhLS0gR2VuZXJhdG9yOiBTa2V0Y2ggNTMgKDcyNTIwKSAtIGh0dHBzOi8vc2tldGNoYXBwLmNvbSAtLT4KICAgIDx0aXRsZT5QJmFtcDtMIFNtYWxsQDN4PC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGcgaWQ9IlAmYW1wO0wiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSIyMDE3LVByb2ZpdC1hbmQtTG9zcy1Db3B5LTMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC00MDMuMDAwMDAwLCAtMjM0LjAwMDAwMCkiPgogICAgICAgICAgICA8ZyBpZD0iR3JvdXAtOCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzcyLjAwMDAwMCwgMTM3LjAwMDAwMCkiPgogICAgICAgICAgICAgICAgPGcgaWQ9IlAmYW1wO0wtU21hbGwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMyLjAwMDAwMCwgOTcuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICAgICAgPGcgaWQ9Ikdyb3VwLTciPgogICAgICAgICAgICAgICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlLUNvcHktNDciIGZpbGw9IiM1M0I3MDAiIGZpbGwtcnVsZT0ibm9uemVybyIgeD0iMCIgeT0iNS44NzA5Njc3NCIgd2lkdGg9IjkiIGhlaWdodD0iMjAuOTY3NzQxOSI+PC9yZWN0PgogICAgICAgICAgICAgICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlLUNvcHktNDkiIGZpbGw9IiM1M0I3MDAiIGZpbGwtcnVsZT0ibm9uemVybyIgeD0iMTkiIHk9IjYuNzA5Njc3NDIiIHdpZHRoPSI5IiBoZWlnaHQ9IjIwLjEyOTAzMjMiPjwvcmVjdD4KICAgICAgICAgICAgICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZS1Db3B5LTUxIiBmaWxsPSIjNTNCNzAwIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHg9IjM5IiB5PSIxMS43NDE5MzU1IiB3aWR0aD0iOSIgaGVpZ2h0PSIxNS4wOTY3NzQyIj48L3JlY3Q+CiAgICAgICAgICAgICAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtQ29weS01MyIgZmlsbD0iIzUzQjcwMCIgZmlsbC1ydWxlPSJub256ZXJvIiB4PSI1OCIgeT0iMi41MTYxMjkwMyIgd2lkdGg9IjkiIGhlaWdodD0iMjQuMzIyNTgwNiI+PC9yZWN0PgogICAgICAgICAgICAgICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlLUNvcHktNTUiIGZpbGw9IiM1M0I3MDAiIGZpbGwtcnVsZT0ibm9uemVybyIgeD0iNzciIHk9IjAiIHdpZHRoPSI5IiBoZWlnaHQ9IjI2LjgzODcwOTciPjwvcmVjdD4KICAgICAgICAgICAgICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZS1Db3B5LTQ4IiBmaWxsPSIjMDBBNkE0IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHg9IjAiIHk9IjMxLjM1NDgzODciIHdpZHRoPSI5IiBoZWlnaHQ9IjEwLjQxOTM1NDgiPjwvcmVjdD4KICAgICAgICAgICAgICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZS1Db3B5LTUwIiBmaWxsPSIjMDBBNkE0IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHg9IjE5IiB5PSIzMS4zNTQ4Mzg3IiB3aWR0aD0iOSIgaGVpZ2h0PSIxNC42MTI5MDMyIj48L3JlY3Q+CiAgICAgICAgICAgICAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtQ29weS01MiIgZmlsbD0iIzAwQTZBNCIgZmlsbC1ydWxlPSJub256ZXJvIiB4PSIzOSIgeT0iMzEuMzU0ODM4NyIgd2lkdGg9IjkiIGhlaWdodD0iMTAuNDE5MzU0OCI+PC9yZWN0PgogICAgICAgICAgICAgICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlLUNvcHktNTQiIGZpbGw9IiMwMEE2QTQiIGZpbGwtcnVsZT0ibm9uemVybyIgeD0iNTgiIHk9IjMxLjM1NDgzODciIHdpZHRoPSI5IiBoZWlnaHQ9IjE1LjQ1MTYxMjkiPjwvcmVjdD4KICAgICAgICAgICAgICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZS1Db3B5LTU2IiBmaWxsPSIjMDBBNkE0IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHg9Ijc3IiB5PSIzMS4zNTQ4Mzg3IiB3aWR0aD0iOSIgaGVpZ2h0PSIxOS42NDUxNjEzIj48L3JlY3Q+CiAgICAgICAgICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDI5LjA5Njc3NDIgTDk0LDI5LjA5Njc3NDIiIGlkPSJMaW5lLTciIHN0cm9rZT0iIzk3OTc5NyIgc3Ryb2tlLWxpbmVjYXA9InNxdWFyZSI+PC9wYXRoPgogICAgICAgICAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgICAgICAgICA8ZyBpZD0iR3JvdXAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDk1LjAwMDAwMCwgNS4wMDAwMDApIj4KICAgICAgICAgICAgICAgICAgICAgICAgPGcgaWQ9Ikdyb3VwLTctQ29weS0yIj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtQ29weS00NyIgZmlsbD0iIzUzQjcwMCIgZmlsbC1ydWxlPSJub256ZXJvIiB4PSIwIiB5PSIwLjg3MDk2Nzc0MiIgd2lkdGg9IjkiIGhlaWdodD0iMjAuOTY3NzQxOSI+PC9yZWN0PgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZS1Db3B5LTQ5IiBmaWxsPSIjNTNCNzAwIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHg9IjE5IiB5PSIxLjcwOTY3NzQyIiB3aWR0aD0iOSIgaGVpZ2h0PSIyMC4xMjkwMzIzIj48L3JlY3Q+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlLUNvcHktNTEiIGZpbGw9IiM1M0I3MDAiIGZpbGwtcnVsZT0ibm9uemVybyIgeD0iMzgiIHk9IjYuNzQxOTM1NDgiIHdpZHRoPSI5IiBoZWlnaHQ9IjE1LjA5Njc3NDIiPjwvcmVjdD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtQ29weS00OCIgZmlsbD0iIzAwQTZBNCIgZmlsbC1ydWxlPSJub256ZXJvIiB4PSIwIiB5PSIyNi4zNTQ4Mzg3IiB3aWR0aD0iOSIgaGVpZ2h0PSIxMC40MTkzNTQ4Ij48L3JlY3Q+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlLUNvcHktNTAiIGZpbGw9IiMwMEE2QTQiIGZpbGwtcnVsZT0ibm9uemVybyIgeD0iMTkiIHk9IjI2LjM1NDgzODciIHdpZHRoPSI5IiBoZWlnaHQ9IjE0LjYxMjkwMzIiPjwvcmVjdD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtQ29weS01MiIgZmlsbD0iIzAwQTZBNCIgZmlsbC1ydWxlPSJub256ZXJvIiB4PSIzOCIgeT0iMjYuMzU0ODM4NyIgd2lkdGg9IjkiIGhlaWdodD0iMTAuNDE5MzU0OCI+PC9yZWN0PgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsMjQuMDk2Nzc0MiBMNDgsMjQuMDk2Nzc0MiIgaWQ9IkxpbmUtNyIgc3Ryb2tlPSIjOTc5Nzk3IiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIj48L3BhdGg+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgICAgICAgICA8L2c+CiAgICAgICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDwvZz4KICAgICAgICA8L2c+CiAgICA8L2c+Cjwvc3ZnPg==) no-repeat 0 0 transparent;
+    height: 50px
+}
+
+.messageDialog a {
+    outline: none !important
+}
+
+.fileGSTR1Assistant .assistant {
+    height: 181.8px !important
+}
+
+.fileGSTR1Assistant .footer {
+    width: 400px !important
+}
+
+.fileGSTR1Assistant .assistantMainNode {
+    width: 360px !important
+}
+
+.redesignedReportsAssistant .assistant {
+    height: 240px !important
+}
+
+.redesignedReportsAssistant .footer {
+    width: 276px !important
+}
+
+.redesignedReportsAssistant .assistantMainNode {
+    width: 240px !important
+}
+
+.professionalReportsFilters .dijitMenuItem .indeterminate {
+    background-position: -100px -3px !important
+}
+
+.professionalReportsFilters .dijitMenuItem hr {
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-top: 1px solid #ccc
+}
+
+.professionalreports-drawer .drawer-panel h3 {
+    display: inline-block
+}
+
+.professionalreports-drawer .drawer-panel .header button:focus .hi-close {
+    border: 1px solid #2ca01c
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .customSumReportText {
+    margin-bottom: 15px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .table {
+    margin-top: 9px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .table .tableCell {
+    height: 25px;
+    width: 135px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .selector {
+    width: 160px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dateFieldSmall {
+    margin-right: 10px;
+    width: 108px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .fieldRow {
+    display: block
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .fieldRow span {
+    line-height: 30px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .titleMargin {
+    width: 200px;
+    display: inline-block
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .textBoxWidth {
+    width: 199px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .headingMargin {
+    margin-top: 20px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .columnsMargin {
+    margin-top: 3px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dijitTitlePane {
+    margin-bottom: 15px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dijitTitlePane .dijitTitlePaneTitleFocus {
+    outline: 0 none
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dijitTitlePane .dijitTitlePaneContentOuter {
+    margin: 10px;
+    margin-top: 0
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dijitTitlePane .dijitTitlePaneContentInner {
+    margin-left: 5px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dijitTitlePane .dijitClosed .dijitArrowNode {
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAAHCAMAAABqdH5UAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAAJUExURXh4eAAAAP///2iUunYAAAADdFJOU///ANfKDUEAAABXSURBVHjalJBJDsAwCAOH/P/RVWvAJc2lPpgEadhYVrR9Rds7kVzY9wJgF0RIN5GgA9LzEOjAMldE/opUSIJKcmzVY5xa9Ry1ztxx3mDuuB/q11UvAQYA0nYCUW+tf84AAAAASUVORK5CYII=) no-repeat scroll -19px top/80px auto transparent;
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+    margin-top: -1px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dijitTitlePane .dijitOpen .dijitArrowNode {
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAAHCAMAAABqdH5UAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAAJUExURXh4eAAAAP///2iUunYAAAADdFJOU///ANfKDUEAAABXSURBVHjalJBJDsAwCAOH/P/RVWvAJc2lPpgEadhYVrR9Rds7kVzY9wJgF0RIN5GgA9LzEOjAMldE/opUSIJKcmzVY5xa9Ry1ztxx3mDuuB/q11UvAQYA0nYCUW+tf84AAAAASUVORK5CYII=) no-repeat scroll 0 0/80px auto transparent;
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+    margin-top: -1px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dijitTitlePane .dijitTitlePaneTitleFocus:focus {
+    color: #2ca01c
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .selectedFilters {
+    margin-top: -5px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .selectedFilters .filterDom {
+    margin-bottom: 15px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .selectedFilters .filterDom .filterLabelContainer {
+    min-width: 200px;
+    display: inline-block
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .selectedFilters .filterDom .filterLabelContainer label {
+    margin-left: 5px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .selectedFilters .filterDom .filterSelector {
+    display: inline-block;
+    width: 200px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .separator {
+    border-top: 2px solid #c7c7c7;
+    margin-bottom: 10px;
+    width: 100%
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .filterContainer .filterDom {
+    margin-bottom: 20px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .filterContainer .filterDom .filterLabelContainer {
+    min-width: 200px;
+    display: inline-block
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .filterContainer .filterDom .filterLabelContainer input[type=checkbox]:not(.dijitCheckBoxInput):focus {
+    border: 1px solid #2ca01c !important
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .filterContainer .filterDom .filterLabelContainer label {
+    margin-left: 5px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .filterContainer .filterDom .filterSelector {
+    display: inline-block;
+    width: 200px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .numberInput {
+    width: 100px;
+    display: inline-block;
+    margin-left: 10px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .numberFilterSelector {
+    width: 150px;
+    display: inline-block
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dateInput {
+    display: inline !important
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dateInput .startDateTextBox {
+    width: 150px !important;
+    margin-left: 30px;
+    margin-top: 10px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dateInput .endDateTextBox {
+    width: 150px !important;
+    margin-left: 10px;
+    margin-top: 10px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dateInput .dateFilterLabel {
+    display: inline !important;
+    margin-left: 10px;
+    padding-top: 10px;
+    text-transform: lowercase
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .extraFieldMargin {
+    margin-top: 10px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .checkBoxContainer {
+    margin-bottom: 20px;
+    margin-left: 20px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .columnsContainer .dgrid-content.ui-widget-content {
+    border: none;
+    margin-top: 10px;
+    background-color: transparent;
+    font-size: 14px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .columnsContainer .dgrid-content.ui-widget-content .dgrid-selected {
+    background-color: transparent
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .columnsContainer .dgrid-content.ui-widget-content .dojoDndItem {
+    margin-left: -10px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .columnsContainer .dgrid-content.ui-widget-content .dojoDndItemOver {
+    cursor: default
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .columnsContainer .dgrid-content.ui-widget-content .checkBoxDiv {
+    margin: 5px 10px 5px 0
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .checkBoxDiv {
+    margin: 10px 10px 0 0;
+    width: 250px;
+    display: inline-block;
+    vertical-align: top
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .checkBoxDiv .checkBox {
+    margin-right: 5px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .checkBoxDiv .subCheckBoxMargin {
+    margin-top: 6px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .resetLink {
+    cursor: pointer;
+    color: #365ebf;
+    float: right
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .marginTop {
+    margin-top: 10px
+}
+
+.professionalreports-drawer .drawer-panel .optionsContainer .dojoDndHandle {
+    display: inline-block;
+    background-position: -1px -2408px;
+    background-size: 120px;
+    padding: 6px 14px;
+    margin: 9px 0;
+    vertical-align: top
+}
+
+.professionalreports-drawer .drawer-panel .option .stageHeader {
+    padding-left: 10px;
+    margin-bottom: 20px
+}
+
+.professionalreports-drawer .drawer-panel .option .stageHeader .periodWidth {
+    max-width: 70%
+}
+
+.professionalreports-drawer .drawer-panel .option .backBtn {
+    font-size: 12px
+}
+
+.professionalreports-drawer .drawer-panel .option .fieldRow {
+    margin-top: 10px
+}
+
+.professionalreports-drawer .drawer-panel .option .fieldRow input:focus {
+    border: 1px solid #2ca01c
+}
+
+.professionalreports-drawer .drawer-panel .option .extraFieldMargin {
+    margin-top: 17px;
+    margin-bottom: -5px
+}
+
+.professionalreports-drawer .drawer-panel .option .groupByLabel {
+    margin-top: 10px
+}
+
+.professionalreports-drawer .drawer-panel .option .selectorLabel {
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: middle
+}
+
+.professionalreports-drawer .drawer-panel .option .periodLabel {
+    display: inline;
+    margin-right: 10px
+}
+
+.professionalreports-drawer .drawer-panel .option .inputSmall {
+    width: 175px
+}
+
+.professionalreports-drawer .drawer-panel .option .checkBoxMargin {
+    margin-right: 5px
+}
+
+.professionalreports-drawer .drawer-panel .option .fieldMargin {
+    margin-left: 10px
+}
+
+.professionalreports-drawer .drawer-panel .option .fieldMarginRight {
+    margin-right: 10px
+}
+
+.professionalreports-drawer .drawer-panel .option .fieldSection {
+    vertical-align: top;
+    margin-top: 20px
+}
+
+.professionalreports-drawer .drawer-panel .option .subFieldRow {
+    margin-left: 25px
+}
+
+.professionalreports-drawer .drawer-panel .option .separator {
+    width: 85%;
+    border: 0 none;
+    border-top: 1px solid #c7c7c7;
+    margin-top: 15px;
+    margin-left: 0
+}
+
+.professionalreports-drawer .drawer-panel .option .section {
+    display: inline-block;
+    width: 200px
+}
+
+.professionalreports-drawer .drawer-panel .option .sectionSmall {
+    display: inline-block;
+    width: 100px
+}
+
+.professionalreports-drawer .drawer-panel .option .topAlign {
+    vertical-align: top
+}
+
+.professionalreports-drawer .drawer-panel .option .negativenum .dijitButtonText {
+    color: red
+}
+
+.professionalreports-drawer .drawer-panel .option .optionItem {
+    margin-right: 10px;
+    display: inline-block;
+    vertical-align: top
+}
+
+.professionalreports-drawer .drawer-panel .option .rowOptionItem {
+    margin-top: 10px;
+    display: inline-block;
+    vertical-align: top
+}
+
+.professionalreports-drawer .drawer-panel #customize_help_pon_link {
+    margin: 30px 0
+}
+
+.marginBottom {
+    margin-bottom: 10px
+}
+
+.dijitPopup .professionalReportsFilters .dijitMenuItem.highlight {
+    color: inherit;
+    background-color: inherit
+}
+
+.gSheetsTooltip {
+    border-top: 8px solid #0277c5
+}
+
+.gSheetsTooltip .title-msg {
+    margin: 0 0 10px
+}
+
+.gSheetsTooltip .dismiss-button {
+    display: none
+}
+
+.editSectionsDialog .idsTable__layout {
+    max-height: 300px;
+    border-bottom: 1px solid #d4d7dc
+}
+
+.editSectionsDialog .idsTable__cell {
+    font-size: 16px
+}
+
+.editSectionsDialog .idsTable__columnGroup {
+    border-collapse: separate;
+    border-spacing: 15px
+}
+
+.editSectionsDialog .idsTable__headerCell, .editSectionsDialog .idsTable__headerRow {
+    display: none
+}
+
+.editSectionsDialog .idsModalHeader {
+    padding-bottom: 0
+}
+
+.editSectionsDialog .idsModalContent {
+    padding-top: 0;
+    padding-bottom: 0
+}
+
+.editSectionsDialog .idsModalAfterSaveTitle {
+    font-weight: 700
+}
+
+.editSectionsDialog .textFieldDefaultValue input[type=text] {
+    color: rgba(57, 58, 61, .5) !important
+}
+
+.editSectionsDialog .textFieldCustomValue input[type=text], .editSectionsDialog .textFieldDefaultValue input[type=text] {
+    width: 200px;
+    height: 20px;
+    font-family: AvenirNextforINTUIT;
+    font-size: 16px;
+    font-weight: 500;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.25;
+    letter-spacing: normal
+}
+
+.editSectionsDialog .textFieldCustomValue input[type=text] {
+    color: #393a3d
+}
+
+@media (max-width: 479px) {
+    .professionalreports .ha-label {
+        max-width: 300px
+    }
+
+    .professionalreports .stage.stage-default {
+        height: fit-content !important
+    }
+
+    .professionalreports .stage.stage-default .stage-content .applyBtn {
+        border-left: none;
+        margin-left: 0;
+        padding-left: 0;
+        display: block
+    }
+
+    .professionalreports .freezeWidthAndScroll {
+        min-width: 0;
+        display: table
+    }
+
+    .professionalreports .option .stageHeader {
+        display: block
+    }
+
+    .professionalreports .option .stageHeader .periodWidth {
+        margin-top: 8px;
+        display: contents
+    }
+
+    .professionalreports .option .dateFieldSmall, .professionalreports .option .optionItem {
+        display: block;
+        margin: 8px 0
+    }
+
+    .professionalreports .page-content .reportGridContainer {
+        width: 100% !important
+    }
+
+    .professionalreports .page-content .reportGridContainer .reportToolBar {
+        width: 100%
+    }
+
+    .professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv, .professionalreports .page-content .reportGridContainer .reportToolBar .rightDiv {
+        padding: 0;
+        margin: 8px
+    }
+
+    .professionalreports .page-content .reportGridContainer .reportArea {
+        margin-top: 0;
+        overflow: auto
+    }
+
+    .professionalreports .page-content .pencilIcon, .professionalreports .page-content .reportGridContainer .reportToolBar .leftDiv .gridAction {
+        text-align: left;
+        margin: 8px 0
+    }
+
+    .professionalreports .page-content .gearIcon {
+        margin-left: 0;
+        float: left
+    }
+
+    .assistantHelpTipContainer {
+        height: 100% !important
+    }
+
+    .assistantHelpTipContainer .assistantHelpTip {
+        width: auto !important;
+        max-height: 100% !important;
+        overflow: auto !important
+    }
+
+    .reportsPrintDialog {
+        margin: 0 !important
+    }
+
+    .reportsPrintDialog .dijitDialog {
+        overflow: auto;
+        width: 100% !important;
+        margin: 0 !important
+    }
+
+    .reportsPrintDialog .dijitDialogTitleBar {
+        padding-left: 16px !important
+    }
+
+    .reportsPrintDialog .dijitDialogTitleBar .dijitDialogCloseIcon {
+        margin-right: 35px
+    }
+
+    .reportsPrintDialog .dijitDialogPaneContent {
+        margin: 0 16px 16px !important
+    }
+
+    .reportsPrintDialog .dijitDialogPaneContent .contents .printSettings {
+        display: block;
+        width: 100% !important
+    }
+
+    .reportsPrintDialog .dijitDialogPaneContent .contents .pdfContent {
+        width: 100% !important
+    }
+
+    .reportsPrintDialog .dijitDialogPaneContent .buttons {
+        width: 90%
+    }
+
+    .reportsPrintDialog .dijitDialogPaneContent .buttons .extraButtons {
+        text-align: center !important
+    }
+
+    .reportsPrintDialog .dijitDialogPaneContent .buttons .ha-button, .reportsPrintDialog .dijitDialogPaneContent .buttons .ha-button[type=button] {
+        padding-left: 16px;
+        padding-right: 16px;
+        min-width: 80px
+    }
+}
+
+.feedback-text {
+    display: inline;
+    color: #0077c5;
+    font-weight: 500
+}
+
+.feedback-text:hover {
+    cursor: pointer;
+    text-decoration: underline
+}
+
+.feedback-text:focus:not(:active) {
+    outline: 2px solid rgba(33, 171, 246, .5);
+    border-radius: 4px
+}
+
+.dijitCalendarContainer {
+    width: auto
+}
+
+.dijitCalendarYearLabel {
+    white-space: nowrap
+}
+
+.dijitCalendarDateTemplate, .dijitCalendarIncrementControl, .dijitCalendarMonthLabel, .dijitCalendarNextYear, .dijitCalendarPreviousYear {
+    cursor: pointer
+}
+
+.dijitCalendarDisabledDate {
+    color: gray;
+    text-decoration: line-through;
+    cursor: default
+}
+
+.dijitSpacer {
+    position: relative;
+    height: 1px;
+    overflow: hidden;
+    visibility: hidden
+}
+
+.dijitCalendar, .dijitCalendarMonthMenu .dijitCalendarMonthLabel {
+    text-align: center
+}
+
+.dijitCalendar {
+    border: 1px solid #c7c7c7;
+    border-collapse: separate;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 2px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, .15);
+    margin-top: 6px
+}
+
+.dijitCalendarMonthContainer th {
+    text-align: center;
+    padding-bottom: 4px;
+    vertical-align: middle
+}
+
+.dijitCalendarMonthLabel {
+    font-size: 1.8rem;
+    text-transform: none
+}
+
+.dijitCalendarIncrementControl {
+    width: 20px;
+    height: 23px;
+    background-size: 160px;
+    background-repeat: no-repeat;
+    background-position: -2px 0
+}
+
+.dijitCalendarIncrease {
+    background-position: -48px 0
+}
+
+.dijitCalendarArrow:hover .dijitCalendarDecrease, .dijitCalendarArrowHover .dijitCalendarDecrease {
+    background-position: -2px -45px
+}
+
+.dijitCalendarArrow:hover .dijitCalendarIncrease, .dijitCalendarArrowHover .dijitCalendarIncrease {
+    background-position: -48px -45px
+}
+
+.dijitA11ySideArrow {
+    display: none
+}
+
+.dijitCalendarDayLabelTemplate {
+    border-bottom: 1px solid #365ebf;
+    padding: 10px 0 3px
+}
+
+.dijitCalendarDateTemplate, .dijitCalendarDayLabelTemplate {
+    text-align: center;
+    font-size: 1.2rem
+}
+
+.dijitCalendarDateTemplate .dijitCalendarDateLabel {
+    height: 24px;
+    line-height: 24px;
+    display: block;
+    padding: 0 2px
+}
+
+.dijitCalendarNextMonth .dijitCalendarDateLabel, .dijitCalendarPreviousMonth .dijitCalendarDateLabel {
+    color: #c7c7c7
+}
+
+.dijitCalendarYearContainer {
+    vertical-align: middle
+}
+
+.dijitCalendarYearControl {
+    padding: 1px 2px 2px
+}
+
+.dijitCalendarYearLabel {
+    padding-top: 10px;
+    margin: 0;
+    font-size: 1.8rem
+}
+
+.dijitCalendarYearLabel span {
+    vertical-align: middle
+}
+
+.dijitCalendarSelectedYear {
+    padding: 0 3px
+}
+
+.dijitCalendarNextYear, .dijitCalendarPreviousYear {
+    padding: 3px 6px;
+    font-size: 1.3rem;
+    color: #c7c7c7
+}
+
+.dijitCalendarSelectedDate .dijitCalendarDateLabel {
+    background-color: #108000;
+    color: #fff;
+    transition: none
+}
+
+.dijitCalendarDisabledDate .dijitCalendarDateLabel {
+    color: #dcdcdc;
+    text-decoration: line-through
+}
+
+.dijitCalendar .dijitDropDownButton .dijitButtonNode {
+    padding: 3px 0;
+    border: 0 none;
+    border-radius: 2px;
+    box-shadow: none;
+    background: none
+}
+
+.dijitCalendarMonthMenu {
+    text-align: center
+}
+
+.dijitCalendarMonthMenu .dijitCalendarMonthLabel {
+    padding: 5px 0;
+    font-size: 1.4rem
+}
+
+.dijitCalendarCurrentDate {
+    color: #5f5f5f;
+    background-color: #e3eaf3
+}
+
+.dijitCalendarRtl .dijitCalendarIncrease {
+    background-position: 0 0
+}
+
+.dijitCalendarRtl .dijitCalendarDecrease {
+    background-position: -18px 0
+}
+
+.dijitCalendarRtl .dijitCalendarArrowHover .dijitCalendarIncrease {
+    background-position: -36px 0
+}
+
+.dijitCalendarRtl .dijitCalendarArrowHover .dijitCalendarDecrease {
+    background-position: -55px 0
+}
+
+.dijitCalendarRtl .dijitCalendarArrowActive .dijitCalendarIncrease {
+    background-position: -72px 0
+}
+
+.dijitCalendarRtl .dijitCalendarArrowActive .dijitCalendarDecrease {
+    background-position: -91px 0
+}
+
+.dijitDialog {
+    border: 1px solid #759dc0
+}
+
+.dijitDialogPaneContent {
+    background: #fff repeat-x 0 0;
+    border-top: 1px solid #759dc0;
+    padding: 10px 8px;
+    position: relative;
+    -webkit-overflow-scrolling: touch
+}
+
+.dijitDialogUnderlayWrapper {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important
+}
+
+.dijitDialog.qboDialog {
+    background-color: #fff;
+    outline: 0 none;
+    border-radius: 2px;
+    border: 0 none
+}
+
+.qboDialog {
+    min-width: 350px;
+    box-sizing: border-box;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0)
+}
+
+.qboDialog .dijitDialogTitleBar.hideTitle {
+    display: none
+}
+
+.qboDialog.complex .dijitDialogTitleBar {
+    width: 100%;
+    box-sizing: border-box
+}
+
+.qboDialog .dijitDialogPaneContent {
+    clear: both;
+    border: none;
+    background-color: transparent;
+    padding: 0;
+    width: auto;
+    margin: 0 30px 30px;
+    box-sizing: border-box
+}
+
+.qboDialog .dijitDialogPaneContent > :first-child {
+    overflow: auto;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #c7c7c7;
+    box-sizing: content-box
+}
+
+.qboDialog.messageDialog {
+    padding: 0 30px 30px
+}
+
+.qboDialog.messageDialog .dijitDialogPaneContent {
+    margin: 0;
+    margin-top: 30px
+}
+
+.qboDialog.messageDialog .dijitDialogPaneContent .messageContainer {
+    clear: both
+}
+
+.qboDialog.messageDialog .message {
+    font-size: 1.4rem;
+    min-height: 64px;
+    display: table-cell;
+    vertical-align: middle
+}
+
+.qboDialog.messageDialog .message .bulletList {
+    list-style-type: disc;
+    margin: 0
+}
+
+.qboDialog.messageDialog .message .dijitDialogTitle {
+    display: inline-block;
+    margin-top: 20px;
+    margin-bottom: 10px
+}
+
+.qboDialog.messageDialog .messageGreyed {
+    font-size: 1.3rem;
+    color: #999;
+    min-height: 64px;
+    display: table-cell;
+    vertical-align: middle
+}
+
+.qboDialog.messageDialog .dialogIconWrapper {
+    display: table-cell
+}
+
+.qboDialog.messageDialog .checkBoxClass {
+    margin-top: 21px
+}
+
+.qboDialog.messageDialog .checkBox {
+    height: 21px
+}
+
+.qboDialog .buttons {
+    margin-top: 20px;
+    text-align: center;
+    display: table;
+    width: 100%
+}
+
+.qboDialog .buttons > div {
+    display: table-cell
+}
+
+.qboDialog .buttons > div.hide {
+    display: none
+}
+
+.qboDialog .buttons > div:first-child {
+    text-align: left
+}
+
+.qboDialog .buttons > div:last-child {
+    text-align: right
+}
+
+.qboDialog .alignCenter {
+    text-align: center !important
+}
+
+.qboDialog .alignRight {
+    text-align: right !important
+}
+
+.qboDialog .alignLeft {
+    text-align: left !important
+}
+
+.qboDialog .padding10Left {
+    padding-left: 10px
+}
+
+.qboDialog .padding10Right {
+    padding-right: 10px
+}
+
+.qboDialog .buttonPipeDivider {
+    border-right: 1px solid
+}
+
+@media (max-width: 479px) {
+    .emailPro .emailFolio {
+        width: auto !important
+    }
+
+    .emailPro .emailFolio .fieldContainer .textField {
+        width: 90% !important
+    }
+
+    .emailPro .emailFolio .fieldContainer .fileName {
+        width: 80% !important
+    }
+
+    .emailPro .buttons {
+        width: 90% !important
+    }
+
+    .professionalreports-drawer .drawer-panel .optionsContainer .columnsContainer .dgrid-content.ui-widget-content {
+        width: max-content
+    }
+}
+
+/*# sourceMappingURL=professionalreports.css.map*/

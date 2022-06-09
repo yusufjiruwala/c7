@@ -75,6 +75,15 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         xx.push(pg.getContent()[i]);
                     for (var i in xx) {
                         pg.removeContent(xx[i]);
+                        // if (xx[i].hasOwnProperty("getItems")) {
+                        //     for (var ii in xx[i].getItems())
+                        //         xx[i].getItems()[ii].destroy();
+                        // }
+                        // if (xx[i].hasOwnProperty("getContent")) {
+                        //     for (var ii in xx[i].getContent())
+                        //         xx[i].getContent()[ii].destroy();
+                        // }
+
                         xx[i].destroy();
                     }
 
@@ -397,7 +406,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         var sett = sap.ui.getCore().getModel("settings").getData();
                         c.setValueFormat(sett["ENGLISH_DATE_FORMAT"]);
                         c.setDisplayFormat(sett["ENGLISH_DATE_FORMAT"]);
-                        if (fldFormat != undefined) {
+                        if (this.nvl(fldFormat, "") != "") {
                             c.setValueFormat(fldFormat);
                             c.setDisplayFormat(fldFormat);
                         }
@@ -437,7 +446,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                 setControlValue: function (comp, pVal, pCustomVal, executeChange) {
                     var val = this.nvl(pVal, "") + "";
                     var customVal = Util.nvl(pCustomVal, Util.nvl(pVal, ""));
-                    if (comp.field_type != undefined && comp.field_type == "number") {
+                    if ((!comp instanceof sap.m.InputBase) && comp.field_type != undefined && comp.field_type == "number") {
                         val = val.replace(/[^\d\.-]/g, '');
                         if (comp.getCustomData().length == 0)
                             comp.addCustomData(new sap.ui.core.CustomData({key: val}))
@@ -453,9 +462,9 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
 
                         if (executeChange && comp.hasOwnProperty("fireChange"))
                             comp.fireChange();
-                        return;
+                        // return;
                     } else if (comp instanceof sap.m.ComboBoxBase) {
-                        comp.setSelectedItem(this.getIndexByKey(comp, val));
+                        comp.setSelectedItem(this.getIndexByKey(comp, Util.nvl(pCustomVal, val)));
                         if (comp.getCustomData().length == 0)
                             comp.addCustomData(new sap.ui.core.CustomData({key: customVal}))
                         else
@@ -489,7 +498,9 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         if (executeChange)
                             comp.fireSelect();
 
-                    } else if (comp instanceof sap.m.InputBase || comp instanceof sap.m.SearchField) {
+                    } else if ((!(comp instanceof sap.m.ComboBox)) &&
+                        comp instanceof sap.m.InputBase || comp instanceof sap.m.SearchField
+                    ) {
                         comp.setValue(val);
                         // if (customVal.length > 0)
                         if (comp.getCustomData().length == 0)
@@ -498,8 +509,13 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             comp.getCustomData()[0].setKey(customVal);
                         if (comp instanceof sap.m.InputBase && executeChange)
                             comp.fireChange();
-                    } else if (comp != undefined && comp.hasOwnProperty("value")) {
+                    }
+                    else if (comp != undefined && comp.hasOwnProperty("value")) {
                         comp.value = pVal;
+                    }
+
+                    if (comp != undefined && comp.hasOwnProperty("onSetField")) {
+                        comp.onSetField(pVal);
                     }
 
 
@@ -550,6 +566,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         //     prev_span = cnt[cnt.length - 1].getLayoutData().getSpan();
                         // else prev_span = "";
                     }
+
                     return new sap.ui.layout.form.SimpleForm({
 
                         editable: ed,
@@ -752,8 +769,21 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     var retVal = Util.nvl(vl, "");
                     if (retVal.startsWith("#DATE_"))
                         retVal = new Date(vl.replace("#DATE_", ""));
-                    if (retVal.startsWith("#NUMBER_"))
+                    if (typeof retVal == "string" && retVal.startsWith("#NUMBER_"))
                         retVal = parseFloat(vl.replace("#NUMBER_", ""));
+                    if (typeof retVal == "string" && retVal == "$TODAY")
+                        retVal = new Date();
+                    if (typeof retVal == "string" && retVal == "$FIRSTDATEOFMONTH") {
+                        retVal = new Date();
+                        retVal.setDate(1);
+                    }
+                    if (typeof retVal == "string" && retVal == "$FIRSTDATEOFYEAR") {
+                        retVal = new Date();
+                        retVal.setDate(1);
+                        retVal.setMonth(1);
+                    }
+
+
                     return retVal;
                 }
                 ,
@@ -802,7 +832,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             cx.mRetValues = Util.nvl(dtx[col].RETURN_VALUES, "");
                             cx.eOther = Util.nvl(dtx[col].VALIDATE_EVENT, "");
                             cx.mDefaultValue = Util.nvl(UtilGen.parseDefaultValue(dtx[col].DEFAULT_VALUE), '');
-                            var paras = Util.nvl(dtx[col].PARAMS, "")
+                            var paras = Util.nvl(dtx[col].PARAMS, "");
                             if (paras != "") {
                                 var ps = paras.split(",");
                                 for (var pi in ps) {
@@ -1022,7 +1052,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             sq3 += (sq3.length > 0 ? "," : "") + Util.nvl(colValues[key], 'null');
                         }
 
-
+                    sq3 = mLctb.parseColValues(sq3, rowno, sett);
                     return sq1 + "(" + sq2 + ") values (" + sq3 + ")";
 
                 },
@@ -1187,7 +1217,8 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     var txt2 = txt;
                     var cm = txt2.split(" ")[0].toUpperCase();
                     var pms = txt2.substring(txt2.indexOf(" ") + 1).trim();
-                    if (view.cmdData != undefined && view.cmdData.length > 0)
+                    // cmdData
+                    if (view != undefined && view.cmdData != undefined && view.cmdData.length > 0)
                         for (var i in view.cmdData)
                             if (view.cmdData[i].COMMAND.toUpperCase() == cm)
                                 txt2 = view.cmdData[i].EXEC_LINE + (pms.length > 0 ? " " : "") + pms;
@@ -1248,6 +1279,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         con = new sap.m.Page({showHeader: false, content: []});
                         dlg = new sap.m.Popover({
                             title: "",
+                            showHeader: false,
                             contentHeight: height,
                             contentWidth: width,
                             modal: (dtx.formModal == "true" ? true : false),
@@ -1366,6 +1398,34 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         ]
                     });
                     return vb;
+                },
+                toHTMLTableFromData: function (dtx11) {
+                    var h = "";
+                    var hasSpan = false;
+                    var tmpv1 = "", tmpv2 = "", hCol = "", classadd = "", styleadd = "";
+
+                    var dtx = dtx11.data;
+                    var mdtx = dtx11.metadata;
+                    for (var x in mdtx) {
+                        tmpv1 = mdtx[x].colname;
+                        tmpv2 = "\"text-align:Center\"";
+                        h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
+                    }
+                    hCol = "<tr>" + hCol + "</tr>";
+                    h = "<thead>" + (hasSpan ? hCol : "") +
+                        "<tr>" + h + "</tr></thead>";
+                    var rs = "";
+                    var rows = "";
+                    for (var j in dtx) {
+                        rs = "";
+                        for (var x in mdtx) {
+                            var cv = dtx[j][mdtx[x].colname];
+                            rs += "<td" + classadd + styleadd + " > " + Util.nvl(Util.htmlEntities(cv), "") + "</td>";
+                        }
+                        rows += "<tr>" + rs + "</tr>";
+                    }
+
+                    return "<table>" + h + rows + "</table>";
                 }
             }
         ;
