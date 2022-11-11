@@ -168,8 +168,8 @@ public class DBClass implements Serializable {
 		List<qryColumn> lst = new ArrayList<qryColumn>();
 		try {
 			qryColumn q;
-			parseStatment();
-			rs = ps.executeQuery();
+//			parseStatment();
+//			rs = ps.executeQuery();
 			rsm = rs.getMetaData();
 			for (int i = 0; i < rsm.getColumnCount(); i++) {
 				q = new qryColumn(i + 1, rsm.getColumnName(i + 1));
@@ -234,7 +234,7 @@ public class DBClass implements Serializable {
 				}
 			}
 			// trs.close();
-			ps.close();
+//			ps.close();
 			return lsr;
 		} catch (SQLException ex) {
 			Logger.getLogger(DBClass.class.getName()).log(Level.SEVERE, null, ex);

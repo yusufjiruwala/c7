@@ -1,0 +1,137 @@
+
+//-----------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------ queryview
+//-----------------------------------------------------------------------------------------------
+
+
+type: "query",
+name: "qry2",
+disp_class: "paddingLR5P",
+showType: FormView.QueryShowType.QUERYVIEW,
+dispRecords: -1,
+execOnShow: false,
+dml: "select '01' accno , 'do it' descr from dual",
+// parent: "PARENTACC",
+// code: "ACCNO",
+// title: "NAME",
+beforeLoadQry: function (sql) {
+},
+fields: {
+    field1: {
+        colname: "field1",
+        data_type: FormView.DataType.String,
+        class_name: FormView.ClassTypes.LABEL,
+        title: "field1",
+        title2: "",
+        parentTitle: "",
+        parentSpan: 1,
+        canvas: "default_canvas",
+        display_width: "150",
+        display_align: "ALIGN_RIGHT",
+        display_style: "",
+        display_format: "SHORT_DATE_FORMAT",  // "MONEY_FORMAT",
+        default_value: "",
+        display_type: "NONE",
+        other_settings: {},
+        // commandLink: "gl.jv formSize=100%,550px status=view keyfld=:keyfld",
+        commandLinkClick: cmdLink
+    }
+}
+
+
+
+//-----------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------ FormView
+//-----------------------------------------------------------------------------------------------
+
+
+
+
+                                type: "query",
+                                name: "qryM",
+                                showType: FormView.QueryShowType.FORM,
+                                dispRecords: -1,
+                                execOnShow: false,
+                                dml: "",
+                                beforeLoadQry: function (sql, qryObj) {
+                                    return "";
+                                },
+                                onCustomValueFields: function (qrtObj) {
+                                    //thatForm.frm.setFieldValue("01@qry3.accno", "xxx11");
+                                    //thatForm.frm.setFieldValue("01@qry3.descr", "custom descr");
+                                },
+                                fields: {
+                                    field1: {
+                                        colname: "field1",
+                                        data_type: FormView.DataType.String,
+                                        class_name: ReportView.ClassTypes.PANEL,
+                                        title: " ",
+                                        title2: "",
+                                        canvas: "default_canvas",
+                                        display_width: "XL10 L12 M12 S12",
+                                        display_align: "ALIGN_RIGHT",
+                                        display_style: "",
+                                        display_format: "",
+                                        default_value: "",
+                                        onPrintField: function () {
+                                            return this.obj.$().outerHTML();
+                                        },
+                                        beforeAddObject: function () {
+                                            // Util.destroyID("graphAccnoPop" + thatForm.timeInLong);
+                                        },
+                                        afterAddOBject: function () {
+                                            /*
+                                            Util.destroyID("graphAccnoPop" + thatForm.timeInLong, view);
+                                            Util.destroyID("graphAccno" + thatForm.timeInLong, view);
+                                            this.obj.removeAllContent();
+                                           this.obj.addContent(
+                                                new sap.viz.ui5.controls.Popover(view.createId("graphAccnoPop" + thatForm.timeInLong)));
+                                            var cnt = new sap.viz.ui5.controls.VizFrame(view.createId("graphAccno" + thatForm.timeInLong), {
+                                                uiConfig: {applicationSet: 'fiori'},
+                                                vizType: "column",
+                                                height: "100%",
+                                                legendVisible: false
+                                            }).addStyleClass("");
+                                            this.obj.addContent(
+                                                cnt
+                                            );
+                                            */
+                                        },
+                                        other_settings: {
+                                            height: "200px",
+                                            headerText: "",
+                                            headerToolbar: undefined,
+                                            content: []
+
+                                        },
+                                    },
+                                    htmlPanel: {
+                                        colname: "htmlPanel",
+                                        data_type: FormView.DataType.String,
+                                        class_name: ReportView.ClassTypes.HTML,
+                                        title: " ",
+                                        title2: "",
+                                        canvas: "default_canvas",
+                                        display_width: "XL10 L12 M12 S12",
+                                        display_align: "ALIGN_RIGHT",
+                                        display_style: "",
+                                        display_format: "",
+                                        default_value: "",
+                                        onSetField: function (pvl) {
+                                            // this.obj.setContent(h);
+                                        }
+
+                                        ,
+                                        onPrintField: function () {
+                                            return this.obj.$().outerHTML();
+                                        }
+                                        ,
+                                        beforeAddObject: function () {
+                                        }
+                                        ,
+                                        other_settings: {
+                                            height: "300px",
+                                        }
+                                    }
+                                }
+

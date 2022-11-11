@@ -348,14 +348,15 @@ sap.ui.jsfragment("bin.forms.testRep3", {
                                             this.obj.removeAllContent();
                                             this.obj.addContent(
                                                 new sap.viz.ui5.controls.Popover(view.createId("graphAccnoPop" + thatForm.timeInLong)));
+                                            var cnt = new sap.viz.ui5.controls.VizFrame(view.createId("graphAccno" + thatForm.timeInLong), {
+                                                uiConfig: {applicationSet: 'fiori'},
+                                                vizType: "column",
+                                                height: "100%",
+                                                legendVisible: false
+                                            }).addStyleClass("");
                                             this.obj.addContent(
-                                                new sap.viz.ui5.controls.VizFrame(view.createId("graphAccno" + thatForm.timeInLong), {
-                                                    uiConfig: {applicationSet: 'fiori'},
-                                                    vizType: "column",
-                                                    height: "100%",
-                                                    legendVisible: false
-
-                                                }));
+                                                cnt
+                                            );
 
                                         },
                                         other_settings: {

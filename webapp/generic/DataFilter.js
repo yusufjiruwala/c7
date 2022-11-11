@@ -1,6 +1,7 @@
 sap.ui.define(["./LocalTableData", "./Parameter"],
     function (LocalTableData, Parameter) {
         'use strict'
+
         function DataFilter() {
             this.fields = [];
             this.params = [];
@@ -62,7 +63,7 @@ sap.ui.define(["./LocalTableData", "./Parameter"],
                 fv2 = pm.default_value.toString();
                 var cp = datax.getColPos(pm.name);
 
-                var s = Util.getParsedJsonValue(r.cells[cp].getValue(),true);
+                var s = Util.getParsedJsonValue(r.cells[cp].getValue(), true);
                 if (typeof s == "number" && typeof fv1 == "string")
                     fv1 = parseFloat(fv1);
                 if (pm.operator == "=")
@@ -116,10 +117,10 @@ sap.ui.define(["./LocalTableData", "./Parameter"],
             for (var i = 0; i < pLctb.masterRows.length; i++) {
                 fnd = 0;
                 r = pLctb.masterRows[i];
-                for (var j = 0; j < this.params.length; j++) {
-                    if (this.canFilterRow(r, pLctb))
-                        pLctb.rows.push(r);
-                }
+                // for (var j = 0; j < this.params.length; j++) {
+                if (this.canFilterRow(r, pLctb))
+                    pLctb.rows.push(r);
+                // }
             }
         };
         DataFilter.prototype.buildDataStructure = function () {

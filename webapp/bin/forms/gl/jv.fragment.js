@@ -32,6 +32,16 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
         this.joApp.addDetailPage(this.mainPage);
         // this.joApp.addDetailPage(this.pgDetail);
         this.joApp.to(this.mainPage, "show");
+        this.joApp.displayBack = function () {
+            that.frm.refreshDisplay();
+        };
+        // UtilGen.setFormTitle(this.oController.getForm(), "Journal Voucher", this.mainPage);
+        setTimeout(function () {
+            if (that.oController.getForm().getParent() instanceof sap.m.Dialog)
+                that.oController.getForm().getParent().setShowHeader(false);
+
+        }, 10);
+
         return this.joApp;
     },
     createView: function () {
@@ -43,18 +53,73 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
         var fullSpan = "XL8 L8 M8 S12";
         var codSpan = "XL3 L3 M3 S12";
         var sumSpan = "XL2 L2 M2 S12";
-        var dmlSq = "select acvoucher2.*,descr2 acname from acvoucher2 " +
+        var sumSpan2 = "XL2 L6 M6 S12";
+        var dmlSq = "select acvoucher2.*,acvoucher2.descr2 acname,cc.title csname from acvoucher2,accostcent1 cc " +
             " where vou_code=" + this.vars.vou_code + " " +
-            " and type=" + this.vars.type + " " +
-            " and acvoucher2.keyfld=':keyfld' order by acvoucher2.pos";
+            // " and type=" + this.vars.type + " " +
+            " and acvoucher2.keyfld=':keyfld' " +
+            " and cc.code(+)=acvoucher2.costcent order by acvoucher2.pos";
         Util.destroyID("cmdA" + this.timeInLong, this.view);
         UtilGen.clearPage(this.mainPage);
         this.frm;
         var js = {
                 form: {
+                    title: "Journal Voucher",
+                    toolbarBG: "lightgreen",
+                    customDisplay: function (vbHeader) {
+                        Util.destroyID("numtxt" + thatForm.timeInLong, thatForm.view);
+                        Util.destroyID("txtMsg" + thatForm.timeInLong, thatForm.view);
+                        var txtMsg = new sap.m.Text(thatForm.view.createId("txtMsg" + thatForm.timeInLong)).addStyleClass("redMiniText blinking");
+                        var txt = new sap.m.Text(thatForm.view.createId("numtxt" + thatForm.timeInLong, {text: "0.000"}));
+                        var hb = new sap.m.Toolbar({
+                            content: [txt, new sap.m.ToolbarSpacer(), txtMsg]
+                        });
+                        txt.addStyleClass("totalVoucherTxt titleFontWithoutPad");
+                        vbHeader.addItem(hb);
+                    },
+                    print_templates: [
+                        {
+                            title: "Print",
+                            reportFile: "vouchers/jv",
+                        }
+                    ],
                     events: {
                         afterLoadQry: function (qry) {
                             qry.formview.setFieldValue("pac", qry.formview.getFieldValue("keyfld"));
+                            if (qry.name == "qry1") {
+                                thatForm.view.byId("txtMsg" + thatForm.timeInLong).setText("");
+                                var kf = qry.formview.getFieldValue("keyfld");
+                                var dt = Util.execSQL("select flag,USERNM,CREATDT,POSTED_BY,POSTED_DATE from acvoucher1 where keyfld=" + kf);
+                                if (dt.ret == "SUCCESS" && dt.data.length > 0) {
+                                    var dtx = JSON.parse("{" + dt.data + "}").data;
+                                    if (dtx.length > 0 && dtx[0].FLAG != undefined && dtx[0].FLAG != 1) {
+                                        setTimeout(function () {
+                                            qry.formview.setFormReadOnly();
+                                            sap.m.MessageToast.show("This JV is posted !");
+                                        });
+                                        thatForm.view.byId("txtMsg" + thatForm.timeInLong).setText("Posted by :" + dtx[0].POSTED_BY + " Posted time: " + dtx[0].POSTED_DATE);
+                                    } else qry.formview.form.readonly = Util.nvl(js.form.readonly, false);
+                                    if (dtx.length > 0) {
+                                        qry.formview.setFieldValue("createdBy", dtx[0].USERNM, dtx[0].USERNM, true);
+                                        qry.formview.setFieldValue("createdOn", dtx[0].CREATDT, dtx[0].CREATDT, true);
+                                    }
+
+                                }
+
+
+                            }
+
+                            if (qry.name == "qry2" && thatForm.oController.jvpos != undefined) {
+                                var rn = qry.obj.mLctb.find("POS", thatForm.oController.jvpos);
+                                if (rn >= 0) {
+                                    thatForm.oController.jvpos = undefined;
+                                    qry.obj.getControl().setSelectedIndex(rn);
+                                    if (rn > 1) {
+                                        qry.obj.getControl().setFirstVisibleRow(rn - 1);
+                                    } else
+                                        qry.obj.getControl().setFirstVisibleRow(rn);
+                                }
+                            }
                         },
                         beforeLoadQry: function (qry, sql) {
                             return sql;
@@ -62,41 +127,30 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                         afterSaveQry: function (qry) {
 
                         },
-                        afterSaveForm: function (frm) {
-                            frm.loadData(undefined, FormView.RecordStatus.NEW);
+                        afterSaveForm: function (frm, nxtStatus) {
+                            // frm.loadData(undefined, FormView.RecordStatus.NEW);
+
+                            frm.setQueryStatus(undefined, Util.nvl(nxtStatus, FormView.RecordStatus.NEW));
                         },
-                        beforeSaveQry: function (qry, df, rowno) {
+                        beforeSaveQry: function (qry, sqlRow, rowno) {
 
                             if (qry.name == "qry1") {
 
-                                var totdeb = qry.formview.getFieldValue("totaldebit");
-                                var totcr = qry.formview.getFieldValue("totalcredit");
-                                if (totdeb < 0 || totcr < 0)
-                                    FormView.err("Total cant be less than zero !");
-                                if (totdeb + totcr == 0)
-                                    FormView.err("Total cant be zero !");
-                                if (totdeb != totcr)
-                                    FormView.err("Total is not matched !");
-                                df["DRAMT"]=totdeb;
-                                df["CRAMT"]=totcr;
+                                UtilGen.Vouchers.validateTotDrTotCr(qry, sqlRow, rowno);
+                                UtilGen.Vouchers.validatePostedVocher(qry, sqlRow, rowno);
 
                             }
-                            if (qry.name == "qry1" && qry.status == FormView.RecordStatus.NEW) {
-                                var kfld = Util.getSQLValue("select nvl(max(keyfld),0)+1 from acvoucher1");
-                                qry.formview.setFieldValue("qry1.keyfld", kfld, kfld, true);
-                                qry.formview.setFieldValue("pac", qry.formview.getFieldValue("keyfld"));
-                            }
-                            if (qry.name == "qry2") {
-                                var ld = qry.obj.mLctb;
-                                var chld = Util.getSQLValue("select childcount from acaccount where accno=" + Util.quoted(ld.getFieldValue(rowno, "ACCNO")));
-                                if (chld == undefined || (typeof chld == "string" && chld == "") || chld > 0)
-                                    FormView.err(ld.getFieldValue(rowno, "ACCNO") + " not a valid a/c !");
-                            }
+                            UtilGen.Vouchers.getNewKF(qry, sqlRow, rowno);
+                            UtilGen.Vouchers.validateDetails(qry, sqlRow, rowno);
+
                             return "";
                         },
                         afterNewRow: function (qry, idx, ld) {
                             if (qry.name == "qry2") {
-
+                                (thatForm.view.byId("txtMsg" + thatForm.timeInLong) != undefined) ?
+                                    thatForm.view.byId("txtMsg" + thatForm.timeInLong).setText("") : '';
+                            }
+                            if (qry.name == "qry2") {
                                 if (ld.rows.length == 1) {
                                     ld.setFieldValue(0, "FCDEBIT", 0);
                                     ld.setFieldValue(0, "FCCREDIT", 0);
@@ -131,7 +185,18 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
 
 
                         },
+                        beforeDeleteValidate: function (frm) {
+                            var kf = frm.getFieldValue("keyfld");
+                            var dt = Util.execSQL("select flag from acvoucher1 where keyfld=" + kf);
+                            if (dt.ret == "SUCCESS" && dt.data.length > 0) {
+                                var dtx = JSON.parse("{" + dt.data + "}").data;
+                                if (dtx.length > 0 && dtx[0].FLAG != undefined && dtx[0].FLAG != 1) {
+                                    FormView.err("This JV is posted !");
+                                }
+                            }
+                        },
                         beforeDelRow: function (qry, idx, ld, data) {
+
 
                         },
                         afterDelRow: function (qry, ld, data) {
@@ -139,7 +204,18 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 qry.obj.addRow();
 
                         },
-
+                        onCellRender: function (qry, rowno, colno, currentRowContext) {
+                            if (qry.status == "edit" && qry.name == "qry2" && colno == 4) {
+                                var oModel = qry.obj.getControl().getModel();
+                                var cellVal = oModel.getProperty("CUST_CODE", currentRowContext)
+                                if (cellVal != "" && cellVal != undefined) {
+                                    qry.obj.getControl().getRows()[rowno].getCells()[4].setEnabled(false);
+                                }
+                            }
+                        },
+                        beforePrint: function (rptName, params) {
+                            return params + "&_para_VOU_TITLE=Journal Voucher";
+                        }
 
                     },
                     parameters: [
@@ -163,9 +239,22 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 "TYPE": this.vars.type,
                                 "CREATDT": "sysdate",
                                 "FLAG": 1,
-                                "USERNM": Util.quoted(sett["LOGON_USER"])
+                                "USERNM": Util.quoted(sett["LOGON_USER"]),
+                                "FCCODE": Util.quoted(sett["DEFAULT_CURRENCY"]),
+                                "FCRATE": 1,
+                                "FC_MAIN_1": Util.quoted(sett["DEFAULT_CURRENCY"]),
+                                "FC_MAIN_RATE_1": 1,
+                                "DEBAMT": ":qry2.totaldebit",
+                                "CRDAMT": ":qry2.totalcredit",
+
+
                             },
-                            update_default_values: {},
+                            update_default_values: {
+                                "DEBAMT": ":qry2.totaldebit",
+                                "CRDAMT": ":qry2.totalcredit",
+
+
+                            },
                             table_name: "ACVOUCHER1",
                             edit_allowed: true,
                             insert_allowed: true,
@@ -175,14 +264,14 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                     colname: "keyfld",
                                     data_type: FormView.DataType.Number,
                                     class_name: FormView.ClassTypes.LABEL,
-                                    title: "Key ID",
+                                    title: '{\"text\":\"Key ID\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                     title2: "",
                                     canvas: "default_canvas",
                                     display_width: codSpan,
                                     display_align: "ALIGN_CENTER",
                                     display_style: "",
                                     display_format: "",
-                                    other_settings: {},
+                                    other_settings: {editable: false, width: "20%"},
                                     edit_allowed: false,
                                     insert_allowed: false,
                                     require: true
@@ -191,14 +280,14 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                     colname: "no",
                                     data_type: FormView.DataType.Number,
                                     class_name: FormView.ClassTypes.TEXTFIELD,
-                                    title: "No",
+                                    title: '{\"text\":\"From A/c\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                     title2: "No",
                                     canvas: "default_canvas",
                                     display_width: codSpan,
                                     display_align: "ALIGN_RIGHT",
                                     display_style: "",
                                     display_format: "",
-                                    other_settings: {},
+                                    other_settings: {width: "20%"},
                                     edit_allowed: false,
                                     insert_allowed: true,
                                     require: true
@@ -207,14 +296,14 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                     colname: "vou_date",
                                     data_type: FormView.DataType.Date,
                                     class_name: FormView.ClassTypes.DATEFIELD,
-                                    title: "@Vou Date",
+                                    title: '@{\"text\":\"Vou Date\",\"width\":\"50%%\","textAlign":"End","styleClass":""}',
                                     title2: "",
                                     canvas: "default_canvas",
                                     display_width: codSpan,
                                     display_align: "ALIGN_RIGHT",
                                     display_style: "",
                                     display_format: "",
-                                    other_settings: {},
+                                    other_settings: {width: "20%"},
                                     list: undefined,
                                     edit_allowed: true,
                                     insert_allowed: true,
@@ -224,14 +313,14 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                     colname: "descr",
                                     data_type: FormView.DataType.String,
                                     class_name: FormView.ClassTypes.TEXTFIELD,
-                                    title: "Descr",
+                                    title: '{\"text\":\"Descr\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                     title2: "",
                                     canvas: "default_canvas",
                                     display_width: fullSpan,
                                     display_align: "ALIGN_RIGHT",
                                     display_style: "",
                                     display_format: "",
-                                    other_settings: {},
+                                    other_settings: {width: "90%"},
                                     edit_allowed: true,
                                     insert_allowed: true,
                                     require: true
@@ -252,7 +341,7 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                             delete_before_update: "delete from acvoucher2 where keyfld=':qry1.keyfld';",
                             where_clause: " keyfld=':keyfld' ",
                             update_exclude_fields: ['keyfld'],
-                            insert_exclude_fields: ["ACNAME"],
+                            insert_exclude_fields: ["ACNAME", "CSNAME"],
                             insert_default_values: {
                                 "DESCR2": ":ACNAME",
                                 "KEYFLD": ":qry1.keyfld",
@@ -265,6 +354,10 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 "DEBIT": ":FCDEBIT",
                                 "CREDIT": ":FCCREDIT",
                                 "FLAG": 1,
+                                "FC_MAIN": sett["DEFAULT_CURRENCY"],
+                                "FC_MAIN_RATE": 1,
+                                "FCCODE": sett["DEFAULT_CURRENCY"],
+                                "FCRATE": 1,
                             },
                             update_default_values: {
                                 "DESCR2": ":ACNAME",
@@ -280,7 +373,6 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 var camt = parseFloat(oModel.getProperty(currentRowoIndexContext.sPath + '/FCCREDIT').replace(/[^\d\.],/g, '').replace(/,/g, ''));
                                 var des = Util.nvl(oModel.getProperty(currentRowoIndexContext.sPath + '/DESCR'), "");
                                 if (cx.mColName == "ACCNO" && des == "") {
-
                                     oModel.setProperty(currentRowoIndexContext.sPath + "/DESCR", that.frm.getFieldValue("qry1.descr"));
                                 }
 
@@ -315,6 +407,8 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 thatForm.frm.setFieldValue('totaldebit', df.format(sumDr));
                                 thatForm.frm.setFieldValue('totalcredit', df.format(sumCr));
                                 thatForm.frm.setFieldValue('totDiff', df.format(sumDr - sumCr));
+                                if (thatForm.view.byId("numtxt" + thatForm.timeInLong) != undefined)
+                                    thatForm.view.byId("numtxt" + thatForm.timeInLong).setText("Amount : " + df.format(sumDr));
 
 
                             },
@@ -323,14 +417,14 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                     colname: "totaldebit",
                                     data_type: FormView.DataType.Number,
                                     class_name: FormView.ClassTypes.TEXTFIELD,
-                                    title: "Total DR",
+                                    title: '{\"text\":\"Total DR\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                     title2: "Total DR",
                                     canvas: "default_canvas",
                                     display_width: sumSpan,
                                     display_align: "ALIGN_RIGHT",
                                     display_style: "",
                                     display_format: sett["FORMAT_MONEY_1"],
-                                    other_settings: {},
+                                    other_settings: {width: "30%"},
                                     edit_allowed: false,
                                     insert_allowed: false,
                                     require: true
@@ -339,14 +433,14 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                     colname: "totalcredit",
                                     data_type: FormView.DataType.Number,
                                     class_name: FormView.ClassTypes.TEXTFIELD,
-                                    title: "Total CR",
+                                    title: '@{\"text\":\"Total CR\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                     title2: "   Total CR",
                                     canvas: "default_canvas",
                                     display_width: sumSpan,
                                     display_align: "ALIGN_RIGHT",
                                     display_style: "",
                                     display_format: "",
-                                    other_settings: {},
+                                    other_settings: {width: "30%"},
                                     edit_allowed: false,
                                     insert_allowed: false,
                                     require: true
@@ -355,17 +449,49 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                     colname: "totDiff",
                                     data_type: FormView.DataType.Number,
                                     class_name: FormView.ClassTypes.TEXTFIELD,
-                                    title: "Difference ",
+                                    title: '@{\"text\":\"Difference \",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                     title2: "Difference",
                                     canvas: "default_canvas",
                                     display_width: sumSpan,
                                     display_align: "ALIGN_RIGHT",
                                     display_style: "redText",
                                     display_format: "",
-                                    other_settings: {},
+                                    other_settings: {width: "30%"},
                                     edit_allowed: false,
                                     insert_allowed: false,
                                     require: true
+                                },
+                                createdBy: {
+                                    colname: "createdBy",
+                                    data_type: FormView.DataType.String,
+                                    class_name: FormView.ClassTypes.TEXTFIELD,
+                                    title: '{\"text\":\"Created By\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                    title2: "",
+                                    canvas: "default_canvas",
+                                    display_width: sumSpan,
+                                    display_align: "ALIGN_RIGHT",
+                                    display_style: "redText",
+                                    display_format: "",
+                                    other_settings: {enabled: false, width: "30%"},
+                                    edit_allowed: false,
+                                    insert_allowed: false,
+                                    require: false
+                                },
+                                createdOn: {
+                                    colname: "createdOn",
+                                    data_type: FormView.DataType.String,
+                                    class_name: FormView.ClassTypes.TEXTFIELD,
+                                    title: '@{\"text\":\"Created On\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                    title2: "",
+                                    canvas: "default_canvas",
+                                    display_width: sumSpan2,
+                                    display_align: "ALIGN_RIGHT",
+                                    display_style: "redText",
+                                    display_format: "",
+                                    other_settings: {enabled: false, width: "30%"},
+                                    edit_allowed: false,
+                                    insert_allowed: false,
+                                    require: false
                                 },
                             }
 
@@ -404,6 +530,11 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                             name: "cmdList",
                             canvas: "default_canvas",
                             list_name: "list1"
+                        },
+                        {
+                            name: "cmdPrint",
+                            canvas: "default_canvas",
+                            title: "Print",
                         },
                         {
                             name: "cmdClose",
@@ -445,7 +576,6 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                             " from acvoucher1 where vou_code=" + that2.vars.vou_code +
                             " and type=" + that2.vars.type + " order by acvoucher1.vou_date desc,no desc",
                             afterSelect: function (data) {
-                                that2.frm.loadData(undefined, "view");
                                 that2.frm.loadData(undefined, "view");
                                 return true;
                             }
@@ -495,13 +625,7 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
     }
     ,
     loadData: function () {
-        // this.frm.setFieldValue("pac", "KWD");
-        // this.frm.loadData("qry1");
-
-        this.frm.setFieldValue('pac', Util.nvl(this.qryStr), "");
-        this.frm.setQueryStatus(undefined, Util.nvl(this.oController.status, FormView.RecordStatus.NEW));
-        if (this.qryStr != "")
-            this.frm.loadData(undefined, this.oController.status);
+        UtilGen.Vouchers.formLoadData(this);
 
 
     }

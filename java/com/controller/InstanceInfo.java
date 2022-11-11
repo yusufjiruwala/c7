@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import com.generic.DBClass;
 import com.generic.QueryExe;
 import com.generic.utils;
+import com.models.Notifications;
 
 import net.sf.jasperreports.engine.JasperRunManager;
 
@@ -40,9 +41,16 @@ public class InstanceInfo {
 	private Map<String, Object> mMapVars = new HashMap<String, Object>();
 	private Map<String, String> mMapProfiles = new HashMap<String, String>();
 	private List<String> mListProfiles = new ArrayList<String>();
+	
+	public InstanceInfo() {
+		
+	}
 
 	@Autowired
 	private ServletContext servletContext;
+
+	@Autowired
+	private com.models.Notifications notifications;
 
 	// -----------------------------------set--get--funcitons---------------------
 	public String getmLoginUser() {

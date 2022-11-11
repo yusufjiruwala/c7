@@ -50,6 +50,12 @@ body {
     color: black !important;
 }
 
+.titleFontWithoutPad {
+    font-size: 1rem !important;
+    text-align: center !important;
+    font-weight: bold !important;
+}
+
 .titleFont {
     font-size: 1.25rem !important;
     text-align: center !important;
@@ -65,6 +71,10 @@ body {
     font-weight: bold !important;
     width: 100%;
     padding: 10px;
+}
+
+.grayBackGround {
+    background-color: lightgrey;
 }
 
 .leftMenuFont:hover {
@@ -499,13 +509,11 @@ body {
 .qtFirstLevel {
     font-weight: bold !important;
     font-size: 14px !important;
-    background-color: rgba(216, 201, 201, 1);
+    background-color: #dcdcdc;
 }
 
 .qtSecondLevel {
-    font-weight: bold !important;
-    font-size: 14px !important;
-    background-color: rgba(239, 227, 227, 1);
+    background-color: #f4f0ec;
 }
 
 .menuicon:after {
@@ -520,6 +528,10 @@ body {
 
 .mytile {
     padding: 10px;
+}
+
+.repPage {
+    background-color: antiquewhite !important;
 }
 
 .mytile .sapMPanelHdr {
@@ -538,6 +550,10 @@ body {
 
 }
 
+.htmlLnk:hover{
+    color: hotpink !important;
+    cursor: pointer !important;
+}
 .mytile .sapMPanelContent:hover {
     box-shadow: 0px 0px 0px #888888 !important;
     background: blue !important;
@@ -628,6 +644,15 @@ body {
 .redText {
     color: red !important;
 }
+.totalVoucherTxt {
+    color: #8b4513 !important;
+}
+
+.redMiniText {
+    color: red !important;
+    font-size: x-small;
+    padding-left: 10px;
+}
 
 .redText .sapMInputBaseInner {
     color: red !important;
@@ -635,6 +660,28 @@ body {
 
 .smallFont {
     font-size: x-small;
+}
+
+.dbRcnt {
+    font-size: small;
+    color: brown;
+    padding-left: 20px;
+    padding-right: 20px;
+
+}
+
+.formRow {
+    align-items: center;
+}
+
+.formRow .sapMLabelTextWrapper {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.dbRcnt:hover {
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 .blueButton .sapMBtnInner {
@@ -649,6 +696,10 @@ body {
 
 .darkBlueText {
     color: #0854a0
+}
+
+.paddingTinyBot {
+    padding-bottom: .2rem !important;
 }
 
 .blinking {
@@ -683,6 +734,11 @@ body {
 
 }
 
+.paddingLR5P {
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
 .reportTable {
     padding-left: 5%;
     padding-right: 5%;
@@ -695,8 +751,11 @@ body {
 }
 
 .reportTable .sapUiTableHeaderRow {
-    background-color: #e8e8e8;
-!important;
+    background-color: #e8e8e8;!important;
+}
+
+.reportTable .sapUiTableRowSel {
+    background-color:#87ceeb!important;
 }
 
 .reportTable .sapUiTableRowFirstFixedBottom {
@@ -708,5 +767,133 @@ body {
     border: 0 !important;
     background-color: white !important;
 }
+
+
+
+.reportTable2 {
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+.reportTable2 .sapUiTableCell {
+    border-top: 0px!important;
+    border-left: 1px;
+    border-right: 1px;
+    border-bottom: 0px!important;
+    border-color: lightgrey;
+    border-style: solid;
+}
+
+.reportTable2 .sapUiTableHeaderRow {
+    background-color: #e8e8e8;
+!important;
+}
+.reportTable2 .sapUiTableRowSel {
+    background-color:#87ceeb!important;
+}
+
+.reportTable2 .sapUiTableRowFirstFixedBottom {
+    background-color: #f9f9f9;
+!important;
+}
+
+.reportTable2 .sapUiTableSelectAllCheckBox::after, .sapUiTableRowSelectionCell::after {
+    border: 0 !important;
+    background-color: white !important;
+}
+
+
+
+.menuTable {
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+.menuTable .sapUiTableCell {
+    box-sizing: border-box;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+.menuTable .sapUiTableHeaderRow {
+    background-color: #e8e8e8;
+!important;
+
+}
+
+.menuTable .sapUiLbl {
+    font-size: .8rem !important;
+    color: maroon !important;
+}
+
+.menuTable .sapUiTableRowHvr > td:hover {
+    background-color: cyan !important;
+}
+
+.menuTable .sapUiTableRowHvr > td .sapUiLbl:hover {
+    background-color: cyan !important;
+}
+
+.menuTable tr.sapUiTableRowHvr:hover {
+    background-color: cyan !important;
+}
+
+.menuTable .sapUiTableRowFirstFixedBottom {
+    background-color: #f9f9f9;
+!important;
+}
+
+.menuTable .sapUiTableSelectAllCheckBox::after, .sapUiTableRowSelectionCell::after {
+    border: 0 !important;
+    background-color: white !important;
+}
+
+.paras {
+    font-size: 12px;
+    color: darkgreen;
+    text-align: center;
+}
+
+.paraLabel {
+    border: 0px;
+    text-align: end;
+}
+
+.paraText {
+
+}
+
+.company {
+    font-size: 18px;
+    font-weight: bold;
+    color: darkgreen;
+    text-align: center;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.reportTitle {
+    font-size: 16px;
+    font-weight: bold;
+    color: darkgreen;
+    text-align: center;
+}
+
+.reportForm {
+    border-style: solid;
+    border-radius: 25px;
+    background-color: #f8f8ff;
+    border-width: thin;
+    border-color: lightblue;
+    margin-bottom: 2px;
+    margin-left: 5%;
+    padding-top: 5px;
+    border: 5px;
+}
+
+.formVoucher {
+
+}
+
 
 

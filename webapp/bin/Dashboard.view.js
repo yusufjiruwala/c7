@@ -39,31 +39,50 @@ sap.ui.jsview('bin.Dashboard', {
             var oModel = new sap.ui.model.json.JSONModel(dt);
             sap.ui.getCore().setModel(oModel, "settings");
         });
+
         this.sp = new sap.f.ShellBar({
-            title: "Actions",
-            homeIcon: "./resources/sap/ui/documentation/sdk/images/logo_ui5.png",
+            title: "General Ledger",
+            homeIcon: "./css/chn.png",
             showCopilot: true,
             showSearch: true,
             showNotifications: true,
             showProductSwitcher: false,
-            showMenuButton: false,
+            showMenuButton: true,
             notificationsNumber: "0",
-            menuButtonPressed: function (ev) {
-                var md = (that.app.getMode() == sap.m.SplitAppMode.HideMode ? sap.m.SplitAppMode.StretchCompressMode : sap.m.SplitAppMode.HideMode)
+            homeIconPressed: function () {
+                var md = (that.app.getMode() == sap.m.SplitAppMode.HideMode ? sap.m.SplitAppMode.StretchCompressMode : sap.m.SplitAppMode.HideMode);
                 that.app.setMode(md);
-                if (that.app.getMode() == sap.m.SplitAppMode.HideMode)
-                    that.app.toMaster(that.pgMain);
-                else {
-                    that.app.toDetail(that.pg);
-                    that.show_main_menus();
+            },
+            copilotPressed: function () {
+                // var md = (that.app.getMode() == sap.m.SplitAppMode.HideMode ? sap.m.SplitAppMode.StretchCompressMode : sap.m.SplitAppMode.HideMode);
+                // that.app.setMode(md);
+                UtilGen.setControlValue(that.lstPgs, "main");
+                that.lstPgs.fireSelectionChange();
+            },
+            notificationsPressed: function (event) {
+                Util.Notifications.showList(event, event.getParameter("button"));
+            },
+            menuButtonPressed: function (ev) {
+                // var md = (that.app.getMode() == sap.m.SplitAppMode.HideMode ? sap.m.SplitAppMode.StretchCompressMode : sap.m.SplitAppMode.HideMode)
+                // that.app.setMode(md);
+                // if (that.app.getMode() == sap.m.SplitAppMode.HideMode)
+                //     that.app.toMaster(that.pgMain);
+                // else {
+                //     that.app.toDetail(that.pg);
+                //     that.show_main_menus();
+                // }
+
+                // that.app.showMaster();
+                if (that.app.isMasterShown()) {
+                    that.app.hideMaster();
                 }
-
-
+                else
+                    that.app.showMaster();
             },
             menu: new sap.m.Menu({
                 items: [
                     new sap.m.MenuItem({
-                        text: "Show/Hide Menus..", icon: "sap-icon://menu2", press: function () {
+                        text: "Refresh..", icon: "sap-icon://menu2", press: function () {
                             var md = (that.app.getMode() == sap.m.SplitAppMode.HideMode ? sap.m.SplitAppMode.StretchCompressMode : sap.m.SplitAppMode.HideMode)
                             that.app.setMode(md);
                             if (that.app.getMode() == sap.m.SplitAppMode.HideMode)
@@ -77,14 +96,16 @@ sap.ui.jsview('bin.Dashboard', {
                     new sap.m.MenuItem({
                         text: "Log out..", icon: "sap-icon://log", press: function () {
                             that.do_logon(true);
-
                         }
                     })
                 ]
             })
         }).addStyleClass("sapFShellBar");
 
-        this.txtExeCmd = new sap.m.Input({width: "100%"});
+        this.txtExeCmd = new sap.m.TextArea({height: "25px", width: "100%"});
+        this.txtExeCmd.attachBrowserEvent("dblclick", function (e) {
+            that.showPopCmd();
+        });
         this.cmdExe = new sap.m.Button(
             {
                 text: "Execute",
@@ -96,7 +117,10 @@ sap.ui.jsview('bin.Dashboard', {
         this.txtExeCmd.attachBrowserEvent("keydown", function (oEvent) {
             if (oEvent.key == 'Enter') {
                 // sap.ui.getCore().byId($('#navigation button').eq(0).attr("i=d")).firePress();
-                that.cmdExe.firePress();
+                // that.cmdExe.firePress();
+                that.txtExeCmd.selectText();
+                that.showPopCmd();
+
             }
         });
 
@@ -106,15 +130,30 @@ sap.ui.jsview('bin.Dashboard', {
                 that.lstPageChange();
             }
         });// Database
+
+        var nxt = new sap.m.Button({
+            icon: "sap-icon://journey-arrive",
+            press: function (e) {
+                var cn = that.lstPgs.getItems().indexOf(that.lstPgs.getSelectedItem());
+                cn++;
+                if (cn > that.lstPgs.getItems().length - 1)
+                    cn = 0;
+                that.lstPgs.setSelectedItem(that.lstPgs.getItems()[cn]);
+                that.lstPgs.fireSelectionChange();
+            }
+        });
+
         var itm = new sap.ui.core.ListItem({
             text: "Main", key: "main"
         });
+
         this.lstPgs.addItem(itm);
         this.lstPgs.setSelectedItem(itm);
 
         // detail page where all sections and main menus will display..
         this.pg = new sap.m.Page({
             showHeader: false,
+            showSubHeader: true,
             showFooter: true,
             enableScrolling: false,
             content: [],
@@ -133,7 +172,7 @@ sap.ui.jsview('bin.Dashboard', {
             });
             that.app.addDetailPage(pg1);
             that.pg1.push(pg1);
-            var itm = new sap.ui.core.ListItem({text: Util.nvl(dtx.formTitle, dtx.formName), key: "dtx.formName"});
+            var itm = new sap.ui.core.ListItem({text: Util.nvl(dtx.formTitle, dtx.formName), key: dtx.formName});
             that.lstPgs.addItem(itm);
             that.lstPgs.setSelectedItem(itm);
             pg1.item = itm;
@@ -151,7 +190,7 @@ sap.ui.jsview('bin.Dashboard', {
         this.app = new sap.m.SplitApp({
             detailPages: [this.pg],
             masterPages: [this.pgMain],
-            mode: sap.m.SplitAppMode.HideMode
+            mode: sap.m.SplitAppMode.StretchCompressMode
         });
         this.pg1.push(this.pg);
         //main page where split app and shellbar will display...
@@ -164,20 +203,143 @@ sap.ui.jsview('bin.Dashboard', {
             footer: [
                 new sap.m.Toolbar({
                     content: [
-                        new sap.m.Text({text: "Pages :", width: "80px"}), this.lstPgs, this.txtExeCmd, that.cmdExe
+                        new sap.m.Text({text: "Pages :", width: "80px"}), this.lstPgs, nxt, this.txtExeCmd, that.cmdExe
                     ]
                 })
             ]
 
         });
+        this.txt = new sap.m.Text().addStyleClass("redMiniText blinking");
+        var tb = new sap.m.Toolbar({
+            content: [
+                new sap.m.Button({
+                    text: "Refresh", icon: "sap-icon://refresh", press: function () {
+                        that.loadData();
+                    }
+                }),
+                new sap.m.ToolbarSpacer(), this.txt]
+        });
         this.app2 = new sap.m.App({pages: [this.mainPage], height: "99%", width: "100%"});
+        this.pg.setSubHeader(tb);
+        Util.Notifications.init(3000, this.sp, this);
+
         this.loadData();
+
+        setTimeout(function () {
+            that.app.showMaster();
+            // that.show_main_menus();
+        }, 10);
+
+        UtilGen.DBView = this;
         return this.app2;
 
     },
+    showPopCmd: function () {
+        var that = this;
+        var txt = new sap.m.TextArea({
+            width: "100%",
+            height: "100%",
+            value: that.txtExeCmd.getValue()
+        });
+        var rbt = new sap.m.Button({
+            text: "x", press: function () {
+                that.txtExeCmd.setValue(txt.getValue());
+                pop.close();
+            }
+        });
+        var fe = [];
+        var cmdList = UtilGen.addControl(fe, "Setup Type", sap.m.ComboBox, "cmdList" + this.timeInLong + "_",
+            {
+                enabled: true,
+                customData: [{key: ""}],
+                items: {
+                    path: "/",
+                    template: new sap.ui.core.ListItem({text: "{COMMAND}", key: "{KEYFLD}"}),
+                    templateShareable: true
+                },
+                selectionChange: function (ev) {
+                    var kf = UtilGen.getControlValue(this);
+                    var cmd = Util.getSQLValue("select exec_line from C7_COMMANDS where keyfld=" + kf);
+                    cmd = cmd.replaceAll('**', ':');
+                    cmd = cmd.replaceAll('*.', "'");
+                    cmd = cmd.replaceAll(/\\n/g, '\n');
+                    txt.setValue(cmd);
+                },
+                value: ""
+            }, "string", undefined, this, undefined, "select KEYFLD ,COMMAND FROM C7_COMMANDS ORDER BY KEYFLD");
+        var pop = new sap.m.Popover({
+                contentHeight: "30%",
+                contentWidth: "70%",
+                content: [txt],
+                placement: sap.m.PlacementType.Auto,
+                modal: false,
+                customHeader: new sap.m.Toolbar({
+                    content: [
+                        new sap.m.Button({
+                            text: "F5 -Execute", press: function () {
+                                rbt.firePress();
+                                that.cmdExe.firePress();
+                            }
+                        }),
+                        cmdList,
+                        new sap.m.Button({
+                            icon: "sap-icon://save",
+                            press: function (e) {
+                                var str = "begin delete from c7_commands where command=':command';" +
+                                    " insert into c7_commands (keyfld,command,exec_line) values " +
+                                    "((select nvl(max(keyfld),0)+1 from c7_commands),':command',':exec_line');" +
+                                    "end; ";
+                                var tx = txt.getValue();
+                                // tx = tx.replaceAll(/\n/g, "\\n");
+                                tx = tx.replaceAll(/:/g, "**");
+                                tx = tx.replaceAll(/\'/g, "*.");
+                                tx = tx.replaceAll(/\n/g, "\\n");
 
+                                str = str.replaceAll(":command", cmdList.getValue());
+                                str = str.replaceAll(":exec_line", tx);
+                                Util.execSQL(str);
+                                sap.m.MessageToast.show("Saved command, #" + cmdList.getValue());
+                            }
+                        }),
+                        new sap.m.ToolbarSpacer(),
+                        rbt
+                    ]
+                })
+            })
+        ;
+
+        pop.openBy(that.txtExeCmd);
+
+        txt.attachBrowserEvent("keydown", function (e) {
+            if (e.key == 'F5') {
+                rbt.firePress();
+                that.cmdExe.firePress();
+            }
+        });
+        setTimeout(function () {
+            // var parentId = txt.getParent().getId();
+            // var heightParent = $("#" + parentId + "-cont").css("height");
+            txt.setHeight("1000px");
+            txt.setValue(that.txtExeCmd.getValue());
+            txt.focus();
+            var l = $("#" + txt.getId() + "-inner")[0].value.length;
+            $("#" + txt.getId() + "-inner")[0].setSelectionRange(l, l);
+            $("#" + txt.getId() + "-inner").attr("spellcheck", false);
+
+        }, 500);
+    },
+    recentClick: function (ri) {
+        var tbl = this.rdtx[ri].TABLE_NAME;
+        var tt = this.rdtx[ri].TRANS_TYPE;
+        var vp1 = this.rdtx[ri].VAL_PARA_1;
+        var vp2 = this.rdtx[ri].VAL_PARA_2;
+        var vp3 = this.rdtx[ri].VAL_PARA_3;
+        if (tbl == "ACACCOUNT" && (tt == "UPDATE" || tt == "INSERT"))
+            UtilGen.execCmd("bin.forms.gl.masterAc formType=dialog formSize=650px,350px status=view accno=" + vp1, this, this, this.newPage);
+        if (tbl == "ACVOUCHER1" && (tt == "UPDATE" || tt == "INSERT") && vp2 == "VOU_CODE=1,TYPE=1")
+            UtilGen.execCmd("bin.forms.gl.jv formType=page status=view keyfld=" + vp1, this, this, this.newPage);
+    },
     do_logon: function (fnLoad) {
-
         var that = this;
         var sett = sap.ui.getCore().getModel("settings").getData();
         Util.destroyID("txtUser", this);
@@ -294,6 +456,7 @@ sap.ui.jsview('bin.Dashboard', {
                     if (that.loginPress()) {
                         sap.m.MessageToast.show("Logon successful !");
                         that.loadData_main();
+                        that.show_main_menus();
                         dlg.close();
                     }
 
@@ -345,6 +508,14 @@ sap.ui.jsview('bin.Dashboard', {
             this.do_logon();
             return;
         }
+
+
+        if (!(Object.keys(sett).length === 0
+            && Object.getPrototypeOf(sett) === Object.prototype)) {
+            this.current_profile = sett["CURRENT_PROFILE_CODE"];
+            this.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
+        }
+        this.show_main_menus();
         this.loadData_main();
     }
     ,
@@ -364,6 +535,10 @@ sap.ui.jsview('bin.Dashboard', {
             var oModel = new sap.ui.model.json.JSONModel(dt);
 
             sap.ui.getCore().setModel(oModel, "settings");
+
+            this.current_profile = oModel.getData()["CURRENT_PROFILE_CODE"];
+            this.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
+
 
         });
         if (dt.errorMsg != null && dt.errorMsg.length > 0) {
@@ -400,6 +575,9 @@ sap.ui.jsview('bin.Dashboard', {
             Util.cookieSet("autoLogon", a.getSelected(), 7);
         } else
             Util.cookiesClear();
+        var sett = sap.ui.getCore().getModel("settings").getData();
+        this.current_profile = sett["CURRENT_PROFILE_CODE"];
+        this.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
 
         return true;
         // document.location.href = "/bi.html" + (s.length > 0 ? "?" : "") + s;
@@ -408,10 +586,16 @@ sap.ui.jsview('bin.Dashboard', {
     ,
     loadData_main: function () {
         var that = this;
+        Util.Notifications.checkNewNotifications();
+        var sett = sap.ui.getCore().getModel("settings").getData();
+        var cmp = sett["LOGON_USER"] + "@" + sett["COMPANY_NAME"];
+        var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
+        var sdf = new simpleDateFormat(sett["ENGLISH_DATE_FORMAT"]);
 
         var secs = {};
 
         UtilGen.clearPage(this.pg);
+
         this.app.toDetail(this.pg);
 
         this.updateMenus();
@@ -419,7 +603,7 @@ sap.ui.jsview('bin.Dashboard', {
         var dt = Util.execSQL(sq);
 
         if (dt.ret == "SUCCESS" && dt.data.length > 0) {
-            var dtx = JSON.parse("{" + dt.data + "}").data;
+            var dtxM = JSON.parse("{" + dt.data + "}").data;
 
             Util.destroyID("ObjectPageLayout");
             var oObjectPage = new sap.uxap.ObjectPageLayout("ObjectPageLayout", {
@@ -429,67 +613,83 @@ sap.ui.jsview('bin.Dashboard', {
             this.pg.addContent(oObjectPage);
 
             var oHeaderTitle = new sap.uxap.ObjectPageHeader();
-            oHeaderTitle.setObjectTitle("Main Menus");
-            oObjectPage.setHeaderTitle(oHeaderTitle);
+            // oHeaderTitle.setObjectTitle(cmp);
+            // oObjectPage.setHeaderTitle(new sap.m.Toolbar());
             oObjectPage.setShowAnchorBar(true);
-
-
-            for (var i in dtx) {
-                if (!secs.hasOwnProperty(dtx[i].MS_ID)) {
-                    secs[dtx[i].MS_ID] = {
-                        "title": dtx[i].MS_TITLE_1, ss: {}, msObj: new sap.uxap.ObjectPageSection({
-                            title: dtx[i].MS_TITLE_1, showTitle: true, titleUppercase: false
+            // setTimeout(function () {
+            //     // $(".sapUxAPObjectPageHeaderTitleText").css("cssText", "color:blue!important;font-size:12px!important;");
+            //     $(".sapUxAPObjectPageHeaderTitleText").addClass("redMiniText");
+            //     $(".sapUxAPObjectPageHeaderTitleText").addClass("blinking");
+            //     // $(".sapUxAPObjectPageHeaderTitleText").css("cssText", "");
+            // }, 1200);
+            this.txt.setText(cmp);
+            for (var i in dtxM) {
+                if (!secs.hasOwnProperty(dtxM[i].MS_ID)) {
+                    secs[dtxM[i].MS_ID] = {
+                        "title": dtxM[i].MS_TITLE_1, ss: {}, msObj: new sap.uxap.ObjectPageSection({
+                            title: dtxM[i].MS_TITLE_1, showTitle: false, titleUppercase: false
                         })
                     };
-                    oObjectPage.addSection(secs[dtx[i].MS_ID].msObj);
+                    oObjectPage.addSection(secs[dtxM[i].MS_ID].msObj);
                 }
-                if (!secs[dtx[i].MS_ID].ss.hasOwnProperty(dtx[i].SS_ID)) {
-                    secs[dtx[i].MS_ID].ss[dtx[i].SS_ID] = {
-                        "title": dtx[i].SS_TITLE_1,
+                if (!secs[dtxM[i].MS_ID].ss.hasOwnProperty(dtxM[i].SS_ID)) {
+                    secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID] = {
+                        "title": dtxM[i].SS_TITLE_1,
                         tiles: {},
                         ssObj: new sap.uxap.ObjectPageSubSection({
-                            title: (dtx[i].SS_TITLE_1 == "ALL" ? "" : dtx[i].SS_TITLE_1),
+                            title: (dtxM[i].SS_TITLE_1 == "ALL" ? "" : dtxM[i].SS_TITLE_1),
                             titleUppercase: false,
                             showTitle: true,
                         }),
-                        hbox: new sap.ui.layout.Grid({
-                            vSpacing: 1,
-                            hSpacing: 1,
-                            width: "100%",
-                            defaultSpan: "XL2 L3 M4 S12"
-                        })
+                        hbox: new sap.m.ScrollContainer().addStyleClass("paddingTinyBot")
+                        // hbox: new sap.ui.layout.Grid({
+                        //     vSpacing: 1,
+                        //     hSpacing: 1,
+                        //     width: "100%",
+                        //     defaultSpan: "XL2 L3 M3 S12"
+                        // })
                     }
                     ;
-                    secs[dtx[i].MS_ID].msObj.addSubSection(secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].ssObj);
+                    secs[dtxM[i].MS_ID].msObj.addSubSection(secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].ssObj);
                 }
 
-                if (!secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].tiles.hasOwnProperty(dtx[dtx[i].TILE_ID])) {
+                if (!secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].tiles.hasOwnProperty(dtxM[dtxM[i].TILE_ID])) {
                     var fv = "";
-                    if (Util.nvl(dtx[i].FOOTER_SQL, "").length > 0)
-                        fv = Util.getSQLValue(dtx[i].FOOTER_SQL)
-                    secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].tiles[dtx[i].TILE_ID] = {
-                        "title": dtx[i].TILE_TITLE_1,
-                        "FORM_NAME": dtx[i].EXEC_LINE,
-                        "EXEC_TYPE": dtx[i].EXEC_TYPE,
-                        "tileObj": new sap.m.GenericTile({
-                            frameType: "OneByHalf",
-                            header: dtx[i].TILE_TITLE_1,
-                            tileContent: new sap.m.TileContent({
-                                footer: fv
-                            }),
-                            press: function (ev) {
-                                that.tileExe(this);
+                    var tileC = new sap.m.TileContent({});
+                    if (Util.nvl(dtxM[i].FOOTER_SQL, "").length > 0)
+                        fv = Util.getSQLValue(dtxM[i].FOOTER_SQL);
 
-                            }
-                        }).addStyleClass("dbTile")
+                    secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].tiles[dtxM[i].TILE_ID] = {
+                        "title": dtxM[i].TILE_TITLE_1,
+                        "FORM_NAME": dtxM[i].EXEC_LINE,
+                        "EXEC_TYPE": dtxM[i].EXEC_TYPE,
+                        "tileObj": Util.nvl(dtxM[i].CUSTOM_OBJ, "") != "" ? eval(dtxM[i].CUSTOM_OBJ) :
+                            new sap.m.GenericTile({
+                                frameType: Util.nvl(dtxM[i].TILE_SIZE, "OneByHalf"),
+                                header: dtxM[i].TILE_TITLE_1,
+                                tileContent: tileC,
+                                press: function (ev) {
+                                    that.tileExe(this);
+                                }
+                            }).addStyleClass("sapUiTinyMarginBegin sapUiTinyMarginTop")
                     };
-                    secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].tiles[dtx[i].TILE_ID].tileObj["dtx"] = dtx[i];
-                    secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].tiles[dtx[i].TILE_ID].tileObj.addStyleClass("mytilex");
-                    if (secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].hbox.getContent() == 0)
-                        secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].ssObj.addBlock(secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].hbox);
 
-                    secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].hbox.addContent(secs[dtx[i].MS_ID].ss[dtx[i].SS_ID].tiles[dtx[i].TILE_ID].tileObj);
+                    if (Util.nvl(dtxM[i].CONTENT_JS, "").length > 0)
+                        try {
+                            eval(dtxM[i].CONTENT_JS);
+                        } catch (ex) {
+                            console.log(ex);
+                        }
+                    ;
+
+                    secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].tiles[dtxM[i].TILE_ID].tileObj["dtx"] = dtxM[i];
+                    secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].tiles[dtxM[i].TILE_ID].tileObj.addStyleClass("mytilex");
+                    if (secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].hbox.getContent() == 0)
+                        secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].ssObj.addBlock(secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].hbox);
+
+                    secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].hbox.addContent(secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].tiles[dtxM[i].TILE_ID].tileObj);
                 }
+
             }
         }
 
@@ -514,24 +714,105 @@ sap.ui.jsview('bin.Dashboard', {
 
         UtilGen.clearPage(this.pgMain);
 
-        var itm = [];
-        itm.push(new sap.m.Text({text: "Tiles"}).addStyleClass("leftMenuFont1"));
-        itm.push(new sap.m.Text({text: "New Tile", width: "100%"}).addStyleClass("leftMenuFont"));
-        itm.push(new sap.m.Text({text: "Add Tile"}).addStyleClass("leftMenuFont"));
-        itm.push(new sap.m.Text({text: "Remove a Tile"}).addStyleClass("leftMenuFont"));
-        itm.push(new sap.m.Text({text: "Copy a Tile"}).addStyleClass("leftMenuFont"));
-        itm.push(new sap.m.Text({text: "Users"}).addStyleClass("leftMenuFont1"));
-        itm.push(new sap.m.Text({text: "Create a User"}).addStyleClass("leftMenuFont"));
-        var vb = new sap.m.VBox({
-            items: itm,
-            alignItems: sap.m.FlexAlignItems.Center,
-            justifyContent: sap.m.FlexJustifyContent.Center,
-            height: "100%"
+        var tb = new sap.m.Toolbar({
+            content: [
+                new sap.m.Button({
+                    icon: "sap-icon://log", press: function () {
+                        that.do_log_out();
+                    }
+                }),
+                new sap.m.Button({
+                    icon: "sap-icon://drop-down-list",
+                    text: this.current_profile_name,
+                    press: function () {
+                        if (sap.ui.getCore().getModel("profiles") == undefined) {
+                            pth = "exe?command=get-profile-list";
+                            Util.doAjaxGet(pth, "", false).done(function (data) {
+                                if (data != undefined) {
+                                    var dt = JSON.parse(data);
+                                    var oModel = new sap.ui.model.json.JSONModel(dt);
+                                    sap.ui.getCore().setModel(oModel, "profiles");
+                                }
+                            });
+                        }
+                        var ps = sap.ui.getCore().getModel("profiles").getData();
+                        var mnus = [];
+                        var pList = ps.list;
+                        for (var i in pList)
+                            mnus.push(new sap.m.MenuItem({
+                                text: pList[i].code + "-" + pList[i].name,
+                                customData: {key: pList[i].code + "::=" + pList[i].name},
+                                press: function (ev) {
+                                    var cs = this.getCustomData()[0].getKey();
+                                    that.current_profile = cs.split("::=")[0];
+                                    that.current_profile_name = cs.split("::=")[1];
+                                    this.setText(cs.split("::=")[1]);
+                                    that.show_main_menus();
+                                }
+                            }));
+                        new sap.m.Menu({
+                            title: "",
+                            items: mnus
+                        }).openBy(this);
+
+                    }
+                })
+            ]
         });
-        this.pgMain.addContent(vb);
-        itm[1].attachBrowserEvent("click", function (e) {
-            that.new_tile();
+        this.pgMain.removeAllHeaderContent();
+        this.pgMain.addHeaderContent(tb);
+
+        // if (this.mv == undefined)
+        this.mv = new QueryView("mainMenus");
+        var dt = Util.execSQL("select menu_code,menu_title,parent_menucode,childcount,JS_COMMAND,JS_PARAMS,SHORTCUT_ICON" +
+            " from C7_MENUS where group_code='" + that.current_profile + "' order by menu_path")
+        // var dt = Util.execSQL("select accno menu_code,name menu_title, parentacc from acaccount order by path ")
+
+
+        if (dt.ret != "SUCCESS")
+            Util.err(dt.ret);
+
+        var mv = this.mv;
+
+        mv.mColCode = "MENU_CODE";
+        mv.mColName = "MENU_TITLE";
+        mv.mColParent = "PARENT_MENUCODE";
+        mv.switchType("tree");
+
+        mv.setJsonStr("{" + dt.data + "}");
+
+        mv.mLctb.getColByName("MENU_CODE").getMUIHelper().display_width = "100";
+        mv.mLctb.getColByName("MENU_TITLE").getMUIHelper().display_width = "400";
+        // mv.mLctb.getColByName("MENU_TITLE").mCfOperator = ":CHILDCOUNT>0";
+        // mv.mLctb.getColByName("MENU_TITLE").mCfTrue = "color:blue;font-weight: bold;";
+
+        mv.mLctb.getColByName("MENU_CODE").mHideCol = true;
+        mv.mLctb.getColByName("PARENT_MENUCODE").mHideCol = true;
+        mv.mLctb.getColByName("CHILDCOUNT").mHideCol = true;
+        mv.mLctb.getColByName("JS_COMMAND").mHideCol = true;
+        mv.mLctb.getColByName("JS_PARAMS").mHideCol = true;
+        mv.mLctb.getColByName("SHORTCUT_ICON").mHideCol = true;
+
+        mv.switchType("tree");
+        this.pgMain.addContent(mv.getControl());
+        mv.getControl().expandToLevel(10);
+        mv.getControl().setFixedBottomRowCount(0);
+        mv.getControl().setSelectionMode(sap.ui.table.SelectionMode.Single);
+        mv.getControl().setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
+        mv.getControl().addStyleClass("sapUiSizeCondensed menuTable");
+        mv.getControl().attachRowSelectionChange(undefined, function () {
+
+
+            var sl = mv.getControl().getSelectedIndices();
+            if (sl.length > 0) {
+                var odata = mv.getControl().getContextByIndex(sl[0]);
+                var data = (odata.getProperty(odata.getPath()));
+                UtilGen.execCmd(data.JS_COMMAND, that, this, that.newPage);
+                mv.getControl().setSelectedIndex(-1);
+            }
+
         });
+        mv.loadData();
 
     }
     ,
@@ -540,10 +821,12 @@ sap.ui.jsview('bin.Dashboard', {
 
     }
     ,
+    do_log_out: function () {
+        this.do_logon();
+    },
     updateMenus: function () {
         var that = this;
         this.sp.getMenu().removeAllItems();
-
         this.sp.getMenu().addItem(new sap.m.MenuItem({
             text: "Show/Hide Menus..", icon: "sap-icon://menu2", press: function () {
                 var md = (that.app.getMode() == sap.m.SplitAppMode.HideMode ? sap.m.SplitAppMode.StretchCompressMode : sap.m.SplitAppMode.HideMode)
@@ -606,13 +889,19 @@ sap.ui.jsview('bin.Dashboard', {
                 break;
             }
         }
-        var pg1 = this.pg1[ix];
-        if (pg1 != undefined)
-            this.app.toDetail(pg1, "baseSlide");
 
+        var pg1 = this.pg1[ix];
+        if (pg1 != undefined) {
+            this.app.toDetail(pg1, "baseSlide");
+            if (pg1.getContent().length > 0 && pg1.getContent()[0].displayBack != undefined)
+                pg1.getContent()[0].displayBack();
+        }
+        if (this.lstPgs.getValue() == "Main")
+            this.loadData_main();
 
     },
     destroyPage: function (pg) {
+        var that = this;
         var itm = pg.item;
         var ix = -1;
         for (var i in this.lstPgs.getItems()) {
@@ -623,13 +912,34 @@ sap.ui.jsview('bin.Dashboard', {
         }
         this.pg1.splice(ix, 1);
         this.lstPgs.removeItem(itm);
-        this.lstPgs.setSelectedItem(this.lstPgs.getItems()[0]);
+        this.lstPgs.setSelectedItem(this.lstPgs.getItems()[this.lstPgs.getItems().length - 1]);
         this.pg.destroyContent();
         this.pg.destroyHeaderContent();
         this.pg.destroyCustomHeader();
+        setTimeout(function () {
+            that.lstPgs.fireSelectionChange();
+        });
 
 
-    }
+    },
+    show_list_cmd: function (txt2) {
+        var sq = Util.getFromWord(txt2, 2);
+        var prnt = "";
+        var cols = [];
+        var js = undefined;
+        if (sq.indexOf(";") > -1) {
+            var sqq = sq.split(";")[0];
+            js = sq.split(";")[1];
+            sq = sqq;
+            js = JSON.parse("[" + js + "]");
+        }
+
+        if (sq.toLowerCase().startsWith("select")) {
+            Util.show_list(sq, undefined, "", function (data) {
+                return true;
+            }, "100%", "100%", undefined, false, undefined, undefined, undefined, js);
+        }
+    },
 
     /*
     execCmd: function (txt) {

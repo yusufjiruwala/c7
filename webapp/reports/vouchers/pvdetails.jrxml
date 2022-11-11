@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="jvdetails" language="groovy" pageWidth="555" pageHeight="802" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="b5ac15f9-7843-4e53-9579-505bbd92a6d0">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<template><![CDATA["voucherStyle.jrtx"]]></template>
+	<parameter name="KEYFLD" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[1]]></defaultValueExpression>
+	</parameter>
+	<parameter name="TOTAL_IN_WORDS" class="java.lang.String" isForPrompting="false"/>
+	<parameter name="CURRENCY_FORMAT" class="java.lang.String" isForPrompting="false"/>
+	<queryString>
+		<![CDATA[select *from acvoucher2 where KEYFLD=$P{KEYFLD}  order by pos]]>
+	</queryString>
+	<field name="PERIODCODE" class="java.lang.String"/>
+	<field name="KEYFLD" class="java.math.BigDecimal"/>
+	<field name="NO" class="java.math.BigDecimal"/>
+	<field name="VOU_CODE" class="java.math.BigDecimal"/>
+	<field name="VOU_DATE" class="java.sql.Timestamp"/>
+	<field name="POS" class="java.math.BigDecimal"/>
+	<field name="ACCNO" class="java.lang.String"/>
+	<field name="DEBIT" class="java.math.BigDecimal"/>
+	<field name="CREDIT" class="java.math.BigDecimal"/>
+	<field name="DESCR" class="java.lang.String"/>
+	<field name="DESCR2" class="java.lang.String"/>
+	<field name="FLAG" class="java.math.BigDecimal"/>
+	<field name="USERNM" class="java.lang.String"/>
+	<field name="CREATDT" class="java.sql.Timestamp"/>
+	<field name="YEAR" class="java.lang.String"/>
+	<field name="TYPE" class="java.math.BigDecimal"/>
+	<field name="ISCHANGE" class="java.lang.String"/>
+	<field name="ISNEW" class="java.lang.String"/>
+	<field name="INVOICE_CODE" class="java.math.BigDecimal"/>
+	<field name="INVOICE_TYPE" class="java.math.BigDecimal"/>
+	<field name="INVKEYFLD" class="java.lang.Double"/>
+	<field name="GRPNO" class="java.math.BigDecimal"/>
+	<field name="REFERNO" class="java.math.BigDecimal"/>
+	<field name="REFERCODE" class="java.math.BigDecimal"/>
+	<field name="REFERTYPE" class="java.math.BigDecimal"/>
+	<field name="COSTCENT" class="java.lang.String"/>
+	<field name="REFERKEYFLD" class="java.math.BigDecimal"/>
+	<field name="FCCODE" class="java.lang.String"/>
+	<field name="FCRATE" class="java.math.BigDecimal"/>
+	<field name="FCDEBAMT" class="java.math.BigDecimal"/>
+	<field name="FCCRDAMT" class="java.math.BigDecimal"/>
+	<field name="FCCODEAMT" class="java.math.BigDecimal"/>
+	<field name="UNIT_NUMBER" class="java.math.BigDecimal"/>
+	<field name="PAIDYEAR" class="java.lang.String"/>
+	<field name="FCDEBIT" class="java.math.BigDecimal"/>
+	<field name="FCCREDIT" class="java.math.BigDecimal"/>
+	<field name="FC_MAIN" class="java.lang.String"/>
+	<field name="FC_MAIN_RATE" class="java.lang.Double"/>
+	<field name="CUST_CODE" class="java.lang.String"/>
+	<field name="BRANCH_NO" class="java.math.BigDecimal"/>
+	<field name="CHEQUE_NO" class="java.lang.String"/>
+	<field name="DUE_DATE" class="java.sql.Timestamp"/>
+	<field name="BKNO" class="java.lang.String"/>
+	<variable name="SUMAMT" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{CREDIT}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<columnHeader>
+		<band height="41" splitType="Stretch">
+			<frame>
+				<reportElement style="labelHeader" mode="Opaque" x="0" y="0" width="555" height="40" backcolor="#FFFFCC" uuid="9d83c7f8-d465-441c-86b1-810ce25af07d"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+			</frame>
+			<staticText>
+				<reportElement style="strColHeader" x="171" y="0" width="136" height="40" uuid="4de4f43d-92d9-4a87-945c-47016fd44e47"/>
+				<box>
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Description
+الـبـيــــــان]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="strColHeader" x="22" y="0" width="54" height="40" uuid="6bf4c394-3e25-4db5-9a84-608eefdd4be8"/>
+				<box>
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Ac/No
+رقم الحساب]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="strColHeader" x="307" y="0" width="88" height="40" uuid="07d987d7-0d23-43d7-8601-7ca0b1d8cad8"/>
+				<box>
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Debit
+مـديــن]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="strColHeader" x="76" y="0" width="95" height="40" uuid="bc8a41e0-e865-4872-a450-f01fd4e39ec6"/>
+				<box>
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" isBold="true"/>
+				</textElement>
+				<text><![CDATA[A/C Name
+اســـم الـحـســــاب]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="strColHeader" x="0" y="0" width="22" height="40" uuid="1e628ea6-43ac-4c8b-8ba2-79eacbb2f385"/>
+				<box>
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Sr]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="strColHeader" x="395" y="0" width="88" height="40" uuid="121f4c7c-f232-45fd-abe4-3a07a95c9777"/>
+				<box>
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Credit
+دائن]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="strColHeader" x="483" y="0" width="72" height="40" uuid="a2ee7a2a-a6d2-4e6e-9110-1a68587ca8ea"/>
+				<box>
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cost C
+مركز التكلفة]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="21" splitType="Prevent">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="strDetails" stretchType="RelativeToTallestObject" x="171" y="0" width="136" height="21" uuid="20e6592b-01e0-4750-9916-7aacea2edb4d"/>
+				<box topPadding="0" leftPadding="2" rightPadding="2">
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement>
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DESCR}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="strDetails" stretchType="RelativeToTallestObject" x="0" y="0" width="22" height="21" uuid="c71eb3d8-3e49-4519-ab86-f3756acd1f4b"/>
+				<box topPadding="0" leftPadding="2" rightPadding="2">
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{POS}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement style="strDetails" stretchType="RelativeToTallestObject" x="395" y="0" width="88" height="21" uuid="5376e652-44c6-45f5-80a0-e16096a74f5e"/>
+				<box topPadding="0" leftPadding="2" rightPadding="2">
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{FCCREDIT}==0?null:$F{FCCREDIT})]]></textFieldExpression>
+				<patternExpression><![CDATA[$P{CURRENCY_FORMAT}]]></patternExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement style="strDetails" stretchType="RelativeToTallestObject" x="307" y="0" width="88" height="21" uuid="e31a3c57-eb4c-445b-9363-fcaa4257c99b"/>
+				<box topPadding="0" leftPadding="2" rightPadding="2">
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{FCDEBIT}==0?null:$F{FCDEBIT})]]></textFieldExpression>
+				<patternExpression><![CDATA[$P{CURRENCY_FORMAT}]]></patternExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="strDetails" stretchType="RelativeToTallestObject" x="22" y="0" width="54" height="21" uuid="34fe4fbe-d9e8-44c2-b922-0185fa0bf273"/>
+				<box topPadding="0" leftPadding="2" rightPadding="2">
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement>
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ACCNO}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="strDetails" stretchType="RelativeToTallestObject" x="76" y="0" width="95" height="21" uuid="ac172823-c83f-49d4-8f4a-44b3fa54c6fd"/>
+				<box topPadding="0" leftPadding="2" rightPadding="2">
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement>
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DESCR2}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="strDetails" stretchType="RelativeToTallestObject" x="483" y="0" width="71" height="21" uuid="974b27a5-d937-433f-8e98-9600c9b6c4cd"/>
+				<box topPadding="0" leftPadding="2" rightPadding="2">
+					<leftPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{COSTCENT}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="33" splitType="Stretch">
+			<staticText>
+				<reportElement style="labelHeader" mode="Opaque" x="1" y="2" width="75" height="22" backcolor="#CCCCCC" uuid="8386999d-aca9-469f-82a9-c896992b3205"/>
+				<box leftPadding="2" rightPadding="2">
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="76" y="2" width="232" height="22" backcolor="#CCCCCC" uuid="88479398-5314-49c1-b460-f71263f175a9"/>
+				<box leftPadding="3" rightPadding="2">
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{TOTAL_IN_WORDS}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="numMoney" mode="Opaque" x="308" y="2" width="246" height="22" backcolor="#CCCCCC" uuid="1d78de5e-c03c-4501-be88-fa53f05041f1"/>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{SUMAMT}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="0" width="554" height="4" uuid="ba7b8cd7-dfba-489c-bae3-f35e1ac31de4"/>
+			</line>
+		</band>
+	</summary>
+</jasperReport>

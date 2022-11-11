@@ -27,6 +27,7 @@ sap.ui.jsfragment("bin.forms.gl.costcent", {
         this.joApp.addPage(this.mainPage);
         // this.joApp.addDetailPage(this.pgDetail);
         this.joApp.to(this.mainPage, "show");
+        UtilGen.setFormTitle(this.oController.getForm(), "Cost Center", this.mainPage);
         return this.joApp;
     },
     createView: function () {
@@ -253,7 +254,7 @@ sap.ui.jsfragment("bin.forms.gl.costcent", {
             that.qryStr = Util.nvl(acn, this.qryStr);
             this.oController.status = "view";
             this.oController.code = this.qryStr;
-            this.fromStatus=undefined;
+            this.fromStatus = undefined;
             that.loadData();
         });
 

@@ -351,6 +351,16 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                                 _oInput.getCustomData()[0].setKey(val);
 
                         });
+                    if (c instanceof sap.m.SearchField)
+                        c.attachChange(function (oEvent) {
+                            var _oInput = oEvent.getSource();
+                            var val = _oInput.getValue();
+                            if (_oInput.getCustomData().length == 0)
+                                _oInput.addCustomData(new sap.ui.core.CustomData({key: val}))
+                            else
+                                _oInput.getCustomData()[0].setKey(val);
+
+                        });
                     if (fldtype == "number" && (c instanceof sap.m.Input)) {
                         c.setTextAlign(sap.ui.core.TextAlign.End);
                         c.attachLiveChange(function (oEvent) {
@@ -397,9 +407,28 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             }
                         }
                     }
+                    if (c instanceof sap.m.ListBase && sqlStr != undefined) {
+                        if (sqlStr.startsWith("@")) {
+                            var dtxx = [];
+                            var spt = sqlStr.substring(1).split(",");
+                            for (var i1 in spt) {
+                                var dttt = {CODE: "", NAME: ""};
+                                var sx = spt[i1].split("/");
+                                dttt.CODE = "" + sx[0];
+                                dttt.NAME = "" + sx[1];
+                                dtxx.push(dttt);
+                            }
+                            c.setModel(new sap.ui.model.json.JSONModel(dtxx));
+                        } else {
+                            var dat = Util.execSQL(sqlStr);
+                            if (dat.ret == "SUCCESS" && dat.data.length > 0) {
+                                var dtx = JSON.parse("{" + dat.data + "}").data;
+                                c.setModel(new sap.ui.model.json.JSONModel(dtx));
+                            }
+                        }
+                    }
 
-                    if (c.getCustomData().length == 0
-                    )
+                    if (c.getCustomData().length == 0)
                         c.addCustomData(new sap.ui.core.CustomData({key: ""}));
 
                     if (c instanceof sap.m.DatePicker) {
@@ -419,12 +448,17 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     var customVal = "";
                     if (comp instanceof sap.m.InputBase && comp.getCustomData != undefined && comp.getCustomData().length > 0)
                         customVal = comp.getCustomData()[0].getKey();
+                    if (comp instanceof sap.m.SearchField && comp.getCustomData != undefined && comp.getCustomData().length > 0)
+                        customVal = comp.getCustomData()[0].getKey();
+
                     if (customVal == "NaN")
                         customVal = "";
                     if (customVal == "false" && !(comp instanceof sap.m.CheckBox))
                         customVal = "";
                     if (comp instanceof sap.m.Text)
                         return this.nvl(customVal, comp.getText());
+                    if (comp instanceof sap.m.Label)
+                        return comp.getText();
                     if (comp instanceof sap.m.SearchField)
                         return this.nvl(customVal, comp.getValue());
                     if (comp instanceof sap.m.DatePicker)
@@ -433,6 +467,9 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         return comp.getDateValue();
                     if (comp instanceof sap.m.ComboBoxBase)
                         return this.nvl(comp.getSelectedKey(), comp.getValue());
+                    if (comp instanceof sap.m.ListBase)
+                        return (Util.nvl(comp.getSelectedItem(), undefined) != undefined ?
+                            this.nvl(comp.getSelectedItem().getCustomData()[0], "") : "");
                     if (comp instanceof sap.m.CheckBox)
                         if (comp.trueValues != undefined)
                             return (comp.getSelected() ? comp.trueValues[0] : comp.trueValues[1]);
@@ -473,6 +510,11 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         if (executeChange)
                             comp.fireChange();
 
+                    } else if (comp instanceof sap.m.ListBase) {
+                        comp.setSelectedItem(this.getIndexByKey(comp, Util.nvl(pCustomVal, val)));
+                        if (executeChange)
+                            comp.fireChange();
+
                     } else if (comp instanceof sap.m.Text) {
                         comp.setText(val);
                         // if (customVal.length > 0)
@@ -486,8 +528,10 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
 
                         if (this.nvl(pVal, "").length == 0)
                             comp.setDateValue(null);
-                        else
-                            comp.setDateValue(new Date(pVal));
+                        else {
+                            var pvx = (typeof pVal == "string" ? pVal.replaceAll(".", ":") : pVal);
+                            comp.setDateValue(new Date(pvx));
+                        }
 
                         if (executeChange)
                             comp.fireChange();
@@ -519,6 +563,132 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     }
 
 
+                },
+                formCreate2: function (title, editable, content, pHbSet, classCont, contSetting, contCssClass, lastAddVB) {
+                    var cc = Util.nvl(contCssClass, "");
+                    if (contSetting != undefined && contSetting.hasOwnProperty("width")) {
+                        if (typeof contSetting.width == "object") {
+                            var newr = "L";
+                            if (sap.ui.Device.resize.width <= 639)
+                                newr = "S";
+                            if (sap.ui.Device.resize.width > 640 && sap.ui.Device.resize.width <= 1007)
+                                newr = "M";
+                            if (sap.ui.Device.resize.width > 1007)
+                                newr = "L";
+                            contSetting.width = contSetting.width[newr] + "px";
+                            console.log("DEVICE " + newr + " -width=" + sap.ui.Device.resize.width + " records=" + contSetting.width);
+                        }
+                    }
+                    var sc = new classCont(Util.nvl(contSetting, {})).addStyleClass(cc);
+                    if (Util.nvl(contSetting, {}).hasOwnProperty("cssText")) {
+                        setTimeout(function () {
+                            var ar = [].concat(contSetting["cssText"]);
+                            for (var ix in ar)
+                                sc.$().css("cssText", ar);
+                        }, 200);
+                    }
+                    var totWd = Util.nvl(Util.nvl(contSetting, {})["width"], "600px").replace("px", "");
+
+                    var fnAdd = function (cnt) {
+                        if (typeof sc.addItem == "function")
+                            sc.addItem(cnt);
+                        else if (typeof sc.addContent == "function")
+                            sc.addContent(cnt);
+                    };
+                    var cnt = [];
+                    var hz = [];
+                    var hbSet = Util.nvl(pHbSet, {});
+                    // if (hbSet.hasOwnProperty("width"))
+                    //     hbSet["width"] = "100%";
+                    if (hbSet.hasOwnProperty("height"))
+                        hbSet["height"] = "24px";
+                    var hb = new sap.m.HBox(hbSet);
+
+                    for (var i in content) {
+                        if (content[i] == undefined) {
+                            console.log("form element " + i + " is undefined !");
+                            continue;
+                        }
+                        fnAdd(hb);
+                        if (typeof content[i] === "string" && !content[i].startsWith("@") &&
+                            !content[i].startsWith("#")) {
+                            var cn = {};
+                            try {
+                                cn = JSON.parse(content[i]);
+                            } catch (e) {
+                                cn = {text: content[i]};
+                            }
+                            var setx = cn;
+                            if (setx.hasOwnProperty("width") && setx["width"].endsWith("%")) {
+                                var wd = (totWd / 100) * Util.extractNumber(setx["width"]);
+                                setx["width"] = wd + "px";
+                            }
+                            var lbl = new sap.m.Label(setx);
+                            if (setx.hasOwnProperty("styleClass"))
+                                lbl.addStyleClass(setx["styleClass"]);
+                            hb = new sap.m.HBox(hbSet);
+                            fnAdd(hb);
+                            hb.addItem(lbl);
+
+                        } else if (typeof content[i] === "string" && content[i].startsWith("@")) {
+                            var cn = {};
+                            try {
+                                cn = JSON.parse(content[i].substr(1));
+                            } catch (e) {
+                                cn = {text: content[i].substr(1)};
+                            }
+
+                            var setx = cn;
+                            if (setx.hasOwnProperty("width") && setx["width"].endsWith("%")) {
+                                var wd = (totWd / 100) * Util.extractNumber(setx["width"]);
+                                setx["width"] = wd + "px";
+                            }
+                            var lbl = new sap.m.Label(setx);
+                            if (setx.hasOwnProperty("styleClass"))
+                                lbl.addStyleClass(setx["styleClass"]);
+                            hb.addItem(lbl);
+                            // cnt.push(new sap.m.Text(setx));
+                        } else if (typeof content[i] === "string" && content[i].startsWith("#")) {
+                            var cn = {};
+                            try {
+                                cn = JSON.parse(content[i].substr(1));
+                            } catch (e) {
+                                cn = {text: content[i].substr(1)};
+                            }
+
+                            var setx = cn;
+                            if (setx.hasOwnProperty("width") && setx["width"].endsWith("%")) {
+                                var wd = (totWd / 100) * Util.extractNumber(setx["width"]);
+                                setx["width"] = wd + "px";
+                            }
+                            var lbl = new sap.m.Title(setx);
+                            if (setx.hasOwnProperty("styleClass"))
+                                lbl.addStyleClass(setx["styleClass"]);
+                            if (setx.hasOwnProperty("style"))
+                                lbl.$().attr("style", setx["style"]);
+
+                            hb = new sap.m.HBox(hbSet);
+                            fnAdd(hb);
+                            hb.addItem(lbl);
+                            // hb.addItem(new sap.m.Title({text: content[i].substr(1)}));
+                            // hb = new sap.m.HBox(hbSet);
+                            // fnAdd(hb);
+                            // hb.addItem(new sap.m.Title({text: content[i].substr(1)}));
+                        }
+                        else {
+                            if (typeof content[i].setWidth == "function" && content[i].getWidth().endsWith("%")) {
+                                var wd = (totWd / 100) * Util.extractNumber(content[i].getWidth());
+                                content[i].setWidth(wd + "px");
+                            }
+                            hb.addItem(content[i]);
+
+                        }
+                        hb.addStyleClass("formRow");
+
+                    }
+                    if (lastAddVB != undefined)
+                        fnAdd(new sap.m.VBox({height: lastAddVB}));
+                    return sc;
                 }
                 ,
                 //---------------------------------------------------------------------------------------------------------
@@ -546,22 +716,48 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         }
                         if (typeof content[i] === "string" && !content[i].startsWith("@") &&
                             !content[i].startsWith("#")) {
-                            var setx = {text: content[i]};
+
+                            var cn = {};
+                            try {
+                                cn = JSON.parse(content[i]);
+                            } catch (e) {
+                                cn = {text: content[i]};
+                            }
+                            var setx = cn;
+                            setx["width"] = "auto";
+                            delete cn.width;
+                            delete cn.textAlign;
                             if (prev_span != "")
                                 setx["layoutData"] = new sap.ui.layout.GridData({span: prev_span});
+
 
                             cnt.push(new sap.m.Label(setx));
                         }
                         else if (typeof content[i] === "string" && content[i].startsWith("@")) {
-                            var setx = {text: content[i].substr(1), textAlign: sap.ui.core.TextAlign.Right};
+                            var setx = {text: content[i].substr(1), /* textAlign: sap.ui.core.TextAlign.Right*/};
+                            var cn = {};
+                            try {
+                                cn = JSON.parse(content[i].substr(1));
+
+                            } catch (e) {
+                                cn = {text: content[i].substr(1)};
+                            }
+
+                            var setx = cn;
                             if (prev_span != "")
                                 setx["layoutData"] = new sap.ui.layout.GridData({span: prev_span});
+                            setx["width"] = "auto";
+                            delete cn.width;
+                            delete cn.textAlign;
                             cnt.push(new sap.m.Text(setx));
                         }
-                        else if (typeof content[i] === "string" && content[i].startsWith("#"))
+                        else if (typeof content[i] === "string" && content[i].startsWith("#")) {
                             cnt.push(new sap.ui.core.Title({text: content[i].substr(1)}));
-                        else
+                        } else {
+                            if (typeof content[i].setWidth == "function")
+                                content[i].setWidth("auto");
                             cnt.push(content[i]);
+                        }
                         // if (cnt[cnt.length - 1].getLayoutData() != undefined)
                         //     prev_span = cnt[cnt.length - 1].getLayoutData().getSpan();
                         // else prev_span = "";
@@ -744,8 +940,8 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
 
                     for (var i in qv.mLctb.cols) {
                         var f = sap.ui.model.FilterOperator.Contains;
-                        if (qv.mLctb.cols[i].getMUIHelper().data_type == "NUMBER")
-                            f = sap.ui.model.FilterOperator.EQ;
+                        // if (qv.mLctb.cols[i].getMUIHelper().data_type == "NUMBER")
+                        //     f = sap.ui.model.FilterOperator.EQ;
                         if (flcol.indexOf(qv.mLctb.cols[i].mColName) > -1)
                             flts.push(new sap.ui.model.Filter({
                                 path: qv.mLctb.cols[i].mColName,
@@ -762,7 +958,9 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     var filter = new sap.ui.model.Filter(f, false);
                     var binding = lst.getBinding("rows");
                     binding.filter(filter);
-
+                    setTimeout(function () {
+                        qv.colorRows();
+                    });
                 }
                 ,
                 parseDefaultValue: function (vl) {
@@ -1116,6 +1314,24 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
 
                 }
                 ,
+                getInsertRowStringByObj: function (tblName, colValues) {
+                    var sett = sap.ui.getCore().getModel("settings").getData();
+                    var sdf = new simpleDateFormat(sett["ENGLISH_DATE_FORMAT"]);
+
+                    var sq1 = "insert into " + tblName;
+                    var sq2 = "";
+                    var sq3 = "";
+
+                    for (var key in colValues) {
+                        // if (mLctb.getColPos(key) < 0) {
+                        sq2 += (sq2.length > 0 ? "," : "") + key;
+                        sq3 += (sq3.length > 0 ? "," : "") + Util.nvl(colValues[key], 'null');
+                    }
+                    // sq3 = mLctb.parseColValues(sq3, rowno, sett);
+                    return sq1 + "(" + sq2 + ") values (" + sq3 + ")";
+
+                },
+
                 showErrorNoVal: function (obj, msg) {
                     var ob = [];
                     var fnd = 0;
@@ -1144,6 +1360,14 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         }, 100);
                     }
                     return fnd;
+                },
+                errorObj: function (obj, tm) {
+                    setTimeout(function () {
+                        obj.addStyleClass("errBack");
+                        setTimeout(function () {
+                            obj.removeStyleClass("errBack");
+                        }, Util.nvl(tm, 10000));
+                    }, 100);
                 }
                 ,
                 openForm: function (frag, frm, ocAdd, view, app) {
@@ -1153,7 +1377,10 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             getView:
                                 function () {
                                     return view;
-                                }
+                                },
+                            getForm: function () {
+                                return frm;
+                            }
                         };
                     if (ocAdd != undefined)
                         for (var xx in ocAdd)
@@ -1167,16 +1394,23 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                 }
                 ,
 
-                doSearch: function (event, sql, obj, fnAfter, tit) {
+                doSearch: function (event, sql, obj, fnAfter, tit, obj2) {
                     if (event != undefined
                         && (event.getParameters().clearButtonPressed
                             || event.getParameters().refreshButtonPressed)) {
                         UtilGen.setControlValue(obj, "", "", true);
+                        if (obj2 != undefined)
+                            UtilGen.setControlValue(obj, "", "", true);
                         return;
                     }
 
                     Util.showSearchList(sql, "TITLE", "CODE", function (valx, val) {
-                        UtilGen.setControlValue(obj, val, valx, true);
+                        if (obj2 == undefined)
+                            UtilGen.setControlValue(obj, val, valx, true);
+                        else {
+                            UtilGen.setControlValue(obj, valx, valx, true);
+                            UtilGen.setControlValue(obj2, val, val, true);
+                        }
                         if (fnAfter != undefined)
                             fnAfter();
                     }, tit);
@@ -1214,14 +1448,20 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
 
                     if (txt == "")
                         return;
-                    var txt2 = txt;
+                    var txt2 = txt.trim();
                     var cm = txt2.split(" ")[0].toUpperCase();
-                    var pms = txt2.substring(txt2.indexOf(" ") + 1).trim();
+                    var pms = (txt2.indexOf(" ") <= -1 ? "" : txt2.substring(txt2.indexOf(" ") + 1).trim());
                     // cmdData
                     if (view != undefined && view.cmdData != undefined && view.cmdData.length > 0)
                         for (var i in view.cmdData)
-                            if (view.cmdData[i].COMMAND.toUpperCase() == cm)
-                                txt2 = view.cmdData[i].EXEC_LINE + (pms.length > 0 ? " " : "") + pms;
+                            if (view.cmdData[i].COMMAND.toUpperCase() == cm) {
+                                var cmd = view.cmdData[i].EXEC_LINE;
+                                cmd = cmd.replaceAll('**', ':');
+                                cmd = cmd.replaceAll('*.', "'");
+                                cmd = cmd.replaceAll(/\\n/g, '\n');
+                                txt2 = cmd + (pms.length > 0 ? " " : "") + pms;
+
+                            }
                     if (txt2.toLowerCase().startsWith("main")) {
                         view.app.toDetail(view.pg, "slide");
                         return;
@@ -1230,9 +1470,58 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         view.loadData();
                         return;
                     }
+                    if (txt2.toLowerCase().startsWith("show_list")) {
+                        view.show_list_cmd(txt2);
+                        return;
+                    }
+                    if (txt2.toLowerCase().startsWith("alert")) {
+                        Util.AlertSettings.cmdAlert(txt2);
+                        return;
+                    }
                     if (!txt2.startsWith("#") && !txt2.startsWith("http")) {
-                        UtilGen.cmdOpenForm(txt2, view, obj, pg1);
+                        var tokens = txt2.split(" ");
+                        var openNew = false;
+                        var formnm = "";
+                        var formtit = "";
+                        for (var i in tokens) {
+                            if (i == 0) {
+                                formnm = tokens[i];
+                                continue;
+                            }
+                            if (tokens[i].split("=")[0] == "formTitle")
+                                formtit = tokens[i].split("=")[1];
 
+                            if (tokens[i].split("=")[0] == "openNew" && tokens[i].split("=")[1] == "true")
+                                openNew = true;
+                        }
+                        if (openNew)
+                            UtilGen.cmdOpenForm(txt2, view, obj, pg1);
+                        else {
+                            if (UtilGen.getIndexByKey(view.lstPgs, formnm) != undefined || UtilGen.getIndexByKey(view.lstPgs, "bin.forms." + formnm) != undefined) {
+                                if (formnm == UtilGen.getControlValue(view.lstPgs))
+                                    return;
+                                if (sap.m.MessageBox == undefined)
+                                    jQuery.sap.require("sap.m.MessageBox");
+                                sap.m.MessageBox.confirm("Already form is opened, Open new " + Util.nvl(formtit, formnm) + " again ?  ", {
+                                    title: "Confirm",                                    // default
+                                    onClose: function (oAction) {
+                                        if (oAction == sap.m.MessageBox.Action.YES) {
+                                            UtilGen.cmdOpenForm(txt2, view, obj, pg1);
+                                        }
+                                        if (oAction == sap.m.MessageBox.Action.NO) {
+                                            UtilGen.setControlValue(view.lstPgs, formnm);
+                                            view.lstPgs.fireSelectionChange();
+                                        }
+                                    },                                       // default
+                                    actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
+                                    emphasizedAction: sap.m.MessageBox.Action.NO,
+                                    styleClass: "",                                      // default
+                                    initialFocus: sap.m.MessageBox.Action.NO, // default
+                                    textDirection: sap.ui.core.TextDirection.Inherit     // default
+                                });
+                            } else
+                                UtilGen.cmdOpenForm(txt2, view, obj, pg1);
+                        }
                         return;
                     }
                 }
@@ -1250,6 +1539,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         }
                         var tkn = tokens[i].split("=");
                         dtx[tkn[0]] = tkn[1];
+
                     }
                     // validate the command and setting default values .......
                     // opening form
@@ -1279,6 +1569,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         con = new sap.m.Page({showHeader: false, content: []});
                         dlg = new sap.m.Popover({
                             title: "",
+                            showTitle: false,
                             showHeader: false,
                             contentHeight: height,
                             contentWidth: width,
@@ -1295,6 +1586,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             if (!(i == "formType" || i == "formName" || i == "formSize" || i == "formModal"))
                                 pms[i] = dtx[i];
 
+
                         var sp = undefined;
                         try {
                             sp = UtilGen.openForm(dtx.formName, con, pms, view);
@@ -1307,6 +1599,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
 
                         if (sp == undefined)
                             try {
+
                                 sp = UtilGen.openForm("bin.forms." + dtx.formName, con, pms, view);
                             }
                             catch (err) {
@@ -1325,11 +1618,16 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                                 return;
                             }
                             view.app.toDetail(view.pg, "show");
-                            that.loadData();
+                            if (sp.onWndClose != undefined)
+                                sp.onWndClose();
+                            // that.loadData();
+                            if (view.lstPgs.getItems().length == 1)
+                                that.show_main_menus();
                         };
                         if (dtx.formType != "page") {
                             UtilGen.clearPage(con);
                             con.addContent(sp);
+
                         }
                         if (dtx.formType == "page") {
                             if (con instanceof sap.m.Page) {
@@ -1340,7 +1638,10 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                                     view.destroyPage(con);
                                     sap.m.MessageToast.show("Removing this page..");
                                     view.app.toDetail(view.pg, "show");
-                                    view.loadData();
+                                    // view.loadData();
+                                    if (view.lstPgs.getItems().length == 1)
+                                        view.loadData_main();
+
                                 };
 
                             }
@@ -1354,7 +1655,9 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                                         view.destroyPage(pgx);
                                         sap.m.MessageToast.show("Removing this page..");
                                         view.app.toDetail(view.pg, "show");
-                                        view.loadData();
+                                        // view.loadData();
+                                        if (view.lstPgs.getItems().length == 1)
+                                            view.loadData_main();
                                     };
                                 }
                                 else {
@@ -1364,8 +1667,23 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
 
                             }
                         }
-                        else if (dtx.formType == "dialog") dlg.open();
-                        else if (dtx.formType == "popover") dlg.openBy(obj);
+                        else if (dtx.formType == "dialog") {
+                            dlg.open();
+                            dlg.attachBeforeClose(undefined, function () {
+
+                                if (sp.onWndClose != undefined)
+                                    sp.onWndClose();
+                            })
+                        }
+                        else if (dtx.formType == "popover") {
+                            dlg.openBy(obj);
+                            dlg.attachBeforeClose(undefined, function () {
+
+                                if (sp.onWndClose != undefined)
+                                    sp.onWndClose();
+                            })
+
+                        }
                     }
                 }
                 ,
@@ -1399,16 +1717,27 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     });
                     return vb;
                 },
-                toHTMLTableFromData: function (dtx11) {
+                toHTMLTableFromData: function (dtx11, pexcCols, fnHeaderAdd, fnDetailAdd) {
                     var h = "";
                     var hasSpan = false;
                     var tmpv1 = "", tmpv2 = "", hCol = "", classadd = "", styleadd = "";
-
+                    var excCols = Util.nvl(pexcCols, []);
                     var dtx = dtx11.data;
                     var mdtx = dtx11.metadata;
                     for (var x in mdtx) {
+                        if (excCols.indexOf(mdtx[x].colname) > -1)
+                            continue;
+
                         tmpv1 = mdtx[x].colname;
-                        tmpv2 = "\"text-align:Center\"";
+                        var tmp;
+                        if (fnHeaderAdd != undefined)
+                            tmp = fnHeaderAdd(tmpv1, tmpv2);
+
+                        if (tmp != undefined) {
+                            tmpv1 = Util.nvl(tmp.title, tmpv1);
+                            tmpv2 = Util.nvl(tmp.prop, "\"text-align:Center\"");
+                        }
+                        // tmpv2 = "\"text-align:Center\"";
                         h += "<th " + tmpv2 + ">" + Util.htmlEntities(tmpv1) + "</th>";
                     }
                     hCol = "<tr>" + hCol + "</tr>";
@@ -1419,14 +1748,235 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     for (var j in dtx) {
                         rs = "";
                         for (var x in mdtx) {
+                            if (excCols.indexOf(mdtx[x].colname) > -1)
+                                continue;
+                            var tmp;
                             var cv = dtx[j][mdtx[x].colname];
-                            rs += "<td" + classadd + styleadd + " > " + Util.nvl(Util.htmlEntities(cv), "") + "</td>";
+
+                            if (fnDetailAdd != undefined)
+                                tmp = fnDetailAdd(mdtx[x].colname, tmpv2, cv);
+
+                            if (tmp != undefined) {
+                                tmpv2 = Util.nvl(tmp.prop, "style=\"text-align:center\"");
+                                cv = Util.nvl(tmp.val, cv);
+                            }
+
+
+                            rs += "<td " + tmpv2 + " > " + Util.nvl(Util.htmlEntities(cv), "") + "</td>";
                         }
                         rows += "<tr>" + rs + "</tr>";
                     }
 
-                    return "<table>" + h + rows + "</table>";
-                }
+                    return "<table class='fl-table'>" + h + rows + "</table>";
+                },
+                showWorking: function (wnd, pstr) {
+                    if ($('#content').parent().find('.sapMMessageToast').length == 0)
+                        sap.m.MessageToast.show(Util.nvl(pstr + "..", "Working.."), {
+                            duration: 9999999,
+                            width: "15em",
+                            my: "center top",
+                            at: "top top",
+                            of: this.nvl(wnd, window),
+                            offset: "0 0",                    // default
+                            collision: "fit fit",            // default
+                            onClose: null,                   // default
+                            autoClose: false,                 // default
+                            animationTimingFunction: "ease", // default
+                            animationDuration: 1000,         // default
+                            closeOnBrowserNavigation: true   // default
+                        });
+                    var oMessageToastDOM = $('#content').parent().find('.sapMMessageToast');
+                    oMessageToastDOM.css('color', "maroon");
+                    oMessageToastDOM.css('background-color', "#00a4eb");
+                },
+                closeWorking: function (wndx) {
+                    var wnd = Util.nvl(wndx, window);
+                    var oMessageToastDOM = $('#content').parent().find('.sapMMessageToast');
+                    for (var i = 0; i < oMessageToastDOM.length; i++) {
+                        if (this.nvl(oMessageToastDOM[i].innerText, "").endsWith(".."))
+                            oMessageToastDOM[i].remove();
+                    }
+                },
+                Search: {
+                    do_quick_search: function (e, control, pSq, pSqGetTitle, titObj) {
+                        if (e.getParameters().clearButtonPressed || e.getParameters().refreshButtonPressed) {
+                            UtilGen.setControlValue(control, "", "", false);
+                            if (titObj != undefined)
+                                UtilGen.setControlValue(titObj, "", "", false);
+                            return;
+                        }
+                        // var control = this;
+                        var sq = pSq;
+                        Util.showSearchList(sq, "TITLE", "CODE", function (valx, val) {
+                            if (titObj == undefined)
+                                UtilGen.setControlValue(control, val, valx, false);
+                            else {
+                                UtilGen.setControlValue(control, valx, valx, false);
+                                UtilGen.setControlValue(titObj, val, val, false);
+                            }
+
+                            var vldtt = Util.execSQL(pSqGetTitle.replaceAll(":CODE", Util.quoted(valx)));
+                            if (vldtt.ret != "SUCCESS") {
+                                UtilGen.setControlValue(control, "", "", false);
+                                if (titObj != undefined)
+                                    UtilGen.setControlValue(titObj, "", "", false);
+                                return;
+                            }
+                            var vldt = JSON.parse("{" + vldtt.data + "}").data;
+                            var acn = vldt[0].CODE;
+                            var nm = vldt[0].TITLE;
+                            if (titObj == undefined)
+                                UtilGen.setControlValue(control, nm + "-" + acn, acn, false);
+                            else {
+                                UtilGen.setControlValue(control, acn, acn, false);
+                                UtilGen.setControlValue(titObj, nm, nm, false);
+                            }
+                        });
+                    },
+                    getLOVSearchField: function (sql, control, nullValid, titObj) {
+                        var vl = control.getValue();
+
+                        if (Util.nvl(nullValid, true) && Util.nvl(vl, "") == "") {
+                            if (titObj != undefined)
+                                UtilGen.setControlValue(titObj, "", "", false);
+                            return;
+                        }
+
+                        var nm = Util.getSQLValue(sql.replaceAll(":CODE", vl));
+                        if (titObj == undefined)
+                            UtilGen.setControlValue(control, vl + "-" + nm, vl, false);
+                        else {
+                            UtilGen.setControlValue(control, vl, vl, false);
+                            UtilGen.setControlValue(titObj, nm, nm, false);
+                        }
+                    }
+                },
+                Vouchers: {
+                    // validate for rv,pv,pvc,rvc
+
+                    validatePostedVocher: function (qry, sqlRow, rn) {
+                        var kf = qry.formview.getFieldValue("keyfld");
+                        var dt = Util.execSQL("select flag from acvoucher1 where keyfld=" + kf);
+                        if (dt.ret == "SUCCESS" && dt.data.length > 0) {
+                            var dtx = JSON.parse("{" + dt.data + "}").data;
+                            if (dtx.length > 0 && dtx[0].FLAG != undefined && dtx[0].FLAG != 1) {
+                                qry.formview.setFormReadOnly();
+                                FormView.err("This voucher is posted !");
+                            }
+
+
+                        }
+
+                    },
+                    validateTotDrTotCr: function (qry, sqlRow, rn) {
+                        var totcr = qry.formview.getFieldValue("totalcredit");
+                        var totdr = qry.formview.getFieldValue("totaldebit");
+                        if (totcr != undefined && totcr < 0)
+                            FormView.err("Total CREDIT cant be less than zero !");
+                        if (totcr != undefined && totcr == 0)
+                            FormView.err("Total Credit cant be zero !");
+                        if (totdr != undefined && totdr < 0)
+                            FormView.err("Total DEBIT cant be less than zero !");
+                        if (totdr != undefined && totdr == 0)
+                            FormView.err("Total DEBIT cant be zero !");
+                        if (totdr != undefined && totcr != undefined && totdr != totcr)
+                            FormView.err("Total DEBIT and CREDIT is not matched !");
+
+                    },
+                    validateFieldsBeforeSave: function (qry, sqlRow, rn) {
+
+
+                        var cc = qry.formview.getFieldValue("qry1.costcent");
+                        var cd = qry.formview.getFieldValue("qry1.code");
+                        var sm = qry.formview.getFieldValue("qry1.slsmn");
+
+                        if (Util.nvl(cc, "") != "") {
+                            var dt = Util.getSQLValue("select code from accostcent1 where code=" + Util.quoted(cc));
+                            if (Util.nvl(dt, "") == "") {
+                                UtilGen.errorObj(qry.formview.objs["qry1.costcent"].obj);
+                                FormView.err("Cost center not found !");
+                            }
+                        }
+                        if (Util.nvl(sm, "") != "") {
+                            var dt = Util.getSQLValue("select no from salesp where no=" + Util.quoted(sm));
+                            if (Util.nvl(dt, "") == "") {
+                                UtilGen.errorObj(qry.formview.objs["qry1.slsmn"].obj);
+                                FormView.err("Sales man not valid !");
+                            }
+                        }
+
+                        if (Util.nvl(cd, "") != "") {
+                            var dt = Util.getSQLValue("select accno from acaccount where childcount=0 and flag=1 and accno=" + Util.quoted(cd));
+                            if (Util.nvl(dt, "") == "") {
+                                UtilGen.errorObj(qry.formview.objs["qry1.code"].obj);
+                                FormView.err("Bank/cash not valid !");
+                            }
+                        }
+
+
+                    },
+                    getNewKF: function (qry, sqlRow, rn) {
+                        if (qry.name == "qry1" && qry.status == FormView.RecordStatus.NEW) {
+                            var kfld = Util.getSQLValue("select nvl(max(keyfld),0)+1 from acvoucher1");
+                            qry.formview.setFieldValue("qry1.keyfld", kfld, kfld, true);
+                            qry.formview.setFieldValue("pac", qry.formview.getFieldValue("keyfld"));
+                        }
+                    },
+                    validateDetails: function (qry, sqlRow, rowno) {
+                        if (qry.name == "qry2") {
+                            var ld = qry.obj.mLctb;
+                            var chld = Util.getSQLValue("select childcount from acaccount where accno=" + Util.quoted(ld.getFieldValue(rowno, "ACCNO")));
+                            if (chld == undefined || (typeof chld == "string" && chld == "") || chld > 0)
+                                FormView.err(ld.getFieldValue(rowno, "ACCNO") + " not a valid a/c !");
+
+                            if (Util.nvl(ld.getFieldValue(rowno, "COSTCENT"), "") != "") {
+                                var chld = Util.getSQLValue("select code from accostcent1 where CODE=" + Util.quoted(ld.getFieldValue(rowno, "COSTCENT")));
+                                if (chld == undefined || (typeof chld == "string" && chld == ""))
+                                    FormView.err(ld.getFieldValue(rowno, "COSTCENT") + " not a valid COST CENTER ! ");
+                            }
+                        }
+                    },
+                    formLoadData: function (frag) {
+
+                        frag.oController.status = Util.nvl(frag.oController.status, 'new');
+                        frag.frm.readonly = Util.nvl(frag.oController.readonly, false);
+
+                        if (frag.frm.readonly)
+                            frag.oController.status = "view";
+
+
+                        if (frag.oController.nolist)
+                            frag.frm.cmdButtons.cmdList.setVisible(false);
+
+                        if (frag.oController.readonly) {
+                            frag.frm.cmdButtons.cmdNew.setVisible(false);
+                            frag.frm.cmdButtons.cmdEdit.setVisible(false);
+                            frag.frm.cmdButtons.cmdDel.setVisible(false);
+                        }
+
+                        if (frag.oController.status != FormView.RecordStatus.NEW) {
+                            frag.frm.setFieldValue('pac', Util.nvl(frag.oController.keyfld), "");
+                            frag.frm.setQueryStatus(undefined, frag.oController.status);
+                        } else {
+                            frag.frm.setFieldValue('pac', Util.nvl(frag.qryStr), "");
+                            frag.frm.setQueryStatus(undefined, Util.nvl(frag.oController.status, FormView.RecordStatus.NEW));
+                        }
+                        if (frag.qryStr != "")
+                            frag.frm.loadData(undefined, frag.oController.status);
+
+                    }
+                },
+                setFormTitle: function (frm, tit, mainPage) {
+                    if (typeof frm.getParent != "undefined" && (frm.getParent() instanceof sap.m.Dialog))
+                        frm.getParent().setTitle(tit);
+                    else {
+                        mainPage.setShowHeader(true);
+                        mainPage.setTitle(tit);
+                    }
+
+
+                },
+
             }
         ;
 

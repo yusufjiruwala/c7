@@ -65,6 +65,7 @@ public class utils {
 	public static final String FORMAT_MONEY = "#,##0.000;(#,##0.000)";
 	public static final String FORMAT_QTY = "#,##0.##;(#,##0.##)";
 	public static final String FORMAT_SHORT_DATE = "dd/MM/yyyy";
+	public static final String FORMAT_SHORT_DATE_TIME = "dd/MM/yyyy HH:m:s";
 
 	public static final String O1_1 = "expand=0.4";
 	public static final String O1_2 = "expand=3.6";
@@ -743,7 +744,7 @@ public class utils {
 	}
 
 	public static String getOraDateValue(Timestamp dt) {
-		return "to_date('" + (new SimpleDateFormat(FORMAT_SHORT_DATE)).format(dt) + "','DD/MM/RRRR')";
+		return "to_date('" + (new SimpleDateFormat(FORMAT_SHORT_DATE_TIME)).format(dt) + "','DD/MM/RRRR hh24:MI:SS')";
 	}
 
 	public static String getOraDateValue(Date dt) {
@@ -1026,7 +1027,7 @@ public class utils {
 			tmp1 += "null";
 		else {
 			tmp1 += ((val instanceof Number) ? nvl(val, "null") + ""
-					: "\"" + StringEscapeUtils.escapeJson(nvl(val, ""))+"\"");
+					: "\"" + StringEscapeUtils.escapeJson(nvl(val, "")) + "\"");
 
 //			tmp1 += ((val instanceof Number) ? nvl(val, "null") + ""
 //					: "\"" + decodeEscape(StringEscapeUtils.escapeJson((nvl(val, "").replaceAll("\"", ""))) + "\""));
@@ -1082,6 +1083,7 @@ public class utils {
 			return "";
 		String ret = "", met = "";
 		String tmp1 = "", cn = "";
+		SimpleDateFormat ssf=new SimpleDateFormat("MM/dd/yyyy hh.mm.ss");
 		ResultSetMetaData rsm = rs.getMetaData();
 		for (int i = 0; i < rsm.getColumnCount(); i++) {
 			tmp1 = getJSONStr("colname", rsm.getColumnName(i + 1), false);
@@ -1103,7 +1105,10 @@ public class utils {
 			tmp1 = "";
 			for (int i = 0; i < rsm.getColumnCount(); i++) {
 				cn = rsm.getColumnName(i + 1);
-				Object vl = (isNumber(rsm.getColumnType(i + 1)) ? Double.valueOf(rs.getDouble(cn)) : rs.getString(cn));
+				
+				Object vl = (rs.getObject(cn)!=null && isNumber(rsm.getColumnType(i + 1)) ? Double.valueOf(rs.getDouble(cn)) : 
+					rs.getObject(cn)!=null && isDateTime(rsm.getColumnType(i + 1))?ssf.format(rs.getTimestamp(cn)):rs.getString(cn));
+//					rs.getString(cn));
 				tmp1 += (tmp1.length() == 0 ? "" : ",") + getJSONStr(cn, vl, false);
 			}
 			ret += (ret.length() == 0 ? "" : ",") + "{" + tmp1 + "}";
@@ -1122,6 +1127,14 @@ public class utils {
 
 	public static boolean isNumber(int datatype) {
 		if (datatype == 19 || datatype == 9 || datatype == 2) {
+			return true;
+		}
+		return false;
+
+	}
+	
+	public static boolean isDateTime(int datatype) {
+		if (datatype == 91 || datatype == 92 || datatype == 93) {
 			return true;
 		}
 		return false;
@@ -1307,6 +1320,30 @@ public class utils {
 		String b4_str = str.substring(0, startIndex + str_after.length());
 
 		return b4_str + str_insert + str.substring(b4_str.length() + 1, str.length());
+	}
+
+	public static double insertNotify(Connection con, String usr, String type_of, String descr, String cmd)
+			throws Exception {
+		String sq = "insert into c7_notify (keyfld,type_of,posted_by,touser,descr,posted_time,cmd) "
+				+ " values (:keyfld , :type_of , :posted_by , :touser ,:descr,:posted_time,:cmd) ";
+		String kf = utils.getSqlValue("select nvl(max(keyfld),0)+1 from c7_notify ", con);
+		QueryExe qe = new QueryExe(sq, con);
+		qe.setParaValue("keyfld", kf);
+		qe.setParaValue("type_of", type_of);
+		qe.setParaValue("posted_by", usr);
+		qe.setParaValue("touser", usr);
+		qe.setParaValue("descr", descr);
+		qe.setParaValue("cmd", cmd);
+		qe.setParaValue("posted_time", new Date(System.currentTimeMillis()));
+		qe.execute();
+		qe.close();
+		return Double.parseDouble(kf);
+	}
+	public static void readNotify(Connection con, double kfld) throws SQLException {
+		String sq="update c7_notify set flag=2 where keyfld="+kfld;
+		con.setAutoCommit(false);
+		utils.execSql(sq, con);
+		con.commit();		
 	}
 
 }

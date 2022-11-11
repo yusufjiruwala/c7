@@ -7,6 +7,7 @@ sap.ui.jsfragment("bin.forms.lg.SO", {
         this.view = oController.getView();
         this.qryStr = oController.qryStr;
         this.qryStrPO = oController.qryStrPO;
+
         this.qryStrSP = Util.nvl(oController.qryStrSP, "");
         this.pgPO = new sap.m.Page({
             showHeader: false

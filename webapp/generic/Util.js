@@ -865,7 +865,7 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 return (s == "AR" ? this.nvl(otStr, enStr) : enStr);
 
             },
-            showSearchTable: function (sql, container, flcol, fnOnselect, multiSelect, ppms) {
+            showSearchTable: function (sql, container, pflcol, fnOnselect, multiSelect, ppms, dta, jsCmd) {
 
                 if (container instanceof sap.m.VBox)
                     container.removeAllItems();
@@ -881,13 +881,14 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                         fnOnselect();
                     });
                 }
+                var flcol = pflcol;
                 var searchField = new sap.m.SearchField({
                     liveChange: function (event) {
                         var flts = [];
                         var val = event.getParameter("newValue");
                         for (var i in qv.mLctb.cols) {
                             if (flcol != undefined && flcol.indexOf(qv.mLctb.cols[i].mColName) > -1) {
-                                if (qv.mLctb.cols[i].getMUIHelper().data_type == "string")
+                                if (qv.mLctb.cols[i].getMUIHelper().data_type == "STRING")
                                     flts.push(new sap.ui.model.Filter({
                                         path: qv.mLctb.cols[i].mColName,
                                         operator: sap.ui.model.FilterOperator.Contains,
@@ -919,10 +920,35 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                     container.addHeaderContent(searchField);
                 var dat = {};
                 if (!sql.startsWith("@"))
-                    dat = this.execSQL(sql);
+                    dat = (dta != undefined ? dta : this.execSQL(sql));
                 else dat = Util.getRowData(sql);
-                if (dat.ret == "SUCCESS" && dat.data.length > 0) {
-                    qv.setJsonStr("{" + dat.data + "}");
+                if (dta != undefined || (dat.ret == "SUCCESS" && dat.data.length > 0)) {
+                    if (dta == undefined) {
+                        // qv.setJsonStr("{" + dat.data + "}");
+                        qv.setJsonStrMetaData("{" + dat.data + "}");
+                        var ld = qv.mLctb;
+                        if (jsCmd != undefined && jsCmd.length > 0)
+                            for (var gi in jsCmd) {
+                                if (jsCmd[gi].hasOwnProperty("general"))
+                                    continue;
+                                var cn = Object.keys(jsCmd[gi])[0];
+                                var prop = jsCmd[gi][cn];
+                                for (var pp in prop) {
+                                    if (pp == "display_format") {
+                                        var c = ld.getColPos(cn);
+                                        ld.cols[c].getMUIHelper().display_format = prop[pp];
+                                    }
+                                    if (pp == "hide") {
+                                        var c = ld.getColPos(cn);
+                                        ld.cols[c].mHideCol = prop[pp];
+                                    }
+                                }
+                            }
+                        qv.mLctb.parse("{" + dat.data + "}", true);
+                    }
+                    else
+                        qv.mLctb = dta;
+
                     if (ppms != undefined && ppms.parent != "") {
                         qv.mColCode = ppms.code;
                         qv.mColName = ppms.name;
@@ -950,6 +976,14 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                     }
                     qv.getControl().setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
                     qv.getControl().setFirstVisibleRow(0);
+
+                    if (flcol == undefined) {
+                        flcol = [];
+                        for (var ci in qv.mLctb.cols)
+                            flcol.push(qv.mLctb.cols[ci].mColName);
+
+                    }
+
                     return qv;
                 }
 
@@ -1064,9 +1098,23 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 }
                 return "";
             },
-            show_list: function (sql, cols, retCols, fnSel, width, height, visibleRowCount, multiSelect, fnShowSel, ppms) {
+            show_list: function (sql, cols, retCols, pfnSel, width, height, visibleRowCount, multiSelect, fnShowSel, pppms, dta, jsCmd) {
                 // var vbox = new sap.m.VBox({width: "100%"});
                 var vbox = new sap.m.Page({showHeader: true});
+                var ppms = Util.nvl(pppms, undefined);
+                var fnSel = Util.nvl(pfnSel, undefined);
+                if (jsCmd != undefined && jsCmd.length > 0)
+                    for (var gi in jsCmd) {
+                        if (jsCmd[gi].hasOwnProperty("general") && jsCmd[gi].general.hasOwnProperty("parentCol")) {
+                            ppms = Util.nvl(ppms, {});
+                            ppms.code = jsCmd[gi].general.parentCol.code;
+                            ppms.name = jsCmd[gi].general.parentCol.name;
+                            ppms.parent = jsCmd[gi].general.parentCol.parent;
+                        }
+                        // if (jsCmd[gi].hasOwnProperty("general") && typeof jsCmd[gi].general.onSelect == "function")
+                        //     fnSel = jsCmd[gi].general.onSelect;
+                    }
+
                 var dlg = new sap.m.Dialog({
                     content: [vbox],
                     contentHeight: this.nvl(height, "500px"),
@@ -1094,26 +1142,37 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                             var odata = qv.getControl().getContextByIndex(sl[0]);
                             data = (odata.getProperty(odata.getPath()))
                         }
+                        if (jsCmd != undefined && jsCmd.length > 0)
+                            for (var gi in jsCmd) {
+                                if (jsCmd[gi].hasOwnProperty("general") && jsCmd[gi].general.hasOwnProperty("onSelect")) {
+                                    var ons = jsCmd[gi].general.onSelect.replaceAll("^^", ";");
+                                    for (var di in data)
+                                        ons = ons.replaceAll("%%" + di, data[di]);
+                                    if (eval(ons)) {
+                                        dlg.close();
+                                        return;
+                                    }
+                                }
 
-                        if (fnSel(data))
+                            }
+                        if (fnSel(data, sl[0]))
                             dlg.close();
                     }
                 });
-
                 var qv = this.showSearchTable(sql, vbox, cols, function () {
                     if (Util.nvl(multiSelect, false) == false) {
                         sap.m.MessageToast.show("selected !");
                         btn.firePress();
                     }
-                }, Util.nvl(multiSelect, false), ppms);
+                }, Util.nvl(multiSelect, false), ppms, dta, jsCmd);
 
                 qv.getControl().addStyleClass("noColumnBorder");
-                if (visibleRowCount != undefined) {
-                    qv.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
-                    qv.getControl().setVisibleRowCount(this.nvl(visibleRowCount, 6));
-                }
+                // if (visibleRowCount != undefined) {
+                //     qv.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
+                //     qv.getControl().setVisibleRowCount(this.nvl(visibleRowCount, 6));
+                // }
 
-                if (qv == null) return
+                if (qv == null) return;
 
 
                 // fnShowSel purpose:  to locate records which is known to be selected.
@@ -1158,12 +1217,29 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 return ((Util.nvl(vl, "") + "").trim().length == 0 ? true : false);
             },
             getWord: function (str, no) {
-                var sp = str.split(' ');
+
+                // var sp = str.match(/\w+/g);
+                var sp = str.match(/[\w;;=\"\',:<>.()&{}|^%]+/gm);
+
+//                var sp = str.split(' ');
                 if (no > sp.length || no < 1)
                     return '';
                 return sp[no - 1];
             },
+            getFromWord: function (str, no) {
+
+                var sp = str.match(/[\w;;=\"\',:<>.()&{}+-|^%]+/gm);
+
+//                var sp = str.split(' ');
+                if (no > sp.length || no < 1)
+                    return '';
+                var ss = "";
+                for (var n = no - 1; n < sp.length; n++)
+                    ss += (ss.length > 0 ? " " : "") + sp[n];
+                return ss;
+            },
             // navigates by enter, ------- dontEnterFocus on object to not focus on pressing enter
+
             navEnter: function (flds, lastObjNext) {
                 if (flds == undefined || flds.length <= 0) return;
                 var fldsids = [];
@@ -1232,13 +1308,238 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 else
                     val = parseFloat("" + neg + val);
                 return val;
-            }
-        };
+            },
+            err: function (msg) {
+                sap.m.MessageToast.show(msg, {
+                    my: sap.ui.core.Popup.Dock.RightBottom,
+                    at: sap.ui.core.Popup.Dock.RightBottom
+                });
 
+                var oMessageToastDOM = $('#content').parent().find('.sapMMessageToast');
+                oMessageToastDOM.css('color', "red");
+                throw  msg;
+            },
+
+            Notifications: {
+                init: function (newNotificationInterval, sp, view) {
+                    this.newNotificationInterval = newNotificationInterval;
+                    this.sp = sp;
+                    this.lastKeyfldRead = 0;
+                    this.view = view;
+                },
+                checkNewNotifications: function () {
+                    var that = this;
+                    if (this.ntTimer != undefined)
+                        clearInterval(this.ntTimer);
+                    this.ntTimer = setInterval(function () {
+                        var sett = sap.ui.getCore().getModel("settings").getData();
+                        var n = that.sp.getNotificationsNumber();
+                        var dt = Util.execSQL("select nvl(count(*),0) cnts from c7_notify where flag=1 and keyfld>" + that.lastKeyfldRead + " and touser=" + Util.quoted(sett["LOGON_USER"]));
+                        if (dt.ret == "SUCCESS" && dt.data.length > 0) {
+                            var dtx = JSON.parse("{" + dt.data + "}").data;
+                            if (n != dtx[0].CNTS) {
+                                that.sp.setNotificationsNumber(dtx[0].CNTS + "");
+                                that.getNotificationData();
+                            }
+                        }
+                    }, this.newNotificationInterval);
+
+                },
+                getNotificationData: function () {
+                    var that = this;
+                    var sett = sap.ui.getCore().getModel("settings").getData();
+                    var dt = Util.execSQL("select *from c7_notify where flag=1 and keyfld>" +
+                        that.lastKeyfldRead +
+                        " and touser=" + Util.quoted(sett["LOGON_USER"]) +
+                        " order by keyfld desc"
+                    );
+
+                    if (dt.ret == "SUCCESS" && dt.data.length > 0) {
+
+                        if (that.notTable != undefined)
+                            that.notTable.resetData();
+                        that.notTable = new LocalTableData();
+                        that.notTable.parse("{" + dt.data + "}", false);
+                    }
+                },
+                showList: function (event, obj) {
+                    var that = this;
+
+                    if (this.notTable == undefined)
+                        return;
+                    if (this.notTable.rows.length <= 0)
+                        return;
+
+                    var lsgrp = new sap.m.NotificationListGroup({title: "Reports"});
+                    for (var i = 0; i < this.notTable.rows.length; i++) {
+                        var des = this.notTable.getFieldValue(i, "DESCR");
+                        var cmd = this.notTable.getFieldValue(i, "CMD");
+                        var si = new sap.m.NotificationListItem(
+                            {
+                                description: des + ",  " + cmd,
+                                customData: {key: i},
+                                tap: function (event) {
+                                    // sap.m.MessageToast.show("Cliked");
+                                    var rn = this.getCustomData()[0].getKey();
+                                    var cmd = that.notTable.getFieldValue(rn, "CMD");
+                                    UtilGen.execCmd(cmd, that.view, that.view.txtExeCmd);
+                                },
+                                close: function (oEvent) {
+                                    var oItem = oEvent.getSource(),
+                                        oList = oItem.getParent();
+
+                                    oList.removeItem(oItem);
+
+                                    var rn = this.getCustomData()[0].getKey();
+                                    var kf = that.notTable.getFieldValue(rn, "KEYFLD");
+                                    Util.execSQL("update c7_notify set flag=2 where keyfld=" + kf);
+                                }
+                            });
+                        lsgrp.addItem(si);
+                    }
+                    var vb = new sap.m.VBox({items: [lsgrp]});
+                    var oPopover = new sap.m.Popover({
+                        title: "Parameters",
+                        showHeader: true,
+                        content: [vb],
+                        modal: false,
+                        footer: [],
+                        contentHeight: "350px",
+                        contentWidth: "350px",
+                        placement: sap.m.PlacementType.Auto
+                    }).addStyleClass("sapUiSizeCompact");
+                    oPopover.openBy(obj);
+
+                }
+
+
+            },
+            AlertSettings: {
+                init: function (view, timeInLong) {
+                    this.view = view;
+                    this.timeInLong = Util.nvl(timeInLong, (new Date()).getTime());
+                    this.titSpan = "XL2 L4 M4 S12";
+                    this.codSpan = "XL3 L2 M2 S12";
+                },
+                createView: function () {
+                    this.fe = [];
+                    this.set.keyfld = UtilGen.addControl(this.fe, "Key ID", sap.m.Input, "Set" + this.timeInLong + "_",
+                        {
+                            enabled: true,
+                            layoutData: new sap.ui.layout.GridData({span: this.codSpan}),
+                        }, "string", undefined, this.view);
+                    this.set.username = UtilGen.addControl(this.fe, "@User Name", sap.m.Input, "Set" + this.timeInLong + "_",
+                        {
+                            enabled: true,
+                            layoutData: new sap.ui.layout.GridData({span: this.codSpan}),
+                        }, "string", undefined, this.view);
+
+                    this.set.setup_type = UtilGen.addControl(this.fe, "Setup Type", sap.m.ComboBox, "Set" + this.timeInLong + "_",
+                        {
+                            enabled: true,
+                            layoutData: new sap.ui.layout.GridData({span: this.codSpan}),
+                            customData: [{key: ""}],
+                            items: {
+                                path: "/",
+                                template: new sap.ui.core.ListItem({text: "{NAME}", key: "{CODE}"}),
+                                templateShareable: true
+                            },
+                            value: "ACACCOUNT"
+                        }, "string", undefined, this.view, undefined, "@ACACCOUNT/ACACCOUNT,JV_NEW/JV_NEW");
+
+                    this.set.condition_str = UtilGen.addControl(this.fe, "Condition Str", sap.m.Input, "Set" + this.timeInLong + "_",
+                        {
+                            enabled: true,
+                            layoutData: new sap.ui.layout.GridData({span: this.codSpan}),
+                        }, "string", undefined, this.view);
+                },
+                cmdAlert: function (txt, showSuccessMsg) {
+                    var sett = sap.ui.getCore().getModel("settings").getData();
+                    var usr = Util.quoted(sett["LOGON_USER"]);
+                    if (!txt.trim().startsWith("alert"))
+                        Util.err("must starts with 'alert' keyword !");
+                    var w2 = Util.getWord(txt, 2);
+                    if (!(w2 == "create" || w2 == "modify"))
+                        Util.err("must have keyword create / modify ");
+                    if (w2 == "create") {
+                        var cond_str = "", set_typ = "";
+                        var w3 = Util.getFromWord(txt, 3);
+                        w3 == "" ?
+                            Util.err("must specfiy parameters setup_type, condition_str!") : "";
+                        var sp = w3.split(";;");
+                        for (var i in sp) {
+                            var sp2 = sp[i].split(":=");
+                            if (sp2[0] == "condition_str")
+                                cond_str = sp2[1];
+                            if (sp2[0] == "setup_type")
+                                set_typ = sp2[1];
+                        }
+                        if (cond_str == "" || set_typ == "")
+                            Util.err("Err! , parameter not assigned setup_type/condition_str");
+                        var delsq = "delete from c7_notify_setup where usernm=:USERNM and " +
+                            " setup_type=:SETUP_TYPE AND " +
+                            " CONDITION_STR=:CONDITION_STR; ";
+                        var sq = "insert into c7_notify_setup ( " +
+                            "KEYFLD, USERNM, POS, SETUP_TYPE," +
+                            " TYPE_PARA_1, TYPE_PARA_2, TYPE_PARA_3, " +
+                            "CONDITION_STR, FLAG, CREATED_BY, CREATED_TIME, " +
+                            "MODIFIED_TIME, LAST_NOTIFIED_TIME, CMD ) values (" +
+                            ":KEYFLD, :USERNM, :POS, :SETUP_TYPE," +
+                            " :TYPE_PARA_1, :TYPE_PARA_2, :TYPE_PARA_3, " +
+                            ":CONDITION_STR, 1, :CREATED_BY, :CREATED_TIME, " +
+                            ":MODIFIED_TIME, :LAST_NOTIFIED_TIME, :CMD );";
+                        sq = "begin " + delsq + sq + " end; ";
+
+                        sq = sq.replaceAll(":KEYFLD", "(SELECT NVL(MAX(KEYFLD),0)+1 FROM c7_notify_setup )");
+                        sq = sq.replaceAll(":USERNM", usr);
+                        sq = sq.replaceAll(":POS", "(SELECT NVL(MAX(POS),0)+1 FROM c7_notify_setup WHERE USERNM=" + usr + ")");
+                        sq = sq.replaceAll(":SETUP_TYPE", Util.quoted(set_typ));
+                        sq = sq.replaceAll(":TYPE_PARA_1", "''");
+                        sq = sq.replaceAll(":TYPE_PARA_2", "''");
+                        sq = sq.replaceAll(":TYPE_PARA_3", "''");
+                        sq = sq.replaceAll(":CONDITION_STR", Util.quoted(cond_str));
+                        sq = sq.replaceAll(":CREATED_BY", Util.quoted(sett["LOGON_USER"]));
+                        sq = sq.replaceAll(":CREATED_TIME", "sysdate");
+                        sq = sq.replaceAll(":MODIFIED_TIME", "sysdate");
+                        sq = sq.replaceAll(":LAST_NOTIFIED_TIME", "sysdate");
+                        sq = sq.replaceAll(":CMD", "''");
+                        try {
+                            var dt = Util.execSQL(sq);
+                            if (dt.ret != "SUCCESS")
+                                Util.err("Err executing sql " + dt.ret);
+                            Util.nvl(showSuccessMsg, true) ?
+                                sap.m.MessageToast.show("Alert created successfully !") : "";
+                        }
+                        catch (e) {
+                            Util.err(e);
+                        }
+
+                    }
+
+
+                },
+
+            },
+            printPdf: function (url) {
+
+                var iframe = this._printIframe;
+                if (!this._printIframe) {
+                    iframe = this._printIframe = document.createElement('iframe');
+                    document.body.appendChild(iframe);
+
+                    iframe.style.display = 'none';
+                    iframe.onload = function () {
+                        setTimeout(function () {
+                            iframe.focus();
+                            iframe.contentWindow.print();
+                        }, 1);
+                    };
+                }
+
+                iframe.src = url;
+            },
+        };
 
         return Util;
     });
-
-
-
 

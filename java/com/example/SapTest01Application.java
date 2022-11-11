@@ -1,7 +1,8 @@
 package com.example;
 
+import java.io.File;
+
 import org.apache.coyote.http11.AbstractHttp11Protocol;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -13,6 +14,8 @@ import org.springframework.context.annotation.ComponentScan;
 
 import com.controller.InstanceInfo;
 import com.models.Batches;
+import com.models.Notifications;
+import com.models.RepBatch7;
 
 @ComponentScan({ "com.controller", "com.models" })
 @SpringBootApplication
@@ -20,8 +23,11 @@ public class SapTest01Application extends SpringBootServletInitializer {
 
 	private int maxUploadSizeInMb = 10 * 1024 * 1024; // 10 MB
 
-
 	private com.models.Batches batch = new Batches();
+
+	private com.models.RepBatch7 repBat7 = new RepBatch7();
+
+	private com.models.Notifications notifications = new Notifications();
 
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
@@ -29,7 +35,13 @@ public class SapTest01Application extends SpringBootServletInitializer {
 	}
 
 	public static void main(String[] args) {
+		System.out.println("Working Directory = " + System.getProperty("user.dir"));
 		SpringApplication.run(SapTest01Application.class, args);
+	}
+
+	@Bean
+	public Notifications getNotifications() {
+		return this.notifications;
 	}
 
 	@Bean
@@ -40,6 +52,11 @@ public class SapTest01Application extends SpringBootServletInitializer {
 	@Bean
 	public Batches getBatches() {
 		return batch;
+	}
+
+	@Bean
+	public RepBatch7 getRepBat7() {
+		return repBat7;
 	}
 
 	public TomcatEmbeddedServletContainerFactory tomcatEmbedded() {

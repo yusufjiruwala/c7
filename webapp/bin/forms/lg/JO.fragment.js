@@ -410,6 +410,7 @@ sap.ui.jsfragment("bin.forms.lg.JO", {
             ]
 
         });
+
         if (ord_type == "1") {
 
             this.addUptoDutyPaid(frmElements);

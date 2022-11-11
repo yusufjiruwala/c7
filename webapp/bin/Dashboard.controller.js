@@ -7,6 +7,9 @@ sap.ui.controller('bin.Dashboard', {
     onInit: function () {
         $('<div class=loadingDiv>Loading libraries</div>').prependTo(document.body);
         this.getView().addStyleClass(sap.ui.Device.support.touch ? "sapUiSizeCozy" : "sapUiSizeCompact");
+        // sap.m.TreeItemBase.prototype.ExpandedIconURI = sap.ui.core.IconPool.getIconURI("less");
+        // sap.m.TreeItemBase.prototype.CollapsedIconURI = sap.ui.core.IconPool.getIconURI("add");
+
     },
 
     /**

@@ -14,6 +14,8 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             this.cols = [];
             this.rows = [];
             this.masterRows = [];
+            this.cndFilter = "";
+
         }
 
         LocalTableData.RowStatus = {
@@ -22,6 +24,43 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             DELETED: "DELETED",
             QUERY: "QUERY",
         };
+
+        LocalTableData.prototype.showDataByCondition = function (pCnd, setCndFilter) {
+            var cnd = Util.nvl(pCnd, "");
+
+            //clearing rows variable
+            // // for (var i = 0; i < this.rows.length; i++)
+            // //     this.rows[i].cells = [];
+            // this.rows = [];
+            if (this.masterRows.length == 0) return;
+
+            // this.rows = this.masterRows.slice(0);
+            if (cnd == "") {
+                this.rows = this.masterRows.slice(0);
+                return;
+            }
+
+            this.rows = [...this.masterRows];
+            var rws = [];
+            for (var i = 0; i < this.rows.length; i++) {
+                var cmpval = this.parseValues(cnd, i);
+                var evald = false;
+                try {
+                    evald = eval(cmpval);
+                }
+                catch (err) {
+                }
+                if (evald) {
+                    rws.push(this.rows[i]);
+                }
+
+            }
+            this.rows = rws.slice(0);
+            if (Util.nvl(setCndFilter, false))
+                this.cndFilter = pCnd;
+
+        };
+
         LocalTableData.prototype.constructor = LocalTableData;
 
 
@@ -81,8 +120,10 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             var frmt = "";
             var dt;
             if (reFormat) {
+                if (Util.nvl(this.cndFilter, "") != "")
+                    this.showDataByCondition(this.cndFilter);
+
                 frmt = this.format();
-                //console.log(frmt);
                 dt = JSON.parse(frmt).data;
             } else {
                 dt = this.dataJson.data;

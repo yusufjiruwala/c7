@@ -17,6 +17,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -55,16 +56,34 @@ import com.generic.qryColumn;
 import com.generic.utils;
 import com.models.Batches;
 import com.models.Batches.UserReports;
+import com.models.RepBatch7;
 import com.tools.queries.QuickRepMetaData;
+import com.tools.utilities.BatchSqlJson;
 import com.tools.utilities.SQLJson;
+
+/**
+ * Main class for REST
+ * 
+ * @author yusufijiruwala
+ * @version 7.0.0
+ *
+ */
 
 @EnableAsync
 @RestController
 @Scope("session")
 public class UserRoute {
 
+	/**
+	 * servletContext path to access local path on server like temporary files,
+	 * report files.
+	 */
 	private String path = "";
 
+	/**
+	 * Session ID passed as each and every unique session from browser, which can be
+	 * used in database to store temporary reports.
+	 */
 	private String sessionId = "";
 
 	@Autowired
@@ -76,11 +95,21 @@ public class UserRoute {
 	@Autowired
 	private Batches batches;
 
+	@Autowired
+	private RepBatch7 repBat7;
+
+	@Autowired
+	private com.models.Notifications notifications;
+
 	private ResultSet lastRsSave = null;
 
 	private String saveQryPlsql = "";
 
 	private Timer saveQryTimer = new Timer(true);
+
+	public UserRoute() {
+
+	}
 
 	@RequestMapping("/connect")
 	public String connectDB() {
@@ -310,6 +339,153 @@ public class UserRoute {
 		}
 
 		return new ResponseEntity<SQLJson>(sql, HttpStatus.OK);
+	}
+
+	// -------repbat7 operations.
+	@RequestMapping(value = "/bat7addQry", method = RequestMethod.POST)
+	public ResponseEntity<BatchSqlJson> bat7addQry(@RequestBody BatchSqlJson sql,
+			@RequestParam Map<String, String> params) {
+		int rn = repBat7.addQry(instanceInfo, sql.getRepCode(), sql.getRepNo(), sql.getSql(), sql.getQrNo(), params);
+		if (rn >= 0)
+			sql.setRet("SUCCESS");
+		else
+			sql.setRet("ERROR");
+		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/bat7SaveToTemp", method = RequestMethod.POST)
+	public ResponseEntity<BatchSqlJson> bat7SaveRep(@RequestBody BatchSqlJson sql,
+			@RequestParam Map<String, String> params) {
+		boolean ret = repBat7.saveToTmp(instanceInfo, sql.getRepCode(), sql.getRepNo());
+		if (ret) {
+			sql.setRet("SUCCESS");
+		} else
+			sql.setRet("ERROR");
+		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/bat7exeTime", method = RequestMethod.POST)
+	public ResponseEntity<BatchSqlJson> bat7exeTime(@RequestBody BatchSqlJson sql,
+			@RequestParam Map<String, String> params) {
+		SimpleDateFormat sdf = new SimpleDateFormat(instanceInfo.getMmapVar().get("ENGLISH_DATE_FORMAT") + "HH:m:s");
+		Date dt = repBat7.getExeTime(instanceInfo, sql.getRepCode(), sql.getRepNo());
+		if (dt != null) {
+			sql.setRet("SUCCESS");
+			sql.setData(sdf.format(dt));
+		} else
+			sql.setRet("ERROR");
+		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/bat7getPara", method = RequestMethod.POST)
+	public ResponseEntity<BatchSqlJson> bat7getPara(@RequestBody BatchSqlJson sql,
+			@RequestParam Map<String, String> params) {
+		String ret = repBat7.getBatchParas(instanceInfo, sql.getRepCode(), sql.getRepNo());
+		RepBatch7.UserReports ur = repBat7.getMapUserReports().get(instanceInfo.getmOwner() + "."
+				+ instanceInfo.getmLoginUser() + "_" + sql.getRepCode() + "_" + sql.getRepNo());
+		if (ret.equals("") || ret == null) {
+			sql.setRet("ERROR");
+			ret = "";
+		} else
+			sql.setRet("SUCCESS");
+		sql.setData(ret);
+		if (ur != null)
+			sql.setWhereClause(ur.whereClause);
+
+		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/bat7getData", method = RequestMethod.POST)
+	public ResponseEntity<BatchSqlJson> bat7getData(@RequestBody BatchSqlJson sql,
+			@RequestParam Map<String, String> params) {
+		String ret = repBat7.getSqlData(instanceInfo, sql.getRepCode(), sql.getRepNo(), sql.getQrNo());
+		SimpleDateFormat sdf = new SimpleDateFormat(instanceInfo.getMmapVar().get("ENGLISH_DATE_FORMAT") + " HH:m:s");
+		if (ret.equals("") || ret == null) {
+			sql.setRet("ERROR");
+			ret = "";
+		} else {
+			sql.setRet("SUCCESS");
+			Date dt = repBat7.getExeTime(instanceInfo, sql.getRepCode(), sql.getRepNo());
+			sql.setP1(sdf.format(dt));
+		}
+
+		System.out.println("bat7getData =  repcode / " + sql.getRepCode() + " repNo / " + sql.getRepNo() + " qrno / "
+				+ sql.getQrNo());
+		sql.setData(ret);
+
+		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/bat7exeRep", method = RequestMethod.POST)
+	public ResponseEntity<BatchSqlJson> bat7exeRep(@RequestBody BatchSqlJson sql,
+			@RequestParam Map<String, String> params) {
+		RepBatch7.UserReports ur = repBat7.startThread(instanceInfo, sql.getRepCode(), sql.getRepNo());
+		if (ur != null) {
+			ur.reportTitle = sql.getP1();
+			ur.cmd = sql.getP2();
+			ur.whereClause = sql.getWhereClause();
+		}
+
+		sql.setRet("SUCCESS");
+		System.out.println("bat7exeRep =  repcode / " + sql.getRepCode() + " repNo /" + sql.getRepNo());
+		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/bat7ClrRep", method = RequestMethod.POST)
+	public ResponseEntity<BatchSqlJson> bat7ClrRep(@RequestBody BatchSqlJson sql,
+			@RequestParam Map<String, String> params) {
+
+		if (sql.getP1().equals("true"))
+			repBat7.saveToTmp(instanceInfo, sql.getRepCode(), sql.getRepNo());
+		String ret = repBat7.clearReport(instanceInfo, sql.getRepCode(), sql.getRepNo());
+
+		sql.setRet(ret);
+
+		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/bat7getStat", method = RequestMethod.POST)
+	public ResponseEntity<BatchSqlJson> bat7getStat(@RequestBody BatchSqlJson sql,
+			@RequestParam Map<String, String> params) {
+		String stat = repBat7.getStatus(instanceInfo, sql.getRepCode(), sql.getRepNo());
+		if (stat == null || stat.equals(""))
+			sql.setRet("ERROR");
+		else
+			sql.setRet("SUCCESS");
+		sql.setData(stat);
+		System.out.println("bat7getStat = " + stat + ", repcode / " + sql.getRepCode() + " repNo /" + sql.getRepNo());
+		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/bat7exeimmediate", method = RequestMethod.POST)
+	public ResponseEntity<BatchSqlJson> bat7exeim(@RequestBody BatchSqlJson sql,
+			@RequestParam Map<String, String> params) {
+		repBat7.addQry(instanceInfo, sql.getRepCode(), sql.getRepNo(), sql.getSql(), sql.getQrNo(), params);
+		repBat7.startThread(instanceInfo, sql.getRepCode(), sql.getRepNo());
+
+		try {
+			Thread.sleep(100);
+			System.out.println("Status : " + repBat7.getStatus(instanceInfo.getmOwner() + "."
+					+ instanceInfo.getmLoginUser() + "_" + sql.getRepCode() + "_" + sql.getRepNo()));
+
+			while (repBat7.getStatus(instanceInfo.getmOwner() + "." + instanceInfo.getmLoginUser() + "_"
+					+ sql.getRepCode() + "_" + sql.getRepNo()).equals(UserReports.STATUS_START)) {
+				System.out.println("sleep");
+				Thread.sleep(500);
+			}
+
+			System.out.println("Data:");
+			System.out.println(repBat7.getSqlData(instanceInfo, sql.getRepCode(), sql.getRepNo(), sql.getQrNo()));
+
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		sql.setData(repBat7.getSqlData(instanceInfo, sql.getRepCode(), sql.getRepNo(), sql.getQrNo()));
+		sql.setRet("SUCCESS");
+
+		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/sqlmetadata", method = RequestMethod.POST)
@@ -967,6 +1143,8 @@ public class UserRoute {
 		mp.put("COMPANY_SPECS", instanceInfo.getMmapVar().get("COMPANY_SPECS"));
 		mp.put("COMPANY_SPECSA", instanceInfo.getMmapVar().get("COMPANY_SPECSA"));
 		mp.put("COMPANY_LOGO", instanceInfo.getMmapVar().get("COMPANY_LOGO"));
+		mp.put("CURRENCY_FORMAT", instanceInfo.getMmapVar().get("FORMAT_MONEY_1"));
+		mp.put("DATE_FORMAT", instanceInfo.getMmapVar().get("ENGLISH_DATE_FORMAT"));
 		mp.put("SES_ID", instanceInfo.getMmapVar().get("SESSION_ID"));
 		// mp.forEach((key, value) -> System.out.println(key + ":" + value));
 		byte[] pdfFile = instanceInfo.storeReport(reportfile, mp, false);
@@ -1016,6 +1194,7 @@ public class UserRoute {
 		String ret = "";
 
 		if (ssql.toUpperCase().startsWith("SELECT")) {
+//			System.out.println(ssql);
 			rs = qe.executeRS();
 			this.lastRsSave = rs;
 			ret = utils.getJSONsqlMetaData(rs, con, "", "");
@@ -1083,22 +1262,21 @@ public class UserRoute {
 					String removingSql = "delete from temporary where idno=878787 and usernm='" + instanceInfo.sessionId
 							+ "_" + nm + "'";
 					tm.schedule(new TimerTask() {
-						
+
 						@Override
 						public void run() {
 							try {
-														
+
 								QueryExe.execute(removingSql, instanceInfo.getmDbc().getDbConnection());
 								instanceInfo.getmDbc().getDbConnection().commit();
-								System.out.println("Removing saved query "+nm);
+								System.out.println("Removing saved query " + nm);
 							} catch (SQLException e) {
 								e.printStackTrace();
 							}
-							
 
 						}
 					}, 600 * 1000);
-				} catch (SQLException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}

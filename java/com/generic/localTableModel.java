@@ -562,30 +562,46 @@ public class localTableModel implements TableModel, Serializable {
 		}
 	}
 
-	public void fetchData(int nextNos) throws SQLException {
+	public void parseSQL(String sql) throws SQLException {
+		dbclass.setSqlString(sql);
+		dbclass.parseStatment();
+
+	}
+
+	public void fetchData(int nextNos, boolean parse) throws SQLException {
 		int tmp = 0;
 		if (fetchSql.length() > 0) {
-			dbclass.setSqlString(fetchSql);
-			dbclass.parseStatment();
+			if (!parse) {
+				dbclass.setSqlString(fetchSql);
+				dbclass.parseStatment();
+			}
 			dbclass.executeStatment();
 			ResultSetMetaData rm = dbclass.getResultset().getMetaData();
 			cols = rm.getColumnCount();
 			qrycols.clear();
 			qrycols.addAll(dbclass.getColumnsList());
 			appendRows(dbclass.convertRows(filterStr));
-			dbclass.getStatment().close();
+			if (!parse)
+				dbclass.getStatment().close();
 			cursorNo = rows.size() - 1;
 		}
 	}
 
-	public void fetchData() throws SQLException {
-		fetchData(fetchrecs);
+	public void fetchData(boolean parse) throws SQLException {
+		fetchData(fetchrecs, parse);
 	}
 
 	public void executeQuery(String sq, boolean visibleAll) throws SQLException {
 		clearALl();
 		fetchSql = sq;
-		fetchData();
+		fetchData(false);
+		setAllColVisible(visibleAll);
+	}
+
+	public void executeQuery(String sq, boolean visibleAll, boolean parse) throws SQLException {
+		clearALl();
+		fetchSql = sq;
+		fetchData(parse);
 		setAllColVisible(visibleAll);
 	}
 
@@ -714,12 +730,11 @@ public class localTableModel implements TableModel, Serializable {
 		}
 		Object s = visibleColValue(r, columnIndex);
 		/*
-		 * if (visbleQrycols.get(columnIndex).getNumberFormat().length() > 0) {
-		 * if (s != null && ((dataCell) s).getValue() != null && ((dataCell)
-		 * s).getValue().toString().length() > 0) { s = (new
-		 * DecimalFormat(visbleQrycols
-		 * .get(columnIndex).getNumberFormat()).format
-		 * (Double.valueOf(((dataCell) s).getValue().toString()))); } }
+		 * if (visbleQrycols.get(columnIndex).getNumberFormat().length() > 0) { if (s !=
+		 * null && ((dataCell) s).getValue() != null && ((dataCell)
+		 * s).getValue().toString().length() > 0) { s = (new DecimalFormat(visbleQrycols
+		 * .get(columnIndex).getNumberFormat()).format (Double.valueOf(((dataCell)
+		 * s).getValue().toString()))); } }
 		 */
 		return s;
 	}
@@ -991,7 +1006,6 @@ public class localTableModel implements TableModel, Serializable {
 		applyDefaultCP(qc, false);
 	}
 
-	
 	public void applyDefaultCP(qryColumn qc, boolean recreate) {
 		ColumnProperty cp = qc.columnUIProperties;
 		if (cp == null || recreate)
@@ -1033,7 +1047,7 @@ public class localTableModel implements TableModel, Serializable {
 		for (int i = 0; i < getRowCount(); i++) {
 			dr = "";
 			for (qryColumn qc : visbleQrycols) {
-				if (qc.getColname()==null)
+				if (qc.getColname() == null)
 					continue;
 				vl = getFieldValue(i, qc.getColname());
 				if (qc.isDateTime())
