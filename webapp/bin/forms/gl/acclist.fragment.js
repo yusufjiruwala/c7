@@ -67,10 +67,10 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
             }
         });
         this.modeList = UtilGen.createControl(sap.m.ComboBox, this.view, "ord_type", {
-            customData: [{key: ""}],
+            customData: [{ key: "" }],
             items: {
                 path: "/",
-                template: new sap.ui.core.ListItem({text: "{NAME}", key: "{CODE}"}),
+                template: new sap.ui.core.ListItem({ text: "{NAME}", key: "{CODE}" }),
                 templateShareable: true
             },
             selectedKey: "acc",
@@ -89,94 +89,94 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
         });
 
         var tb = new sap.m.Toolbar({
-                content: [
-                    this.modeList,
-                    new sap.m.ToggleButton({
-                        icon: "sap-icon://graph",
-                        pressed: false,
-                        text: "Graph",
-                        press: function (e) {
-                            if (this.pressed)
-                                that2.hideGraphFooter();
-                            else
-                                that2.showGraphFooter();
+            content: [
+                this.modeList,
+                new sap.m.ToggleButton({
+                    icon: "sap-icon://graph",
+                    pressed: false,
+                    text: "Graph",
+                    press: function (e) {
+                        if (this.pressed)
+                            that2.hideGraphFooter();
+                        else
+                            that2.showGraphFooter();
 
-                        }
-                    }),
-                    new sap.m.Button({
-                        icon: "sap-icon://create-form",
-                        text: "New A/c",
-                        press: function (e) {
-                            UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,300px status=new",
-                                that2.view, e.getSource());
-                        }
-                    }),
-                    new sap.m.Button({
-                        icon: "sap-icon://sys-prev-page",
-                        text: "Up A/c",
-                        press: function () {
-                            if (that2.current_ac != "") {
-                                var sq =
-                                    "select ac.parentacc," +
-                                    "(select childcount from acaccount where acaccount.accno=ac.parentacc ) childcount" +
-                                    " from acaccount ac where ac.accno=" + that2.current_ac
-                                if (that2.mode == "cc")
-                                    sq =
-                                        "select ac.parentcostcent parentacc," +
-                                        "(select childcount from accostcent1 where accostcent1.code=ac.parentcostcent ) childcount" +
-                                        " from accostcent1 ac where ac.code=" + that2.current_ac;
-                                else if (that2.mode == "rp")
-                                    sq =
-                                        "select ac.parentcustomer parentacc," +
-                                        "(select childcount from c_ycust where c_ycust.code=ac.parentcustomer ) childcount" +
-                                        " from c_ycust ac where ac.code=" + that2.current_ac;
-                                var dt = Util.execSQLWithData(sq);
-
-                                if (dt != "" && dt.length > 0 && Util.nvl(dt[0].PARENTACC, "") != "")
-                                    that2.loadData_details(dt[0].PARENTACC, dt[0].CHILDCOUNT);
-                            }
-
-
-                        }
-                    }),
-                    new sap.m.Button({
-                        icon: "sap-icon://print",
-                        text: "Print",
-                        press: function () {
-                            that.view.colData = {};
-                            that.view.reportsData = {
-                                report_info: {report_name: "Account Details"}
-                            };
-                            that.acDet.printHtml(that.view, "para");
-                        }
-                    }),
-                    new sap.m.Button({
-                        icon: "sap-icon://refresh",
-                        text: "Refresh",
-                        press: function () {
-                            var ca = that2.current_ac;
-                            var sq = "select childcount from acaccount where accno=" + Util.quoted(ca);
+                    }
+                }),
+                new sap.m.Button({
+                    icon: "sap-icon://create-form",
+                    text: "New A/c",
+                    press: function (e) {
+                        UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,400px status=new",
+                            that2.view, e.getSource());
+                    }
+                }),
+                new sap.m.Button({
+                    icon: "sap-icon://sys-prev-page",
+                    text: "Up A/c",
+                    press: function () {
+                        if (that2.current_ac != "") {
+                            var sq =
+                                "select ac.parentacc," +
+                                "(select childcount from acaccount where acaccount.accno=ac.parentacc ) childcount" +
+                                " from acaccount ac where ac.accno=" + that2.current_ac
                             if (that2.mode == "cc")
-                                sq = "select childcount from accostcent1 where code=" + Util.quoted(ca)
+                                sq =
+                                    "select ac.parentcostcent parentacc," +
+                                    "(select childcount from accostcent1 where accostcent1.code=ac.parentcostcent ) childcount" +
+                                    " from accostcent1 ac where ac.code=" + that2.current_ac;
                             else if (that2.mode == "rp")
-                                sq = "select childcount from c_ycust where code=" + Util.quoted(ca)
+                                sq =
+                                    "select ac.parentcustomer parentacc," +
+                                    "(select childcount from c_ycust where c_ycust.code=ac.parentcustomer ) childcount" +
+                                    " from c_ycust ac where ac.code=" + that2.current_ac;
+                            var dt = Util.execSQLWithData(sq);
 
-                            var ch = Util.getSQLValue(sq);
-                            that2.loadData();
-                            that2.loadData_details(ca, ch);
+                            if (dt != "" && dt.length > 0 && Util.nvl(dt[0].PARENTACC, "") != "")
+                                that2.loadData_details(dt[0].PARENTACC, dt[0].CHILDCOUNT);
                         }
-                    }),
-                    new sap.m.ToolbarSpacer(),
-                    new sap.m.Button({
-                        text: "Close",
-                        icon: "sap-icon://nav-back",
-                        press: function () {
-                            that2.pgMain.backFunction();
-                        }
-                    })
-                ]
-            })
-        ;
+
+
+                    }
+                }),
+                new sap.m.Button({
+                    icon: "sap-icon://print",
+                    text: "Print",
+                    press: function () {
+                        that.view.colData = {};
+                        that.view.reportsData = {
+                            report_info: { report_name: "Account Details" }
+                        };
+                        that.acDet.printHtml(that.view, "para");
+                    }
+                }),
+                new sap.m.Button({
+                    icon: "sap-icon://refresh",
+                    text: "Refresh",
+                    press: function () {
+                        var ca = that2.current_ac;
+                        var sq = "select childcount from acaccount where accno=" + Util.quoted(ca);
+                        if (that2.mode == "cc")
+                            sq = "select childcount from accostcent1 where code=" + Util.quoted(ca)
+                        else if (that2.mode == "rp")
+                            sq = "select childcount from c_ycust where code=" + Util.quoted(ca)
+
+                        var ch = Util.getSQLValue(sq);
+                        that2.loadData();
+                        that2.loadData_details(ca, ch);
+                    }
+                }),
+                new sap.m.ToolbarSpacer(),
+                new sap.m.Button({
+                    text: "Close",
+                    icon: "sap-icon://nav-back",
+                    press: function () {
+                        that2.pgMain.backFunction();
+                    }
+                })
+            ]
+        })
+            ;
         that2.pgMain.removeAllHeaderContent();
         that2.pgMain.addHeaderContent(tb);
 
@@ -273,17 +273,17 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
                 mnu.addItem(new sap.m.MenuItem({
                     text: "Add child AC",
                     press: function () {
-                        UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,300px status=new parentacc=" + accno, that2.view, e.getSource().getParent().getParent());
+                        UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,400px status=new parentacc=" + accno, that2.view, e.getSource().getParent().getParent());
                     }
                 }));
             mnu.addItem(new sap.m.MenuItem({
                 text: "View A/c", press: function () {
-                    UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,300px status=view accno=" + accno, that2.view, e.getSource().getParent().getParent());
+                    UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,400px status=view accno=" + accno, that2.view, e.getSource().getParent().getParent());
                 }
             }));
             mnu.addItem(new sap.m.MenuItem({
                 text: "Edit A/c", press: function () {
-                    UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,300px status=edit accno=" + accno, that2.view, e.getSource().getParent().getParent());
+                    UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,400px status=edit accno=" + accno, that2.view, e.getSource().getParent().getParent());
                 }
             }));
 
@@ -380,9 +380,9 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
                 var c = that.acDet.mLctb.getColPos("BALANCE");
                 that.acDet.mLctb.cols[c].getMUIHelper().display_format = "MONEY_FORMAT";
                 that.acDet.mLctb.cols[c].mSummary = "SUM";
-
                 c = that.acDet.mLctb.getColPos("CHILDCOUNT");
                 that.acDet.mLctb.cols[c].mHideCol = true;
+
             } else {
 
                 var c = that.acDet.mLctb.getColPos("DEBIT");
@@ -398,6 +398,20 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
 
 
             }
+            that.acDet.onRowRender = function (qv, dispRow, rowno, currentRowContext, startCell, endCell) {
+                var oModel = this.getControl().getModel();
+                if (oModel.getProperty("BALANCE", currentRowContext) != undefined) {
+                    var bal = parseFloat(oModel.getProperty("BALANCE", currentRowContext));
+                    if (bal >= 0)
+                        qv.getControl().getRows()[dispRow].getCells()[2].$().parent().parent().find("*").css("cssText", UtilGen.DBView.style_debit_numbers + ";text-align:end;");
+                    else
+                        qv.getControl().getRows()[dispRow].getCells()[2].$().parent().parent().find("*").css("cssText", UtilGen.DBView.style_credit_numbers + ";text-align:end;");
+                }
+                if (oModel.getProperty("DEBIT", currentRowContext) != undefined) {
+                    qv.getControl().getRows()[dispRow].getCells()[4].$().parent().parent().find("*").css("cssText", UtilGen.DBView.style_debit_numbers + ";text-align:end;");
+                    qv.getControl().getRows()[dispRow].getCells()[5].$().parent().parent().find("*").css("cssText", UtilGen.DBView.style_credit_numbers + ";text-align:end;");
+                }
+            };
 
             that.acDet.loadData();
             that.current_ac = pacc;

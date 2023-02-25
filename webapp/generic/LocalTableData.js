@@ -15,6 +15,15 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             this.rows = [];
             this.masterRows = [];
             this.cndFilter = "";
+            this.parsedLstCols = {
+                rowCol: [],
+                valCols: [],
+                totCols: [],
+                valHeadObj: {},
+                valHeadCols: []
+            };
+
+
 
         }
 
@@ -163,6 +172,8 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             this.resetData();
             this.dataJson = JSON.parse(strData);
             this.jsonString = strData;
+            this.parsedLstCols.rowCol = [];
+            this.parsedLstCols.totCols = [];
             for (var key in this.dataJson.metadata) {
                 var c = new Column();
                 c.mColName = this.dataJson.metadata[key].colname;
@@ -199,6 +210,11 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
                     this.rows[i].cells = [];
                 this.rows = [];
             }
+            this.parsedLstCols.rowCol = [];
+            this.parsedLstCols.totCols = [];
+            this.parsedLstCols.valCols = [];
+            this.parsedLstCols.valHeadObj = {};
+            this.parsedLstCols.valHeadCols = []; // must be same column index of valCols
 
             for (var rn in this.dataJson.data) {
                 var r = new Row(this.cols.length);
@@ -211,12 +227,134 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
                     // }
                     // else
                     r.cells[cp].setValue(this.dataJson.data[rn][key]);
+
+                    if (Util.nvl(this.cols[cp].ct_col, "N") == "Y" && this.parsedLstCols.valCols.indexOf(this.dataJson.data[rn][key]) < 0) {
+                        this.parsedLstCols.valCols.push(this.dataJson.data[rn][key]);
+                        this.parsedLstCols.valHeadObj[this.dataJson.data[rn][key]] = key;
+                        if (this.parsedLstCols.valHeadCols.indexOf(key) < 0) {
+                            this.parsedLstCols.valHeadCols.push(key);
+                        }
+                    }
+                    if (Util.nvl(this.cols[cp].ct_row, "N") == "Y" && this.parsedLstCols.rowCol.indexOf(key) < 0)
+                        this.parsedLstCols.rowCol.push(key);
+                    if (Util.nvl(this.cols[cp].ct_val, "N") == "Y" && this.parsedLstCols.totCols.indexOf("tot__" + key) < 0)
+                        this.parsedLstCols.totCols.push("tot__" + key);
                 }
+
                 this.rows.push(r);
             }
             this.masterRows = [];
             this.masterRows = this.rows.slice(0);
+            if (this.isCrossTb)
+                this.do_cross_tab();
 
+        };
+
+        // FUNCTION: building & replacing columns,rows 
+        //          1. Adding all columns row ,total and value  into lstCols array
+        //          2. Adding all data to mapRows by refering unique row string from row columns.
+        //          3. copying mapRows to new LocalTableData object and slice it to (this) object.
+        //     NOTE: value columns are queried in format of i.e. "JAN__BALANCE", where "BALANCE" is value column, "JAN" is header column
+        LocalTableData.prototype.do_cross_tab = function () {
+            var nData = new LocalTableData();
+            var lstCols = []; // array for all columns
+            var mapCols = {}; // array for all columns
+            var mapRows = {};
+
+            //LOOP: Adding lstCols from rowCols array
+            var tmcl = [...this.parsedLstCols.rowCol];
+            for (var ci = 0; ci < tmcl.length; ci++) {
+                var col = this.cols[this.getColPos(tmcl[ci])].getClone();
+                lstCols.push(col);
+                mapCols[col.mColName] = col;
+            }
+
+            //LOOP: Adding lstCols from valCols array
+            var tmcl = [...this.parsedLstCols.valCols];
+            for (var ci = 0; ci < tmcl.length; ci++) {
+                var col = this.cols[this.getColPos(tmcl[ci].split("__")[1])].getClone();
+                col.mColName = this.parsedLstCols.valCols[ci];
+                if (col.mColName.includes("__") && this.parsedLstCols.totCols.length > 1) {
+                    col.mTitleParent = this.parsedLstCols.valCols[ci].split("__")[0];
+                    col.mTitle = this.parsedLstCols.valCols[ci].split("__")[1];
+                    col.mTitleParentSpan = this.parsedLstCols.totCols.length;
+                } else {
+                    col.mTitleParent = this.parsedLstCols.valCols[ci].split("__")[1].toUpperCase();
+                    col.mTitle = this.parsedLstCols.valCols[ci].split("__")[0];
+                    col.mTitleParentSpan = this.parsedLstCols.valCols.length;
+                }
+                lstCols.push(col);
+                mapCols[col.mColName] = col;
+            }
+
+            //LOOP: Adding lstCols from totCols array
+            var tmcl = [...this.parsedLstCols.totCols];
+            for (var ci = 0; ci < tmcl.length; ci++) {
+                var col = this.cols[this.getColPos(tmcl[ci].replaceAll("tot__", ""))].getClone();
+                col.mColName = tmcl[ci];
+                if (col.mColName.includes("__")) {
+                    col.mTitleParent = "Total";
+                    col.mTitle = this.parsedLstCols.valCols[ci].split("__")[1];
+                    col.mTitleParentSpan = this.parsedLstCols.valCols.length;
+                }
+                lstCols.push(col);
+                mapCols[col.mColName] = col;
+            }
+
+            // LOOP:  creating columns from lstCols to new Localtable Object (nData) 
+            for (var i in lstCols) {
+                lstCols[i].mColpos = i;
+                nData.cols.push(lstCols[i]);
+            }
+
+
+            //LOOP:  scanning all this object rows and copy it to mapRows object array.
+            for (var i = 0; i < this.rows.length; i++) {
+                var mp = {};
+                var rstr = "";
+                for (var ri = 0; ri < this.parsedLstCols.rowCol.length; ri++) {
+                    rstr += this.getFieldValue(i, this.parsedLstCols.rowCol[ri]);
+                    mp[this.parsedLstCols.rowCol[ri]] = this.getFieldValue(i, this.parsedLstCols.rowCol[ri]);
+                }
+                if (mapRows[rstr] == undefined)
+                    mapRows[rstr] = mp;
+                for (var ci in lstCols) {
+                    var mp = mapRows[rstr];
+                    if (this.parsedLstCols.valCols.indexOf(lstCols[ci].mColName) >= 0) {
+                        var cnm = lstCols[ci].mColName.split("__")[1];
+                        var cval = this.getFieldValue(i, cnm);
+                        var cHeadVal = this.getFieldValue(i, this.parsedLstCols.valHeadObj[lstCols[ci].mColName])
+                        if (cHeadVal == lstCols[ci].mColName) {
+                            mp[lstCols[ci].mColName] = Util.nvl(mp[lstCols[ci].mColName], 0) + Util.nvl(cval, 0);
+                            // calculating totals from mp array and assign it to total column.
+                            var tcnm = mapCols["tot__" + cnm];
+                            if (tcnm != undefined) {
+                                var tmptot = 0;
+                                for (var mi in mp)
+                                    if (mi.split("__")[0] != "tot" && mi.split("__")[1] == cHeadVal.split("__")[1])
+                                        tmptot += mp[mi]
+                                mp[tcnm.mColName] = tmptot;
+                            }
+                        }
+
+                    }
+                }
+
+            }
+            //LOOP:  copy mapRows into new localtable object (nData).
+            for (var i in mapRows) {
+                var nr = nData.addRow();
+                for (var ci in lstCols) {
+                    nData.setFieldValue(nr, lstCols[ci].mColName, Util.nvl(mapRows[i][lstCols[ci].mColName], 0));
+                }
+
+            }
+
+            // FINAL: reset current data and copy nData object columns and rows to this object.
+            this.resetData();
+            this.cols = nData.cols.slice(0);
+            this.rows = nData.rows.slice(0);
+            this.masterRows = this.rows.slice(0);
         };
 
         LocalTableData.prototype.addRow = function () {
@@ -266,8 +404,16 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
                 for (var r in this.rows) {
                     rstr = "";
                     for (var c in this.cols) {
-                        rstr += (rstr.length == 0 ? "" : ",") + '"' +
-                            this.cols[c].mColName.replace(/\//g, "___") + '":' + ((Util.getParsedJsonValue(this.rows[r].cells[c].getValue()) + "")/*.replace(/\\/g, "\\\\")*/);
+                        if (this.cols[c].mUIHelper.data_type == "NUMBER" && isNaN(typeof this.rows[r].cells[c].getValue() == "string" ? parseFloat(this.rows[r].cells[c].getValue().replace(",", "")) : this.rows[r].cells[c].getValue()))
+                            rstr += (rstr.length == 0 ? "" : ",") + '"' +
+                                this.cols[c].mColName.replace(/\//g, "___") + '":0';
+                        else {
+                            rstr += (rstr.length == 0 ? "" : ",") + '"' +
+                                this.cols[c].mColName.replace(/\//g, "___") + '":' +
+                                (this.cols[c].mUIHelper.data_type == "NUMBER" ? ((Util.getParsedJsonValue(this.rows[r].cells[c].getValue()) + "").replace(",", "")) :
+                                    ((Util.getParsedJsonValue(this.rows[r].cells[c].getValue()) + "")/*.replace(/\\/g, "\\\\")*/));
+                        }
+
                     }
                     rstr += (rstr.length == 0 ? "" : ",") + '"_rowid":"' + r + '"';
                     tmpstr += (r == 0 ? "" : ",") + "{" + rstr + "}";
@@ -464,4 +610,4 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
         return LocalTableData;
 
     })
-;
+    ;

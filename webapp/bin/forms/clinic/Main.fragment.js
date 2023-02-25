@@ -141,10 +141,7 @@ sap.ui.jsfragment("bin.forms.clinic.Main", {
 
         sc.addContent(this.frm);
         sc.addContent(this.cl);
-
-
         this.mainPage.addContent(sc);
-
     },
     createViewHeader: function () {
         var that = this;

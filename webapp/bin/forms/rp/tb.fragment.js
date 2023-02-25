@@ -83,7 +83,7 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
 
             mnu.addItem(new sap.m.MenuItem({
                 text: "SOA A/c -" + ac,
-                customData: {key: ac},
+                customData: { key: ac },
                 press: function () {
                     var accno = this.getCustomData()[0].getKey();
                     UtilGen.execCmd("testRep5 formType=dialog formSize=100%,80% repno=1 para_PARAFORM=false para_EXEC_REP=true fromacc=" + accno + " toacc=" + accno + " fromdate=@01/01/2020", UtilGen.DBView, obj, UtilGen.DBView.newPage);
@@ -91,7 +91,7 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
             }));
             mnu.addItem(new sap.m.MenuItem({
                 text: "View A/c -" + ac,
-                customData: {key: ac},
+                customData: { key: ac },
                 press: function () {
                     var accno = this.getCustomData()[0].getKey();
                     UtilGen.execCmd("bin.forms.gl.masterAc formType=dialog formSize=650px,300px status=view accno=" + accno, UtilGen.DBView, obj, UtilGen.DBView.newPage);
@@ -104,23 +104,23 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
         this.o1 = {};
         var fe = [];
 
-// this.frm = this.createViewHeader();
-// this.frm.getToolbar().addContent(this.bk);
+        // this.frm = this.createViewHeader();
+        // this.frm.getToolbar().addContent(this.bk);
 
-// Util.destroyID("poCmdSave", this.view);
-// this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdSave"), {
-//     icon: "sap-icon://save", press: function () {
-//         that.save_data();
-//     }
-// }));
-//
-// Util.destroyID("poCmdDel", this.view);
-// this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdDel"), {
-//     icon: "sap-icon://delete", press: function () {
-//         that.delete_data();
-//     }
-// }));
-// that.createScrollCmds(this.frm.getToolbar());
+        // Util.destroyID("poCmdSave", this.view);
+        // this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdSave"), {
+        //     icon: "sap-icon://save", press: function () {
+        //         that.save_data();
+        //     }
+        // }));
+        //
+        // Util.destroyID("poCmdDel", this.view);
+        // this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdDel"), {
+        //     icon: "sap-icon://delete", press: function () {
+        //         that.delete_data();
+        //     }
+        // }));
+        // that.createScrollCmds(this.frm.getToolbar());
 
         var sc = new sap.m.ScrollContainer();
 
@@ -148,7 +148,8 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                             "padding-left:50px;" +
                             "padding-top:20px;" +
                             "border-style: inset;" +
-                            "margin: 10px;" +
+                            "margin-left: 10%;" +
+                            "margin-right: 10%;" +
                             "border-radius:25px;" +
                             "background-color:#dcdcdc;"
                         ]
@@ -166,7 +167,7 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                 display_style: "",
                                 display_format: "",
                                 default_value: "$FIRSTDATEOFYEAR",
-                                other_settings: {width: "35%"},
+                                other_settings: { width: "35%" },
                                 list: undefined,
                                 edit_allowed: true,
                                 insert_allowed: true,
@@ -184,7 +185,7 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                 display_style: "",
                                 display_format: "",
                                 default_value: "$TODAY",
-                                other_settings: {width: "35%"},
+                                other_settings: { width: "35%" },
                                 list: undefined,
                                 edit_allowed: true,
                                 insert_allowed: true,
@@ -224,7 +225,7 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                 list: undefined,
                                 edit_allowed: true,
                                 insert_allowed: true,
-                                require: true,
+                                require: false,
                                 dispInPara: true,
                             },
                             acname: {
@@ -238,11 +239,11 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                 display_style: "",
                                 display_format: "",
                                 default_value: "",
-                                other_settings: {width: "49%", editable: false},
+                                other_settings: { width: "49%", editable: false },
                                 list: undefined,
                                 edit_allowed: false,
                                 insert_allowed: false,
-                                require: true,
+                                require: false,
                                 dispInPara: true,
                             },
                             levelno: {
@@ -266,8 +267,8 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                         },
                         print_templates: [
                             {
-                                title: "Transaction Report",
-                                reportFile: "trans_1",
+                                title: "PDF",
+                                reportFile: "tb001",
                             }
                         ],
                         canvas: [],
@@ -277,7 +278,7 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                 name: "qry2",
                                 showType: FormView.QueryShowType.QUERYVIEW,
                                 disp_class: "reportTable2",
-                                dispRecords: {"S": 10, "M": 16, "L": 20},
+                                dispRecords: { "S": 10, "M": 16, "L": 20 },
                                 execOnShow: false,
                                 dml: "select '01' accno , 'do it' descr from dual",
                                 parent: "PARENTACC",
@@ -370,12 +371,13 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                         data_type: FormView.DataType.Number,
                                         class_name: FormView.ClassTypes.LABEL,
                                         title: "Debit",
+                                        valOnZero: "",
                                         title2: "",
                                         parentTitle: "Opening Bal",
                                         parentSpan: 2,
                                         display_width: "100",
                                         display_align: "ALIGN_RIGHT",
-                                        display_style: "",
+                                        display_style: UtilGen.DBView.style_debit_numbers + ";",
                                         display_format: "MONEY_FORMAT",
                                         default_value: "",
                                         display_type: "NONE",
@@ -388,11 +390,12 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                         class_name: FormView.ClassTypes.LABEL,
                                         title: "Credit",
                                         title2: "",
+                                        valOnZero: "",
                                         parentTitle: "Opening Bal",
                                         parentSpan: 2,
                                         display_width: "100",
                                         display_align: "ALIGN_RIGHT",
-                                        display_style: "",
+                                        display_style: UtilGen.DBView.style_credit_numbers + ";",
                                         display_format: "MONEY_FORMAT",
                                         default_value: "",
                                         display_type: "NONE",
@@ -407,9 +410,10 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                         title2: "",
                                         parentTitle: "Transaction",
                                         parentSpan: 2,
+                                        valOnZero: "",
                                         display_width: "100",
                                         display_align: "ALIGN_RIGHT",
-                                        display_style: "",
+                                        display_style: UtilGen.DBView.style_debit_numbers + ";",
                                         display_format: "MONEY_FORMAT",
                                         default_value: "",
                                         display_type: "NONE",
@@ -424,9 +428,10 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                         title2: "",
                                         parentTitle: "Transaction",
                                         parentSpan: 2,
+                                        valOnZero: "",
                                         display_width: "100",
                                         display_align: "ALIGN_RIGHT",
-                                        display_style: "",
+                                        display_style: UtilGen.DBView.style_credit_numbers + ";",
                                         display_format: "MONEY_FORMAT",
                                         default_value: "",
                                         display_type: "NONE",
@@ -441,10 +446,10 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                         title2: "",
                                         parentTitle: "Closing Bal",
                                         parentSpan: 2,
-
+                                        valOnZero: "",
                                         display_width: "100",
                                         display_align: "ALIGN_RIGHT",
-                                        display_style: "",
+                                        display_style: UtilGen.DBView.style_debit_numbers + ";",
                                         display_format: "MONEY_FORMAT",
                                         default_value: "",
                                         display_type: "NONE",
@@ -459,9 +464,10 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
                                         title2: "",
                                         parentTitle: "Closing Bal",
                                         parentSpan: 2,
+                                        valOnZero: "",
                                         display_width: "100",
                                         display_align: "ALIGN_RIGHT",
-                                        display_style: "",
+                                        display_style: UtilGen.DBView.style_credit_numbers + ";",
                                         display_format: "MONEY_FORMAT",
                                         default_value: "",
                                         display_type: "NONE",
@@ -517,7 +523,7 @@ sap.ui.jsfragment("bin.forms.rp.tb", {
     }
 
 })
-;
+    ;
 
 
 

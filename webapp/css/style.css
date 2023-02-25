@@ -1,10 +1,17 @@
 body {
-    overflow-y: hidden; /* Hide vertical scrollbar */
-    overflow-x: hidden; /* Hide horizontal scrollbar */
+    overflow-y: hidden;
+    /* Hide vertical scrollbar */
+    overflow-x: hidden;
+    /* Hide horizontal scrollbar */
 }
 
 .colorBlack {
     color: black !important;
+}
+
+.profileMenus {
+    background-color: #b9f2ff !important;
+    font-weight: bold;
 }
 
 .highContrastPage {
@@ -75,6 +82,11 @@ body {
 
 .grayBackGround {
     background-color: lightgrey;
+}
+
+.toolBarBackgroundColor1 {
+    background-color: #e5e4e2;
+    color: maroon;
 }
 
 .leftMenuFont:hover {
@@ -363,8 +375,7 @@ body {
 }
 
 @media (max-width: 400px) {
-    .container {
-    }
+    .container {}
 
     .button {
         top: 150px;
@@ -456,7 +467,8 @@ body {
     padding-bottom: 50px;
 }
 
-.graphTable td, th {
+.graphTable td,
+th {
     border: 1px solid #dddddd;
     text-align: left;
     padding: 8px;
@@ -550,10 +562,11 @@ body {
 
 }
 
-.htmlLnk:hover{
+.htmlLnk:hover {
     color: hotpink !important;
     cursor: pointer !important;
 }
+
 .mytile .sapMPanelContent:hover {
     box-shadow: 0px 0px 0px #888888 !important;
     background: blue !important;
@@ -599,7 +612,7 @@ body {
     border-width: 1px;
 }
 
-.noColumnBorder .sapUiTableTr > td {
+.noColumnBorder .sapUiTableTr>td {
     border: 0 !important;
 
 }
@@ -612,27 +625,27 @@ body {
     background-color: rgba(187, 222, 255, 0.5) !important;
 }
 
-.sapUiFormResGrid.sapUiFormToolbar > div:first-child {
+.sapUiFormResGrid.sapUiFormToolbar>div:first-child {
     background-color: lightblue !important;
 }
 
-.sapUiFormResGrid.sapUiFormToolbar.greyTB > div:first-child {
+.sapUiFormResGrid.sapUiFormToolbar.greyTB>div:first-child {
     background-color: lightgray !important;
 }
 
-.sapUiFormResGrid.sapUiFormToolbar.yellowTB > div:first-child {
+.sapUiFormResGrid.sapUiFormToolbar.yellowTB>div:first-child {
     background-color: yellow !important;
 }
 
-.sapUiFormResGrid.sapUiFormToolbar.orangeTB > div:first-child {
+.sapUiFormResGrid.sapUiFormToolbar.orangeTB>div:first-child {
     background-color: orange !important;
 }
 
-.sapUiFormResGrid.sapUiFormToolbar.oliveTB > div:first-child {
+.sapUiFormResGrid.sapUiFormToolbar.oliveTB>div:first-child {
     background-color: lightseagreen !important;
 }
 
-.sapUiFormResGrid.sapUiFormToolbar.goldenTB > div:first-child {
+.sapUiFormResGrid.sapUiFormToolbar.goldenTB>div:first-child {
     background-color: lightgoldenrodyellow !important;
 }
 
@@ -644,6 +657,7 @@ body {
 .redText {
     color: red !important;
 }
+
 .totalVoucherTxt {
     color: #8b4513 !important;
 }
@@ -680,6 +694,11 @@ body {
 }
 
 .dbRcnt:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.dbCashBank:hover {
     cursor: pointer;
     text-decoration: underline;
 }
@@ -739,6 +758,10 @@ body {
     padding-right: 5%;
 }
 
+.reportMainPageToolbar {
+    background-color: #addfad;
+}
+
 .reportTable {
     padding-left: 5%;
     padding-right: 5%;
@@ -751,19 +774,19 @@ body {
 }
 
 .reportTable .sapUiTableHeaderRow {
-    background-color: #e8e8e8;!important;
+    background-color: #e8e8e8 !important;
 }
 
 .reportTable .sapUiTableRowSel {
-    background-color:#87ceeb!important;
+    background-color: #87ceeb !important;
 }
 
 .reportTable .sapUiTableRowFirstFixedBottom {
-    background-color: #f9f9f9;
-!important;
+    background-color: #f9f9f9 !important;
 }
 
-.reportTable .sapUiTableSelectAllCheckBox::after, .sapUiTableRowSelectionCell::after {
+.reportTable .sapUiTableSelectAllCheckBox::after,
+.sapUiTableRowSelectionCell::after {
     border: 0 !important;
     background-color: white !important;
 }
@@ -776,32 +799,65 @@ body {
 }
 
 .reportTable2 .sapUiTableCell {
-    border-top: 0px!important;
+    border-top: 0px !important;
     border-left: 1px;
     border-right: 1px;
-    border-bottom: 0px!important;
+    border-bottom: 0px !important;
     border-color: lightgrey;
     border-style: solid;
 }
 
 .reportTable2 .sapUiTableHeaderRow {
-    background-color: #e8e8e8;
-!important;
+    background-color: #e8e8e8 !important;
 }
+
 .reportTable2 .sapUiTableRowSel {
-    background-color:#87ceeb!important;
+    background-color: #87ceeb !important;
 }
 
 .reportTable2 .sapUiTableRowFirstFixedBottom {
-    background-color: #f9f9f9;
-!important;
+    background-color: #f9f9f9 !important;
 }
 
-.reportTable2 .sapUiTableSelectAllCheckBox::after, .sapUiTableRowSelectionCell::after {
+.reportTable2 .sapUiTableSelectAllCheckBox::after,
+.sapUiTableRowSelectionCell::after {
     border: 0 !important;
     background-color: white !important;
 }
 
+
+.lstRepTable {
+    padding-left: 5%;
+    padding-right: 5%;
+    margin-left: 10%;
+    margin-right: 10%;
+
+}
+
+.lstRepTable .sapUiTableCell {
+    box-sizing: border-box;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+
+.lstRepTable .sapUiTableCtrlRowScroll {}
+
+.lstRepTable .sapUiTableHeaderRow {
+    background-color: rgb(220, 220, 220) !important;
+}
+
+.lstRepTable .sapUiTableRowSel {}
+
+.lstRepTable .sapUiTableRowFirstFixedBottom {
+    background-color: rgb(220, 220, 220) !important;
+}
+
+.lstRepTable .sapUiTableSelectAllCheckBox::after,
+.sapUiTableRowSelectionCell::after {
+    border: 0 !important;
+    background-color: rgb(220, 220, 220) !important;
+}
 
 
 .menuTable {
@@ -816,8 +872,7 @@ body {
 }
 
 .menuTable .sapUiTableHeaderRow {
-    background-color: #e8e8e8;
-!important;
+    background-color: #e8e8e8 !important;
 
 }
 
@@ -826,11 +881,11 @@ body {
     color: maroon !important;
 }
 
-.menuTable .sapUiTableRowHvr > td:hover {
+.menuTable .sapUiTableRowHvr>td:hover {
     background-color: cyan !important;
 }
 
-.menuTable .sapUiTableRowHvr > td .sapUiLbl:hover {
+.menuTable .sapUiTableRowHvr>td .sapUiLbl:hover {
     background-color: cyan !important;
 }
 
@@ -839,11 +894,11 @@ body {
 }
 
 .menuTable .sapUiTableRowFirstFixedBottom {
-    background-color: #f9f9f9;
-!important;
+    background-color: #f9f9f9 !important;
 }
 
-.menuTable .sapUiTableSelectAllCheckBox::after, .sapUiTableRowSelectionCell::after {
+.menuTable .sapUiTableSelectAllCheckBox::after,
+.sapUiTableRowSelectionCell::after {
     border: 0 !important;
     background-color: white !important;
 }
@@ -859,9 +914,7 @@ body {
     text-align: end;
 }
 
-.paraText {
-
-}
+.paraText {}
 
 .company {
     font-size: 18px;
@@ -891,9 +944,112 @@ body {
     border: 5px;
 }
 
-.formVoucher {
+.itemTile {
+    padding: 2px;
+}
 
+.itemTile .sapMPanelHdr {
+    border-bottom-color: #ffffff !important;
+    color: black !important;
+    background-color: yellow !important;
+    min-height: 27px !important;
+    border: none !important;
+    border-bottom: 2px solid #ffffff;
+}
+
+.itemTile .sapMPanelContent {
+    background-color: yellow !important;
+    color: white !important;
+    padding: 0.625rem 0.5rem 0.8rem 0.5rem;
+    box-shadow: 1px 1px 2px #808888 !important;
+    text-align: center !important;
+    overflow: hidden;
+    font-size: 1.75rem;
+}
+
+.itemTile .sapMPanelContent:hover {
+    box-shadow: 0px 0px 0px #888888 !important;
+    background: aqua !important;
+    cursor: pointer;
+}
+
+
+.selectedTile {
+    padding: 2px;
+}
+
+.selectedTile .sapMPanelHdr {
+    border-bottom-color: #ffffff !important;
+    color: black !important;
+    font-weight: bold;
+    background-color: yellow !important;
+    min-height: 27px !important;
+    border: none !important;
+    border-bottom: 2px solid #ffffff;
+}
+
+.selectedTile .sapMPanelContent {
+    background-color: khaki !important;
+    color: white !important;
+    padding: 0.625rem 0.5rem 0.8rem 0.5rem;
+    box-shadow: 1px 1px 2px #808888 !important;
+    text-align: center !important;
+    overflow: hidden;
+    font-size: 1.90rem;
+    font-weight: bold;
+}
+
+.selectedTile .sapMPanelContent:hover {
+    box-shadow: 0px 0px 0px #888888 !important;
+    background: aqua !important;
+    cursor: pointer;
+}
+
+
+.menuTile {
+    padding: 2px;
+}
+
+.menuTile .sapMPanelHdr {
+    border-bottom-color: #ffffff !important;
+    color: black !important;
+    background-color: #faf0e6 !important;
+    min-height: 27px !important;
+    border: none !important;
+    border-bottom: 2px solid #ffffff;
+}
+
+.menuTile .sapMPanelContent {
+    background-color: #fffafa !important;
+    color: white !important;
+    padding: 0.625rem 0.5rem 0.8rem 0.5rem;
+    box-shadow: 1px 1px 2px #808888 !important;
+    text-align: center !important;
+    overflow: hidden;
+    font-size: 1.75rem;
+}
+
+.txtSubMenu:hover {
+    background: cyan !important;
+
+    cursor: pointer;
+}
+
+
+.masterMenu {
+    font-size: larger !important;    
+    padding-bottom: 0.8rem;
+    background-color: ivory;
+    text-align: center!important;
+
+}
+
+.masterMenu:hover {
+    cursor: pointer;
+    text-decoration: underline;
+    background-color: aqua;
 }
 
 
 
+.formVoucher {}

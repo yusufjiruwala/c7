@@ -31,7 +31,6 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
             } catch (e) {
                 tit = fld.title;
             }
-
             return tit;
         };
 
@@ -118,6 +117,7 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                 rep.name = rps[r].name;
                 rep.descr = Util.nvl(rps[r].descr, rps[r].name);
                 rep.code = rps[r].code;
+                rep.isCrossTb = Util.nvl(rps[r].isCrossTb, "N");
                 rep.rptNo = r;
                 rep.showSQLWhereClause = Util.nvl(rps[r].showSQLWhereClause, false);
                 rep.mainParaContainerSetting = Util.nvl(rps[r].mainParaContainerSetting, {});
@@ -199,22 +199,7 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                     qr.eventCalc = Util.nvl(qrys[i].eventCalc, undefined);
                     qr.dispRecords = Util.nvl(qrys[i].dispRecords, 10);
                     qr.onRowRender = Util.nvl(qrys[i].onRowRender, undefined);
-                    if (typeof qr.dispRecords == "object") {
-                        var newr = "L";
-                        if (sap.ui.Device.resize.height <= 639)
-                            newr = "S";
-                        if (sap.ui.Device.resize.height > 640 && sap.ui.Device.resize.height <= 768)
-                            newr = "M";
-                        if (sap.ui.Device.resize.height > 769 && sap.ui.Device.resize.height <= 888)
-                            newr = "L";
-                        if (sap.ui.Device.resize.height > 889 && sap.ui.Device.resize.height <= 1080)
-                            newr = "XL";
-                        if (sap.ui.Device.resize.height > 1080)
-                            newr = "XXL";
-                        console.log("DEVICE " + newr + " -height=" + sap.ui.Device.resize.height + " records=" + qr.dispRecords[newr]);
-
-                        qr.dispRecords = qr.dispRecords[newr];
-                    }
+                    qr.dispRecords = UtilGen.dispTblRecsByDevice(qr.dispRecords);
                     qr.fields = {};
                     qr.canvas = Util.nvl(qrys[i].canvas, "default_canvas");
                     qr.canvasType = Util.nvl(qrys[i].canvasType, ReportView.CanvasType.FORMCREATE2);
@@ -266,6 +251,7 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                         fd.default_value = Util.nvl(met[f].default_value, "");
                         fd.other_settings = Util.nvl(met[f].other_settings, {});
                         fd.commandLink = Util.nvl(met[f].commandLink, "");
+                        fd.valOnZero = met[f].valOnZero;
                         fd.grouped = Util.nvl(met[f].grouped, false);
                         fd.commandLinkClick = Util.nvl(met[f].commandLinkClick, undefined);
                         fd.onPrintField = Util.nvl(met[f].onPrintField, undefined);
@@ -433,6 +419,12 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                 init: function (thatRV) {
                     this.thatRV = thatRV;
                 },
+                getObjectByObj: function (obj) {
+                    var thatRV = this.thatRV;
+                    for (var i in thatRV.objs) {
+                        if (thatRV.objs[i].obj == obj) return thatRV.objs[i];
+                    }
+                },
                 showDisplayRecs: function (pRptno) {
                     var thatRV = this.thatRV;
                     var rptNo = Util.nvl(pRptno, UtilGen.getControlValue(thatRV.lstRep));
@@ -442,11 +434,11 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                     for (var i in Util.nvl(rep.db, []))
                         if (rep.db[i].showType == FormView.QueryShowType.QUERYVIEW)
                             msg2 += msg.replaceAll(":qry", rep.db[i].name).replaceAll(":filtered", rep.db[i].obj.mLctb.rows.length);
-
-                    sap.m.MessageToast.show(msg2, {
-                        my: sap.ui.core.Popup.Dock.RightBottom,
-                        at: sap.ui.core.Popup.Dock.RightBottom
-                    });
+                    if (Util.nvl(msg2, "").trim() != "")
+                        sap.m.MessageToast.show(msg2, {
+                            my: sap.ui.core.Popup.Dock.RightBottom,
+                            at: sap.ui.core.Popup.Dock.RightBottom
+                        });
 
                     var oMessageToastDOM = $('#content').parent().find('.sapMMessageToast');
                     oMessageToastDOM.css('color', "red");
@@ -668,8 +660,8 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                     var str = "";
                     var ff = [];
                     this.lstRepTbl = new QueryView("lstRepTbl" + thatRV.timeInLong);
-                    this.lstRepTbl.getControl().addStyleClass("sapUiSizeCondensed reportTable");
-                    this.lstRepTbl.getControl().setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
+                    this.lstRepTbl.getControl().addStyleClass("sapUiSizeCondensed lstRepTable");
+                    this.lstRepTbl.getControl().setSelectionBehavior(sap.ui.table.SelectionBehavior.RowOnly);
                     this.lstRepTbl.getControl().setSelectionMode(sap.ui.table.SelectionMode.Single);
                     this.lstRepTbl.getControl().setAlternateRowColors(false);
                     this.lstRepTbl.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
@@ -706,10 +698,10 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                     this.lstRepTbl.mLctb.parse(JSON.stringify(md), true);
                     this.lstRepTbl.mLctb.cols[
                         this.lstRepTbl.mLctb.getColPos("CODE")]
-                        .mUIHelper.display_width = "225";
+                        .mUIHelper.display_width = "175";
                     this.lstRepTbl.mLctb.cols[
                         this.lstRepTbl.mLctb.getColPos("TITLE")]
-                        .mUIHelper.display_width = "500";
+                        .mUIHelper.display_width = "400";
                     this.lstRepTbl.loadData();
                     this.lstRepTbl.getControl().attachRowSelectionChange(undefined, function () {
                         var sl = that.lstRepTbl.getControl().getSelectedIndices();
@@ -760,6 +752,21 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                         thatRV.lstRep.setSelectedItem(this.lstRep.getItems()[0]);
                     }
                     this.lstRepTbl.getControl().setSelectedIndex(parseInt(thatRV.lstRep.getSelectedKey()));
+                    var tb = new sap.m.Toolbar({
+                        content: [
+                            new sap.m.Title({ text: thatRV.title }),
+                            new sap.m.ToolbarSpacer(),
+                            new sap.m.Button({
+                                icon: "sap-icon://decline",
+                                text: "Close",
+                                visible: true,
+                                press: function () {
+                                    thatRV.frag.jp.backFunction();
+                                }
+                            })
+                        ]
+                    }).addStyleClass("reportMainPageToolbar");
+                    this.pg.addContent(tb);
                     this.pg.addContent(new sap.m.Title({ text: "Select Sub Report of " + thatRV.title }).addStyleClass("sapUiMediumMarginTop sapUiLargeMarginBegin"));
                     this.pg.addContent(this.lstRep);
                     this.pg.addContent(this.lstRepTbl.getControl());
@@ -1030,13 +1037,17 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                                 }, 10);
 
                             }
-                        })],
+                        })
+                        ],
                         contentMiddle: [
                             new sap.m.Title({ text: Util.nvl(thatRV.title2, thatRV.title) })
                         ],
                         contentRight: [
                             thatRV.bt_Reports,
-                            bt2
+                            bt2,
+                            thatRV.bt_paraform,
+                            thatRV.bt_close
+
                         ]
                     }).addStyleClass("");
                     thatRV.pg.setSubHeader(thatRV.tbMain);
@@ -1283,26 +1294,6 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                             if (Util.nvl(qr.execOnShow, false))
                                 thatRV.helperFunctions.load.loadQueryView(qr, true);
 
-                            if (Object.keys(qr.fields).length > 0 && qr.fields[Object.keys(qr.fields)[0]].grouped) {
-
-                                thatRV.lstRepGroups = UtilGen.createControl(sap.m.ComboBox, thatRV.view, "lstRepGroup" + thatRV.timeInLong, {
-                                    customData: [{ key: "" }],
-                                    width: "40%",
-                                    items: {
-                                        path: "/",
-                                        template: new sap.ui.core.ListItem({ text: "{NAME}", key: "{CODE}" }),
-                                        templateShareable: true
-                                    },
-                                    selectionChange: function (event) {
-                                        thatRV.helperFunctions.misc.doQuickFilterData(qr);
-                                    }
-                                }, "string", undefined, undefined, "@");
-                                thatRV.lstRepGroups.addStyleClass("reportTable");
-                                // Util.fillCombo(thatRV.lstRepGroups, cdt);
-                                // this.scrollObjs.push(thatRV.lstRepGroups);
-                                rep.dispCanvases[qr.canvas].push(thatRV.lstRepGroups);
-                            }
-
                             // this.scrollObjs.push(qr.obj.showToolbar.toolbar);
                             // this.scrollObjs.push(qr.obj.getControl());
                             rep.dispCanvases[qr.canvas].push(qr.obj.showToolbar.toolbar);
@@ -1360,13 +1351,15 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                         if (thatRV.objs[ci].canvasType == ReportView.CanvasType.VBOX) {
                             thatRV.objs[ci].obj = new sap.m.VBox({ width: "100%" });
                             for (var di in rep.dispCanvases[ci])
-                                thatRV.objs[ci].obj.addItem(rep.dispCanvases[ci][di]);
+                                if (rep.dispCanvases[ci][di] instanceof sap.ui.core.Control)
+                                    thatRV.objs[ci].obj.addItem(rep.dispCanvases[ci][di]);
                             this.scrollObjs.push(thatRV.objs[ci].obj);
                         }
                         if (thatRV.objs[ci].canvasType == ReportView.CanvasType.HBOX) {
                             thatRV.objs[ci].obj = new sap.m.HBox({});
                             for (var di in rep.dispCanvases[ci])
-                                thatRV.objs[ci].obj.addItem(rep.dispCanvases[ci][di]);
+                                if (rep.dispCanvases[ci][di] instanceof sap.ui.core.Control)
+                                    thatRV.objs[ci].obj.addItem(rep.dispCanvases[ci][di]);
                             this.scrollObjs.push(thatRV.objs[ci].obj);
                         }
                         if (thatRV.objs[ci].canvasType == ReportView.CanvasType.FORMCREATE2) {
@@ -1402,7 +1395,8 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                     var rep = thatRV.reports[rptNo];
 
                     for (var i in this.scrollObjsH)
-                        thatRV.pg.addContent(this.scrollObjsH[i]);
+                        if (this.scrollObjs[i] instanceof sap.ui.core.Control)
+                            thatRV.pg.addContent(this.scrollObjsH[i]);
 
 
                     // if (Util.nvl(thatRV.dispCanvases["para_canvas"], []).length > 0)
@@ -1431,7 +1425,8 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                     Util.destroyID("adv" + thatRV.timeInLong, thatRV.view);
 
                     for (var i in this.scrollObjs)
-                        thatRV.pg.addContent(this.scrollObjs[i]);
+                        if (this.scrollObjs[i] instanceof sap.ui.core.Control)
+                            thatRV.pg.addContent(this.scrollObjs[i]);
 
 
                     Util.navEnter(Object.keys(rep.dispCanvases)[0], function (lastObj) {
@@ -1527,16 +1522,17 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                     if (Util.nvl(execBeforeSql, false) && qryObj.beforeLoadQry != undefined)
                         sql = qryObj.beforeLoadQry(sql, qryObj);
                     sql = thatRV.parseString(sql);
-                    if (sql != "") {
-                        var pars = Util.nvl(qryObj.rep.rep.parameters, []);
-                        var ps = "";
-                        for (var i in pars) {
-                            var vl = thatRV.getFieldValue("parameter." + pars[i].colname);
-                            if (pars[i].data_type == FormView.DataType.Date)
-                                vl = "@" + sdf.format(thatRV.getFieldValue("parameter." + pars[i].colname));
-                            ps += (ps.length > 0 ? "&" : "") + "_para_" + pars[i].colname + "=" + vl;
-                        }
 
+                    var pars = Util.nvl(qryObj.rep.rep.parameters, []);
+                    var ps = "";
+                    for (var i in pars) {
+                        var vl = thatRV.getFieldValue("parameter." + pars[i].colname);
+                        if (pars[i].data_type == FormView.DataType.Date)
+                            vl = "@" + sdf.format(thatRV.getFieldValue("parameter." + pars[i].colname));
+                        ps += (ps.length > 0 ? "&" : "") + "_para_" + pars[i].colname + "=" + vl;
+                    }
+
+                    if (sql != "") {
                         Util.doAjaxJson("bat7addQry?" + ps, {
                             sql: sql,
                             ret: "",
@@ -2078,6 +2074,9 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                                     qrNo: qryObj.qrNo,
                                 }, false).done(function (data) {
                                     if (data.ret == "SUCCESS") {
+                                        thatRV.bat7GetParas(qryObj.rep.code, qryObj.repNo);
+                                        UtilGen.closeWorking(thatRV.pg);
+
                                         var dtx = JSON.parse("{" + data.data + "}");
                                         thatRV.helperFunctions.load._loadDataFromJson(qryObj, dtx.data[0], true);
                                     }
@@ -2085,6 +2084,8 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                                 });
 
                             } else {
+                                thatRV.bat7GetParas(qryObj.rep.code, qryObj.repNo);
+                                UtilGen.closeWorking(thatRV.pg);
                                 if (qryObj.hasOwnProperty("bat7CustomGetData") && qryObj.bat7CustomGetData != undefined)
                                     qryObj.bat7CustomGetData(qryObj);
                                 for (var key in qryObj.fields) {
@@ -2444,7 +2445,22 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
             //         thatRV.mnuE.openBy(this);
             //     }
             // });
-
+            this.bt_paraform = new sap.m.Button({
+                icon: "sap-icon://arrow-right",
+                text: "",
+                visible: true,
+                press: function () {
+                    thatRV.navApp.to(thatRV.frag.joApp2);
+                }
+            });
+            this.bt_close = new sap.m.Button({
+                icon: "sap-icon://decline",
+                text: "Close",
+                visible: true,
+                press: function () {
+                    thatRV.frag.jp.backFunction();
+                }
+            });
             this.bt_Reports = new sap.m.Button({
                 icon: "sap-icon://print",
                 text: "Templates",
@@ -2625,6 +2641,7 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                 cx.mTitleParent = Util.nvl(dtx[col].parentTitle, "");
                 cx.mTitleParentSpan = Util.nvl(dtx[col].parentSpan, 1);
                 cx.commandLink = Util.nvl(dtx[col].commandLink, "");
+                cx.valOnZero = dtx[col].valOnZero;
                 cx.commandLinkClick2 = dtx[col].commandLinkClick;
                 cx.commandLinkClick = (dtx[col].commandLinkClick != undefined ? function (obj, rowno, col, lctb) {
                     this.commandLinkClick2(obj, rowno, col, lctb, thatForm);
@@ -2636,6 +2653,7 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                 cx.eOther = "";
                 cx.mDefaultValue = "";
                 cx.mGrouped = Util.nvl(dtx[col].grouped, false);
+
 
             }
 
@@ -2837,7 +2855,11 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                     var prev;
                     if (flds[f].obj.paraObj != undefined) {
                         prev = UtilGen.getControlValue(flds[f].obj);
-                        flds[f].obj.paraObj.desroy();
+                        if (flds[f].obj.paraObj != undefined)
+                            try {
+                                flds[f].obj.paraObj.desroy();
+                            }
+                            catch (e) { }
                     }
 
                     var obj = UtilGen.addControl(fe,
@@ -2891,6 +2913,12 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                         var vl = UtilGen.getControlValue(paras[fld]);
                         // var pid = thatForm.view.byId("rep" + rptNo + "_parameter" + fld + thatForm.timeInLong);
                         UtilGen.setControlValue(paras[fld].parentObj, vl, vl, true);
+
+                        if (Util.nvl(vl, "") == "" && thatForm.helperFunctions.misc.getObjectByObj(paras[fld].parentObj).require) {
+                            UtilGen.errorObj(paras[fld]);
+                            ReportView.err(thatForm.helperFunctions.misc.getObjectByObj(paras[fld].parentObj).colname + " field rquired a value !");
+                        }
+
                         // var fx=thatForm.view.byId("rep" + rptNo + "_" + flds[f].name.replace(".", '')  + this.timeInLong)
                         // thatForm.setFieldValue(paras[fld].parentObj, vl, vl, true);
                     }
@@ -3243,7 +3271,6 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
                 "</div>";
 
             for (var q in rep.db) {
-
                 if (rep.db[q].showType == FormView.QueryShowType.QUERYVIEW) {
                     ht = ht + rep.db[q].obj.getHTMLTable(that.view, "para", false);
                 } else if (rep.db[q].showType == FormView.QueryShowType.FORM) {
@@ -3270,18 +3297,28 @@ sap.ui.define("sap/ui/ce/generic/ReportView", ["./QueryView"],
         ReportView.prototype.showXLS = function (pRptno) {
             var that = this;
             var rptNo = Util.nvl(pRptno, UtilGen.getControlValue(this.lstRep));
+            var sett = sap.ui.getCore().getModel("settings").getData();
             var rep = this.reports[rptNo];
             var html = "";
             that.view.colData = {};
             that.view.reportsData = {
                 report_info: { report_name: Util.nvl(rep.title, "Query") }
             };
+            var ht = "<div class='company'>" + sett["COMPANY_NAME"] + "</div> " +
+                "<div class='reportTitle'>" + rep.title +
+                "</div>";
 
             for (var q in rep.db) {
-                var ht = "";
                 if (rep.db[q].showType == FormView.QueryShowType.QUERYVIEW) {
-                    ht = rep.db[q].obj.getHTMLTable(that.view, "para");
-                    break;
+                    ht = ht + rep.db[q].obj.getHTMLTable(that.view, "para", false);
+                } else if (rep.db[q].showType == FormView.QueryShowType.FORM) {
+                    var flds = rep.db[q].fields;
+                    for (var f in flds) {
+                        if (flds[f].hasOwnProperty("onPrintField") && flds[f].onPrintField != undefined)
+                            ht = ht + flds[f].onPrintField();
+                        else
+                            ht = ht + "<b>" + flds[f].title + " : </b>" + " " + UtilGen.getControlValue(flds[f].obj) + "<br>";
+                    }
                 }
             }
 

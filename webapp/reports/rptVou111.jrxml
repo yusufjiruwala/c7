@@ -173,7 +173,7 @@ order by order1.ord_no]]>
 	<field name="REFERENCE" class="java.lang.String"/>
 	<field name="EMAIL" class="java.lang.String"/>
 	<field name="BNK" class="java.lang.String"/>
-	<group name="N1" isStartNewPage="true" keepTogether="true">
+	<group name="N1" isStartNewPage="true" isReprintHeaderOnEachPage="true" keepTogether="true">
 		<groupExpression><![CDATA[$F{ORD_NO}]]></groupExpression>
 		<groupHeader>
 			<band height="403" splitType="Stretch">

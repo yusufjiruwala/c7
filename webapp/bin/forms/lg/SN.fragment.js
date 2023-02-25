@@ -45,8 +45,7 @@ sap.ui.jsfragment("bin.forms.lg.DN", {
         this.qv.getControl().setFixedBottomRowCount(0);
         this.qv.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
         this.qv.getControl().setVisibleRowCount(7);
-
-
+        
         this.frm.getToolbar().addContent(this.bk);
         (this.view.byId("poCmdSave") != undefined ? this.view.byId("poCmdSave").destroy() : null);
         this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdSave"), {

@@ -45,10 +45,15 @@ sap.ui.define(["./DataCell"], function (DataCell) {
         this.mSearchColTitle = "";
         this.mSearchColTitle = "";
         this.mSearchColChildCount = "";
+        this.valOnZero = undefined;
         this.whenValidate = undefined;
         this.eventCalc = undefined;
         this.commandLink = undefined;
         this.commandLinkClick = undefined;
+        this.ct_row = "N";
+        this.ct_col = "N";
+        this.ct_val = "N";
+
 
     }
 
@@ -59,8 +64,19 @@ sap.ui.define(["./DataCell"], function (DataCell) {
         },
         getParent: function () {
             return this.parentmLcTb;
+        },
+        getClone: function () {
+            var cl = new Column();
+            for (var i in this)
+                if (i != "mUIHelper")
+                    cl[i] = this[i];
+            cl["mUIHelper"] = {};
+            for (var i in this.mUIHelper)
+                cl["mUIHelper"][i] = this.mUIHelper[i];
+            return cl;
         }
 
     }
+
     return Column;
 });

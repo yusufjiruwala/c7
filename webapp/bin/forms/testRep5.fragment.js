@@ -244,7 +244,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 list: "select accno,name from acaccount order by path",
                                 edit_allowed: true,
                                 insert_allowed: true,
-                                require: true,
+                                require: false,
                                 dispInPara: true,
                             },
                             pcc: {
@@ -286,7 +286,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 list: "",
                                 edit_allowed: true,
                                 insert_allowed: true,
-                                require: true,
+                                require: false,
                                 dispInPara: true,
                             },
                             pref: {
@@ -325,7 +325,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 list: "",
                                 edit_allowed: true,
                                 insert_allowed: true,
-                                require: true,
+                                require: false,
                                 dispInPara: true,
                             },
                             pageing: {
@@ -352,7 +352,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 list: "@NONE/NONE,DEBIT/DEBIT,CREDIT/CREDIT",
                                 edit_allowed: true,
                                 insert_allowed: true,
-                                require: true,
+                                require: false,
                                 dispInPara: true,
                             },
                         },
@@ -903,7 +903,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 list: "select accno,name from acaccount where childcount=0 order by path",
                                 edit_allowed: true,
                                 insert_allowed: true,
-                                require: true,
+                                require: false,
                                 dispInPara: true,
                             },
                             toacc: {
@@ -943,7 +943,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 list: "",
                                 edit_allowed: true,
                                 insert_allowed: true,
-                                require: true,
+                                require: false,
                                 dispInPara: true,
                             }
                         },

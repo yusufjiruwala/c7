@@ -434,13 +434,10 @@ public class UserRoute {
 	@RequestMapping(value = "/bat7ClrRep", method = RequestMethod.POST)
 	public ResponseEntity<BatchSqlJson> bat7ClrRep(@RequestBody BatchSqlJson sql,
 			@RequestParam Map<String, String> params) {
-
 		if (sql.getP1().equals("true"))
 			repBat7.saveToTmp(instanceInfo, sql.getRepCode(), sql.getRepNo());
 		String ret = repBat7.clearReport(instanceInfo, sql.getRepCode(), sql.getRepNo());
-
-		sql.setRet(ret);
-
+		sql.setRet(ret);		
 		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
 	}
 

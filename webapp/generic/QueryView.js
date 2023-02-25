@@ -30,6 +30,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 showCollapse: false,
                 filterCols: [],
                 toolbar: undefined,
+                showGroupFilter: false
 
             };
 
@@ -122,8 +123,8 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
             this.mJsonString = "";
             this.mLctb = new LocalTableData();
-//            this.mLctb.parse();
-//            this.mJsonObject = JSON.parse(jsonStr);
+            //            this.mLctb.parse();
+            //            this.mJsonObject = JSON.parse(jsonStr);
         }
 
         QueryView.DataFilter = DataFilter;
@@ -137,11 +138,32 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             return q;
         };
         QueryView.prototype.createToolbar = function (addClass, filterCols, prsnEventAfterApply, prsnEventAfterRevert) {
+            var that = this;
             this.showToolbar.showBar = true;
             this.showToolbar.filterCols = Util.nvl(filterCols, []);
             var that = this;
             var cont = [new sap.m.ToolbarSpacer()];
+            if (this.showToolbar.showGroupFilter) {
+                this.showToolbar.lstFltGroup = UtilGen.createControl(sap.m.ComboBox, UtilGen.DBView, "", {
+                    customData: [{ key: "" }],
+                    visible: false,
+                    items: {
+                        path: "/",
+                        template: new sap.ui.core.ListItem({ text: "{NAME}", key: "{CODE}" }),
+                        templateShareable: true
+                    },
+                    selectionChange: function (event) {
+                        that.mViewSettings["filterStr"] = "";
+                        if (Util.nvl(this.getValue(), "ALL") != "ALL")
+                            that.mViewSettings["filterStr"] = that.mLctb.cols[0].mColName + "=" + this.getValue();
+                        that.dontFillFilterComb = true;
+                        that.loadData();
+                    }
+                }, "string", undefined, undefined, "@");
 
+                cont.push(this.showToolbar.lstFltGroup);
+            } else
+                this.showToolbar.lstFltGroup = undefined;
             if (this.showToolbar.showExpand) {
                 cont.push(new sap.m.Button(this.tableId + "cmdExpandAll", {
                     icon: "sap-icon://positive", press: function () {
@@ -160,25 +182,36 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             }
 
             if (this.showToolbar.showSearch)
-                cont.push(new sap.m.Input(this.tableId + "searchText", {
+                cont.push(new sap.m.Input({
                     placeholder: "search text here",
                     width: "150px",
                     liveChange: function (ev) {
                         UtilGen.doFilterLiveTable(ev, that, that.showToolbar.filterCols);
+                        var val = ev.getParameter("newValue");
+                        if (that.showBottomFixedRow == undefined)
+                            that.showBottomFixedRow = that.getControl().getFixedBottomRowCount();
+                        if (val == "") {
+                            that.getControl().setFixedBottomRowCount(that.showBottomFixedRow);
+                            that.loadData();
+                        }
+                        else
+                            that.getControl().setFixedBottomRowCount(0);
                     }
                 }));
-            if (this.showToolbar.showFilter)
+            if (this.showToolbar.showFilter) {
+                Util.destroyID(this.tableId + "cmdFilter");
                 cont.push(new sap.m.Button(this.tableId + "cmdFilter", {
                     icon: "sap-icon://filter", press: function () {
                         that.showFilterWindow(that.getControl().view);
                     }
                 }));
+            }
             if (this.showToolbar.showPersonalization) {
                 if (prsnEventAfterApply != undefined)
                     that.prsnEventAfterApply = prsnEventAfterApply;
                 if (prsnEventAfterRevert != undefined)
                     that.prsnEventAfterRevert = prsnEventAfterRevert;
-
+                Util.destroyID(this.tableId + "cmdPersonalization");
                 cont.push(new sap.m.Button(this.tableId + "cmdPersonalization", {
                     icon: "sap-icon://settings", press: function () {
                         that.showPersonalization(this);
@@ -252,8 +285,10 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 var col = that.mLctb.cols[cn];
                 var prop = prs[ci];
                 col.mUIHelper.display_style = "";
-                if (Util.nvl(prop.background, "") != "")
-                    col.mUIHelper.display_style = "background:" + prop.background + ";";
+                if (Util.nvl(prop["background-color"], "") != "")
+                    col.mUIHelper.display_style = "background-color:" + prop["background-color"] + ";";
+                if (Util.nvl(prop["background"], "") != "")
+                    col.mUIHelper.display_style = "background-color:" + prop["background"] + ";";
                 if (Util.nvl(prop.color, "") != "")
                     col.mUIHelper.display_style += "color:" + prop.color + ";";
                 if (Util.nvl(prop["font-size"], "") != "")
@@ -288,11 +323,13 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             var fe = [];
 
             for (var ci in cols) {
+                if (cols[ci].mGrouped || cols[ci].mHideCol)
+                    continue;
                 fe.push("#" + cols[ci].mTitle);
                 var obj = UtilGen.addControl(fe,
                     "{\"text\":\"Background color\",\"width\":\"50%\",\"textAlign\":\"End\",\"styleClass\":\"\"}", sap.m.Input,
                     "txtfF" + cols[ci].mColName + "--background--" + that.tableId,
-                    {width: "50%"}, "string", "", this.getControl().view, undefined, "");
+                    { width: "50%" }, "string", "", this.getControl().view, undefined, "");
                 if (cols[ci].mUIHelper.display_style != "") {
                     var dp = cols[ci].mUIHelper.display_style.split(";")
                     for (var s in dp)
@@ -303,7 +340,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 obj = UtilGen.addControl(fe,
                     "{\"text\":\"Color\",\"width\":\"50%\",\"textAlign\":\"End\",\"styleClass\":\"\"}", sap.m.Input,
                     "txtfF" + cols[ci].mColName + "--color--" + that.tableId,
-                    {width: "50%"}, "string", "", this.getControl().view, undefined, "");
+                    { width: "50%" }, "string", "", this.getControl().view, undefined, "");
                 if (cols[ci].mUIHelper.display_style != "") {
                     var dp = cols[ci].mUIHelper.display_style.split(";")
                     for (var s in dp)
@@ -313,7 +350,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 obj = UtilGen.addControl(fe,
                     "{\"text\":\"Font-size\",\"width\":\"50%\",\"textAlign\":\"End\",\"styleClass\":\"\"}", sap.m.Input,
                     "txtfF" + cols[ci].mColName + "--font-size--" + that.tableId,
-                    {width: "50%"}, "string", "", this.getControl().view, undefined, "");
+                    { width: "50%" }, "string", "", this.getControl().view, undefined, "");
                 if (cols[ci].mUIHelper.display_style != "") {
                     var dp = cols[ci].mUIHelper.display_style.split(";")
                     for (var s in dp)
@@ -324,7 +361,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 obj = UtilGen.addControl(fe,
                     "{\"text\":\"Width\",\"width\":\"50%\",\"textAlign\":\"End\",\"styleClass\":\"\"}", sap.m.Input,
                     "txtfF" + cols[ci].mColName + "--width--" + that.tableId,
-                    {width: "50%"}, "string", "", this.getControl().view, undefined, "");
+                    { width: "50%" }, "string", "", this.getControl().view, undefined, "");
                 obj.setValue(cols[ci].mUIHelper.display_width);
             }
             var frm = UtilGen.formCreate2("", true, fe, undefined, sap.m.ScrollContainer, {
@@ -339,7 +376,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
             }, undefined);
             frm.addStyleClass("sapUiSizeCondensed");
-            var pg = new sap.m.Page({showHeader: false, enableScrolling: true, content: frm});
+            var pg = new sap.m.Page({ showHeader: false, enableScrolling: true, content: frm });
             var pop = new sap.m.Popover({
                 content: pg,
                 contentHeight: "350px",
@@ -512,7 +549,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 },
                 title: "{TITLE}",
                 active: true,
-                customData: [{key: "{CODE} "}, {key: ss}]
+                customData: [{ key: "{CODE} " }, { key: ss }]
 
             });
             // if (this.mList.getModel() != undefined)
@@ -708,7 +745,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     if (cc.mSearchSQL.startsWith("@")) {
                         var spt = cc.mSearchSQL.substring(1).split(",");
                         for (var i1 in spt) {
-                            var dttt = {CODE: "", TITLE: ""};
+                            var dttt = { CODE: "", TITLE: "" };
                             var sx = spt[i1].split("/");
                             dttt.CODE = "" + sx[0];
                             dttt.TITLE = "" + sx[1];
@@ -1024,7 +1061,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
                 }
 
-// object for adding multiLabel or Label
+                // object for adding multiLabel or Label
                 var l = {
                     template: o,
                     width: (cc.getMUIHelper().display_width) + "px",
@@ -1038,7 +1075,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     text: Util.getLangDescrAR(cc.mTitle, cc.mTitleAr),
                     wrapping: true
                 })];
-// if multilabel then add objects for multiLabel
+                // if multilabel then add objects for multiLabel
                 if (Util.nvl(cc.mTitleParent, "").length > 0) {
                     l["multiLabels"] = [
                         new sap.ui.commons.TextView({
@@ -1089,6 +1126,12 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
             if (this.eventCalc != undefined)
                 this.eventCalc(this, undefined, -1, false);
+            if (that.dontFillFilterComb == undefined) {
+                that.dontFillFilterComb = undefined;
+                this.fillFilterGroupList();
+            }
+            else
+                that.dontFillFilterComb = undefined;
 
             if (that.prsnOrigin == undefined)
                 that.prsnOrigin = that.getCurrentPrs();
@@ -1113,9 +1156,36 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     });
                 }
             });
-
+            setTimeout(function () {
+                that.colorRows();
+            });
         }
-        ;
+            ;
+        QueryView.prototype.fillFilterGroupList = function () {
+            var that = this;
+            if (this.showToolbar.lstFltGroup == undefined)
+                return;
+            this.showToolbar.lstFltGroup.setVisible(true);
+            var cdt = [];
+            var ld = that.mLctb;
+            var lastVal = "";
+            cdt.push({ CODE: "", NAME: "ALL" });
+            for (var l = 0; l < ld.rows.length; l++) {
+                var cd = { CODE: "", NAME: "" };
+                var cval = ld.getFieldValue(l, ld.cols[0].mColName);
+                var nmval = cval;
+                if (ld.cols.length > 1 && ld.cols[1].mGrouped)
+                    nmval = cval + "-" + Util.nvl(ld.getFieldValue(l, ld.cols[1].mColName), "");
+                if (lastVal != cval) {
+                    cd.CODE = cval;
+                    cd.NAME = nmval;
+                    lastVal = cval;
+                    cdt.push(cd);
+                }
+            }
+            Util.fillCombo(that.showToolbar.lstFltGroup, cdt);
+            that.showToolbar.lstFltGroup.setSelectedItem(that.showToolbar.lstFltGroup.getItems()[0]);
+        };
         QueryView.prototype._nextFocusableCell = function (rowno, colno) {
             //that.getControl().getRows()[rowno].getCells()[colno].focus()
             // write here code to find next inputable cell.
@@ -1277,10 +1347,16 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                             footerg[v] = null;
                             footer[v] = null;
                         }
-                        if (this.mLctb.getColByName(vv) != undefined && this.mLctb.getColByName(vv).getMUIHelper().display_format === "MONEY_FORMAT")
+
+                        if (this.mLctb.getColByName(vv) != undefined &&
+                            this.mLctb.getColByName(vv).valOnZero != undefined &&
+                            o[i][v] == 0)
+                            o[i][v] = this.mLctb.getColByName(vv).valOnZero;
+                        else if (this.mLctb.getColByName(vv) != undefined && this.mLctb.getColByName(vv).getMUIHelper().display_format === "MONEY_FORMAT")
                             o[i][v] = df.format(o[i][v]);
-                        if (this.mLctb.getColByName(vv) != undefined && this.mLctb.getColByName(vv).getMUIHelper().display_format === "QTY_FORMAT")
+                        else if (this.mLctb.getColByName(vv) != undefined && this.mLctb.getColByName(vv).getMUIHelper().display_format === "QTY_FORMAT")
                             o[i][v] = dfq.format(o[i][v]);
+
                     }
                     else {
                         // footer[v] = null;
@@ -1374,7 +1450,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             return o;
 
         };
-//tree buildjson data
+        //tree buildjson data
 
         QueryView.prototype.buildJsonDataTree = function () {
 
@@ -1440,10 +1516,17 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                         this.mLctb.cols[k].getMUIHelper().display_format == "MONEY_FORMAT") {
                         vl = (vl.length == 0 ? "" : df.format(parseFloat(vl)));
                     }
+
                     if (this.mLctb.cols[k].getMUIHelper().data_type == "NUMBER" &&
                         this.mLctb.cols[k].getMUIHelper().display_format == "QTY_FORMAT") {
                         vl = (vl.length == 0 ? "" : dfq.format(parseFloat(vl)));
                     }
+                    if (this.mLctb.cols[k].getMUIHelper().data_type == "NUMBER" &&
+                        this.mLctb.cols[k].valOnZero != undefined && parseFloat(vl) == 0) {
+                        vl = this.mLctb.cols[k].valOnZero;
+                    }
+
+
                     if (this.mLctb.cols[k].getMUIHelper().data_type == "DATE" &&
                         this.mLctb.cols[k].getMUIHelper().display_format == "SHORT_DATE_FORMAT") {
                         var dt = new Date(vl);
@@ -1566,45 +1649,48 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 }
 
 
-                for (var j = 0 + cellAdd; j < cellsCount; j++)
-                    if (this.getControl().getRows()[i].getCells()[j - cellAdd] != undefined) {
+                for (var j = 0; j < cellsCount - cellAdd; j++)
+                    if (this.getControl().getRows()[i].getCells()[j] != undefined) {
                         // var rd = oModel.getData()[rowStart + i]._rowid;
                         // removing any class...
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].setVisible(true);
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeClass("yellow");
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeClass("qrGroup");
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeClass("qtSecondLevel");
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeClass("qtFirstLevel");
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeAttr("colspan");
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().attr("style", this.b4_cf_val);
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().attr("style", Util.nvl(this.b4_cf_val1[j - cellAdd], ""));
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().css("background-color", "");
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().css("background-color", "");
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().css("background-color", "");
-                        this.getControl().getRows()[i].getCells()[j - cellAdd].$().css("color", "");
+                        this.getControl().getRows()[i].getCells()[j].setVisible(true);
+                        this.getControl().getRows()[i].getCells()[j].$().parent().parent().show();
+                        this.getControl().getRows()[i].getCells()[j].$().parent().parent().removeClass("yellow");
+                        this.getControl().getRows()[i].getCells()[j].$().parent().parent().removeClass("qrGroup");
+                        this.getControl().getRows()[i].getCells()[j].$().parent().parent().removeClass("qtSecondLevel");
+                        this.getControl().getRows()[i].getCells()[j].$().parent().parent().removeClass("qtFirstLevel");
+                        this.getControl().getRows()[i].getCells()[j].$().parent().parent().removeAttr("colspan");
+                        this.getControl().getRows()[i].getCells()[j].$().attr("style", this.b4_cf_val);
+                        this.getControl().getRows()[i].getCells()[j].$().parent().parent().attr("style", Util.nvl(this.b4_cf_val1[j], ""));
+                        this.getControl().getRows()[i].getCells()[j].$().parent().parent().css("background-color", "");
+                        this.getControl().getRows()[i].getCells()[j].$().parent().css("background-color", "");
+                        this.getControl().getRows()[i].getCells()[j].$().css("background-color", "");
+                        this.getControl().getRows()[i].getCells()[j].$().css("color", "");
 
                         // column formatting...
                         var col_fmt1 = "";// will hold column format
                         if (i < this.mLctb.rows.length &&
-                            Util.nvl(this.mLctb.cols[j - cellAdd].getMUIHelper().display_style, "").trim() != "") {
-                            var s = this.mLctb.cols[j - cellAdd].getMUIHelper().display_style;
+                            Util.nvl(this.mLctb.cols[(j + groupedAdd)].getMUIHelper().display_style, "").trim() != "") {
+                            var s = this.mLctb.cols[j + groupedAdd].getMUIHelper().display_style;
                             col_fmt1 = s;
-                            this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().attr("style", this.b4_cf_val1[j - cellAdd] + ";" + s);
-                            this.getControl().getRows()[i].getCells()[j - cellAdd].$().attr("style", this.b4_cf_val[j - cellAdd] + ";" + s);
+                            this.getControl().getRows()[i].getCells()[(j)].$().parent().parent().attr("style", this.b4_cf_val1[j] + ";" + s);
+                            this.getControl().getRows()[i].getCells()[(j)].$().attr("style", this.b4_cf_val[j] + ";" + s);
+                            this.getControl().getRows()[i].getCells()[(j)].$().parent().parent().find("input").attr("style", s);
+
                         }
                         //applying conditional formatting....
                         if (cf != undefined && cf.length > 0) {
                             var rd = oModel.getData()[rowStart + i]._rowid;
-                            this.getControl().getRows()[rd].getCells()[j - cellAdd].$().parent().parent().attr("style", this.b4_cf_val1[j - cellAdd] + ";" + col_fmt1 + cf);
-                            this.getControl().getRows()[rd].getCells()[j - cellAdd].$().attr("style", this.b4_cf_val[j - cellAdd] + ";" + col_fmt1 + cf);
+                            this.getControl().getRows()[rd].getCells()[j].$().parent().parent().attr("style", this.b4_cf_val1[j] + ";" + col_fmt1 + cf);
+                            this.getControl().getRows()[rd].getCells()[j].$().attr("style", this.b4_cf_val[j] + ";" + col_fmt1 + cf);
                             if (cf_tooltip != "")
-                                this.getControl().getRows()[rd].getCells()[j - cellAdd].$().parent().parent().attr('title', cf_tooltip);
+                                this.getControl().getRows()[rd].getCells()[j].$().parent().parent().attr('title', cf_tooltip);
                         }
-                        else if (this.mLctb.cols[j - cellAdd].getMUIHelper().display_style == undefined ||
-                            this.mLctb.cols[j - cellAdd].getMUIHelper().display_style.length == 0) {
-                            this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().attr("style", this.b4_cf_val1[j - cellAdd]);
-                            this.getControl().getRows()[i].getCells()[j - cellAdd].$().attr("style", this.b4_cf_val[j - cellAdd]);
-                            this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().removeAttr('title');
+                        else if (this.mLctb.cols[j + groupedAdd].getMUIHelper().display_style == undefined ||
+                            this.mLctb.cols[j + groupedAdd].getMUIHelper().display_style.length == 0) {
+                            this.getControl().getRows()[i].getCells()[j].$().parent().parent().attr("style", this.b4_cf_val1[j]);
+                            this.getControl().getRows()[i].getCells()[j].$().attr("style", this.b4_cf_val[j]);
+                            this.getControl().getRows()[i].getCells()[j].$().parent().parent().removeAttr('title');
                         }
 
 
@@ -1641,10 +1727,11 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 if (cellValue != undefined && (cellValue + "").startsWith(String.fromCharCode(4094))) {
                     this.getControl().getRows()[i].getCells()[0].$().addClass("qrGroup");
                     this.getControl().getRows()[i].getCells()[1].$().addClass("qrGroup");
-                    // this.getControl().getRows()[i].getCells()[0].$().parent().parent().attr("colspan", (cellAdd + 1) + "");
-                    for (var k = 1 + cellAdd; k < cellsCount; k++) {
-                        // this.getControl().getRows()[i].getCells()[k - cellAdd].$().parent().parent().attr("width", "0px");
-                        // this.getControl().getRows()[i].getCells()[k - cellAdd].setVisible(false);
+                    this.getControl().getRows()[i].getCells()[0].$().parent().parent().attr("colspan", (this.mLctb.cols.length - cellAdd) + "");
+                    //  this.getControl().getRows()[i].getCells()[1].$().parent().parent().attr("colspan", (this.mLctb.cols.length-cellAdd) + ""); 
+                    for (var k = 1; k < this.mLctb.cols.length - cellAdd; k++) {
+                        // this.getControl().getRows()[i].getCells()[k ].$().parent().parent().attr("width", "0px");
+                        this.getControl().getRows()[i].getCells()[k].$().parent().parent().hide();
                     }
                     // this.getControl().getRows()[i].removeCell(this.getControl().getRows()[i].getCells().length - 1);
 
@@ -1712,7 +1799,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             }
 
         }
-        ;
+            ;
         QueryView.prototype.reset = function () {
             this.getControl().removeAllRows();
             this.getControl().removeAllColumns();
@@ -1841,7 +1928,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             var h = this.getHTMLTable(view, iadd);
             var newWin = window.open("");
             newWin.document.write(h);
-            $("<link>", {rel: "stylesheet", href: "css/print.css"}).appendTo(newWin.document.head);
+            $("<link>", { rel: "stylesheet", href: "css/print.css" }).appendTo(newWin.document.head);
             setTimeout(function () {
                 newWin.print();
             }, 1000);
@@ -2242,7 +2329,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
 
         }
-        ;
+            ;
         QueryView.prototype.buildQuickFilter = function () {
             var that = this;
             if (this.mLctb.cols.length <= 0) return false;
@@ -2320,7 +2407,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 },
                 title: "{DISPLAY}",
                 active: true,
-                customData: {key: "{FILTER_STRING}"}
+                customData: { key: "{FILTER_STRING}" }
             });
 
             lst.setModel(new sap.ui.model.json.JSONModel(o));
@@ -2334,14 +2421,14 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 }
             }));
             this.filterBox.addItem(new sap.m.SearchField({
-                    placeholder: "filter..",
-                    liveChange: function (event) {
-                        var val = event.getParameter("newValue");
-                        var filter = new sap.ui.model.Filter("DISPLAY", sap.ui.model.FilterOperator.Contains, val);
-                        var binding = lst.getBinding("items");
-                        binding.filter(filter);
-                    }
+                placeholder: "filter..",
+                liveChange: function (event) {
+                    var val = event.getParameter("newValue");
+                    var filter = new sap.ui.model.Filter("DISPLAY", sap.ui.model.FilterOperator.Contains, val);
+                    var binding = lst.getBinding("items");
+                    binding.filter(filter);
                 }
+            }
             ));
             this.filterBox.addItem(lst);
             return true;
@@ -2429,16 +2516,16 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                         dlg.close();
                     }
                 }),
-                    new sap.m.Button({
-                        text: "Clear filter",
-                        press: function () {
-                            view.filterData = [];
-                            qv.mViewSettings["filterStr"] = null;
-                            qv.loadData();
-                            dlg.close();
-                        }
+                new sap.m.Button({
+                    text: "Clear filter",
+                    press: function () {
+                        view.filterData = [];
+                        qv.mViewSettings["filterStr"] = null;
+                        qv.loadData();
+                        dlg.close();
+                    }
 
-                    })
+                })
                 ]
             });
             dlg.open();
@@ -2464,7 +2551,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
         return QueryView;
     }
 )
-;
+    ;
 
 
 

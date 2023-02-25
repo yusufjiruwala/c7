@@ -102,7 +102,7 @@ sap.ui.jsview('bin.Dashboard', {
             })
         }).addStyleClass("sapFShellBar");
 
-        this.txtExeCmd = new sap.m.TextArea({height: "25px", width: "100%"});
+        this.txtExeCmd = new sap.m.TextArea({ height: "25px", width: "100%" });
         this.txtExeCmd.attachBrowserEvent("dblclick", function (e) {
             that.showPopCmd();
         });
@@ -172,7 +172,7 @@ sap.ui.jsview('bin.Dashboard', {
             });
             that.app.addDetailPage(pg1);
             that.pg1.push(pg1);
-            var itm = new sap.ui.core.ListItem({text: Util.nvl(dtx.formTitle, dtx.formName), key: dtx.formName});
+            var itm = new sap.ui.core.ListItem({ text: Util.nvl(dtx.formTitle, dtx.formName), key: dtx.formName });
             that.lstPgs.addItem(itm);
             that.lstPgs.setSelectedItem(itm);
             pg1.item = itm;
@@ -182,16 +182,18 @@ sap.ui.jsview('bin.Dashboard', {
         // action side menu page.
         this.pgMain = new sap.m.Page({
             showHeader: true,
-            showFooter: false,
+            showFooter: true,
             enableScrolling: false,
             content: [],
         });
-
+        var appMaster = new sap.m.App({ height: "90%", pages: [this.pgMain] });
         this.app = new sap.m.SplitApp({
             detailPages: [this.pg],
-            masterPages: [this.pgMain],
-            mode: sap.m.SplitAppMode.StretchCompressMode
+            masterPages: [appMaster],
+            mode: sap.m.SplitAppMode.StretchCompressMode,
         });
+
+
         this.pg1.push(this.pg);
         //main page where split app and shellbar will display...
         this.mainPage = new sap.m.Page({
@@ -203,7 +205,7 @@ sap.ui.jsview('bin.Dashboard', {
             footer: [
                 new sap.m.Toolbar({
                     content: [
-                        new sap.m.Text({text: "Pages :", width: "80px"}), this.lstPgs, nxt, this.txtExeCmd, that.cmdExe
+                        new sap.m.Text({ text: "Pages :", width: "80px" }), this.lstPgs, nxt, this.txtExeCmd, that.cmdExe
                     ]
                 })
             ]
@@ -214,12 +216,12 @@ sap.ui.jsview('bin.Dashboard', {
             content: [
                 new sap.m.Button({
                     text: "Refresh", icon: "sap-icon://refresh", press: function () {
-                        that.loadData();
+                        that.loadData(false);
                     }
                 }),
                 new sap.m.ToolbarSpacer(), this.txt]
         });
-        this.app2 = new sap.m.App({pages: [this.mainPage], height: "99%", width: "100%"});
+        this.app2 = new sap.m.App({ pages: [this.mainPage], height: "99%", width: "100%" });
         this.pg.setSubHeader(tb);
         Util.Notifications.init(3000, this.sp, this);
 
@@ -231,6 +233,7 @@ sap.ui.jsview('bin.Dashboard', {
         }, 10);
 
         UtilGen.DBView = this;
+        UtilGen.toolBarBackColor = "#addfad";
         return this.app2;
 
     },
@@ -251,10 +254,10 @@ sap.ui.jsview('bin.Dashboard', {
         var cmdList = UtilGen.addControl(fe, "Setup Type", sap.m.ComboBox, "cmdList" + this.timeInLong + "_",
             {
                 enabled: true,
-                customData: [{key: ""}],
+                customData: [{ key: "" }],
                 items: {
                     path: "/",
-                    template: new sap.ui.core.ListItem({text: "{COMMAND}", key: "{KEYFLD}"}),
+                    template: new sap.ui.core.ListItem({ text: "{COMMAND}", key: "{KEYFLD}" }),
                     templateShareable: true
                 },
                 selectionChange: function (ev) {
@@ -268,45 +271,45 @@ sap.ui.jsview('bin.Dashboard', {
                 value: ""
             }, "string", undefined, this, undefined, "select KEYFLD ,COMMAND FROM C7_COMMANDS ORDER BY KEYFLD");
         var pop = new sap.m.Popover({
-                contentHeight: "30%",
-                contentWidth: "70%",
-                content: [txt],
-                placement: sap.m.PlacementType.Auto,
-                modal: false,
-                customHeader: new sap.m.Toolbar({
-                    content: [
-                        new sap.m.Button({
-                            text: "F5 -Execute", press: function () {
-                                rbt.firePress();
-                                that.cmdExe.firePress();
-                            }
-                        }),
-                        cmdList,
-                        new sap.m.Button({
-                            icon: "sap-icon://save",
-                            press: function (e) {
-                                var str = "begin delete from c7_commands where command=':command';" +
-                                    " insert into c7_commands (keyfld,command,exec_line) values " +
-                                    "((select nvl(max(keyfld),0)+1 from c7_commands),':command',':exec_line');" +
-                                    "end; ";
-                                var tx = txt.getValue();
-                                // tx = tx.replaceAll(/\n/g, "\\n");
-                                tx = tx.replaceAll(/:/g, "**");
-                                tx = tx.replaceAll(/\'/g, "*.");
-                                tx = tx.replaceAll(/\n/g, "\\n");
+            contentHeight: "30%",
+            contentWidth: "70%",
+            content: [txt],
+            placement: sap.m.PlacementType.Auto,
+            modal: false,
+            customHeader: new sap.m.Toolbar({
+                content: [
+                    new sap.m.Button({
+                        text: "F5 -Execute", press: function () {
+                            rbt.firePress();
+                            that.cmdExe.firePress();
+                        }
+                    }),
+                    cmdList,
+                    new sap.m.Button({
+                        icon: "sap-icon://save",
+                        press: function (e) {
+                            var str = "begin delete from c7_commands where command=':command';" +
+                                " insert into c7_commands (keyfld,command,exec_line) values " +
+                                "((select nvl(max(keyfld),0)+1 from c7_commands),':command',':exec_line');" +
+                                "end; ";
+                            var tx = txt.getValue();
+                            // tx = tx.replaceAll(/\n/g, "\\n");
+                            tx = tx.replaceAll(/:/g, "**");
+                            tx = tx.replaceAll(/\'/g, "*.");
+                            tx = tx.replaceAll(/\n/g, "\\n");
 
-                                str = str.replaceAll(":command", cmdList.getValue());
-                                str = str.replaceAll(":exec_line", tx);
-                                Util.execSQL(str);
-                                sap.m.MessageToast.show("Saved command, #" + cmdList.getValue());
-                            }
-                        }),
-                        new sap.m.ToolbarSpacer(),
-                        rbt
-                    ]
-                })
+                            str = str.replaceAll(":command", cmdList.getValue());
+                            str = str.replaceAll(":exec_line", tx);
+                            Util.execSQL(str);
+                            sap.m.MessageToast.show("Saved command, #" + cmdList.getValue());
+                        }
+                    }),
+                    new sap.m.ToolbarSpacer(),
+                    rbt
+                ]
             })
-        ;
+        })
+            ;
 
         pop.openBy(that.txtExeCmd);
 
@@ -354,12 +357,12 @@ sap.ui.jsview('bin.Dashboard', {
         Util.destroyID("txtHost", this);
 
         var op = new sap.m.Input(this.createId("txtUser")); // User name
-        var np = new sap.m.Input(this.createId("txtPassword"), {type: sap.m.InputType.Password}); // New Password
+        var np = new sap.m.Input(this.createId("txtPassword"), { type: sap.m.InputType.Password }); // New Password
         var cp = new sap.m.ComboBox(this.createId("txtFile"), {
             width: "100%",
             items: {
                 path: "/",
-                template: new sap.ui.core.ListItem({text: "{file}", key: "{file}"}),
+                template: new sap.ui.core.ListItem({ text: "{file}", key: "{file}" }),
                 templateShareable: true
             }
         });// Database
@@ -383,7 +386,7 @@ sap.ui.jsview('bin.Dashboard', {
             width: "100%",
             items: {
                 path: "/",
-                template: new sap.ui.core.ListItem({text: "{file}", key: "{file}"}),
+                template: new sap.ui.core.ListItem({ text: "{file}", key: "{file}" }),
                 templateShareable: true
 
             },
@@ -394,14 +397,14 @@ sap.ui.jsview('bin.Dashboard', {
 
         });
         var op2 = new sap.m.Input(this.createId("txtUser2")); // User name
-        var np2 = new sap.m.Input(this.createId("txtPassword2"), {type: sap.m.InputType.Password}); // New Password
-        var hs = new sap.m.Input(this.createId("txtHost"), {value: "jdbc:oracle:thin:@HOST:1521:orcl"});
+        var np2 = new sap.m.Input(this.createId("txtPassword2"), { type: sap.m.InputType.Password }); // New Password
+        var hs = new sap.m.Input(this.createId("txtHost"), { value: "jdbc:oracle:thin:@HOST:1521:orcl" });
 
         Util.doAjaxGet("exe?command=get-init-files", "", false).done(function (data) {
             var oModel = new sap.ui.model.json.JSONModel();
             var dt = JSON.parse(data);
-            dt.push({file: ".Schema"});
-            dt.push({file: ".New Init"});
+            dt.push({ file: ".Schema" });
+            dt.push({ file: ".New Init" });
             oModel.setData(dt);
 
             cp.setModel(oModel);
@@ -429,16 +432,45 @@ sap.ui.jsview('bin.Dashboard', {
                 })
             ]
         });
+        var url = new URL(window.location.href);
+        var user = url.searchParams.get("user");
+        if (user != undefined)
+            op.setValue(user);
+        if (url.searchParams.get("password") != undefined)
+            np.setValue(url.searchParams.get("password"));
+        if (url.searchParams.get("file") != undefined)
+            cp.setValue(url.searchParams.get("file"));
+        if (Util.nvl(np.getValue(), "") != "" &&
+            Util.nvl(op.getValue(), "") != "" &&
+            Util.nvl(cp.getValue(), "") != "")
+            setTimeout(function () {
+                that.byId("cmdLogon").firePress();
+                var locUrl = location.href;
+                var newURL = locUrl.split("?")[0];
+                var newPara = "";
+                var ar1 = ["user", "password", "file"];
+                var u1 = locUrl.split("?")[1].split("&");
+                for (var ui in u1)
+                    if (ar1.indexOf(u1[ui].split("=")[0]) < 0)
+                        newPara += (newPara.length > 0 ? "&" : "") + u1[ui];
+                newURL = newURL + (newPara.length > 0 ? "?" : "") + newPara;
+                console.log(newURL);
+                window.history.pushState({}, document.title, newURL);
+                // setTimeout(function () {
+                //     that.exeParams();
+                // }, 1000);
+
+            });
 
         var vb = new sap.m.VBox({
             items: [
-                new sap.m.Text({text: "User Name "}),
+                new sap.m.Text({ text: "User Name " }),
                 op,
-                new sap.m.Text({text: "Password "}),
+                new sap.m.Text({ text: "Password " }),
                 np,
-                new sap.m.Text({text: "Database"}),
+                new sap.m.Text({ text: "Database" }),
                 cp,
-                new sap.m.HBox({width: "100%", items: [al]}),
+                new sap.m.HBox({ width: "100%", items: [al] }),
 
             ]
         }).addStyleClass("sapUiSmallMargin");
@@ -458,6 +490,9 @@ sap.ui.jsview('bin.Dashboard', {
                         that.loadData_main();
                         that.show_main_menus();
                         dlg.close();
+                        setTimeout(function () {
+                            that.exeParams();
+                        }, 1000);
                     }
 
                 }
@@ -466,13 +501,13 @@ sap.ui.jsview('bin.Dashboard', {
         var vbInit = new sap.m.VBox({
             items: [
                 tb,
-                new sap.m.Text({text: "Database"}),
+                new sap.m.Text({ text: "Database" }),
                 cp2,
-                new sap.m.Text({text: "User"}),
+                new sap.m.Text({ text: "User" }),
                 op2,
-                new sap.m.Text({text: "Password "}),
+                new sap.m.Text({ text: "Password " }),
                 np2,
-                new sap.m.Text({text: "Host "}),
+                new sap.m.Text({ text: "Host " }),
                 hs,
 
             ]
@@ -496,7 +531,9 @@ sap.ui.jsview('bin.Dashboard', {
 
     }
     ,
-    loadData: function () {
+    loadData: function (pexePara) {
+        var that = this;
+        var exePara = Util.nvl(pexePara, true);
         var mdl = sap.ui.getCore().getModel("settings");
         if (mdl == undefined) {
             this.do_logon();
@@ -508,19 +545,42 @@ sap.ui.jsview('bin.Dashboard', {
             this.do_logon();
             return;
         }
-
+        var url = new URL(window.location.href);
+        var user = url.searchParams.get("user");
+        if (exePara && user != undefined) {
+            this.do_logon();
+            return;
+        }
 
         if (!(Object.keys(sett).length === 0
             && Object.getPrototypeOf(sett) === Object.prototype)) {
             this.current_profile = sett["CURRENT_PROFILE_CODE"];
             this.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
+            this.style_debit_numbers = Util.nvl(sett["STYLE_DEBIT_NUMBERS"], "color:green");
+            this.style_credit_numbers = Util.nvl(sett["STYLE_CREDIT_NUMBERS"], "color:red");
+
         }
         this.show_main_menus();
         this.loadData_main();
+        if (exePara)
+            setTimeout(function () {
+                that.exeParams();
+            }, 1000);
     }
     ,
-
+    exeParams: function () {
+        var url = new URL(window.location.href);
+        var cmd = url.searchParams.get("cmd");
+        if (Util.nvl(cmd, "") == "")
+            return;
+        var para = url.searchParams.get("para");
+        var pr = (Util.nvl(para, "").length > 0 ? " " : "") + Util.nvl(para, "");
+        pr = pr.replaceAll("@@", "=");
+        UtilGen.execCmd(cmd + pr, UtilGen.DBView, UtilGen.DBView.txtExeCmd, UtilGen.DBView.newPage);
+    }
+    ,
     loginPress: function () {
+        var that = this;
         var u = this.byId("txtUser");
         var p = this.byId("txtPassword");
         var f = this.byId("txtFile");
@@ -536,8 +596,11 @@ sap.ui.jsview('bin.Dashboard', {
 
             sap.ui.getCore().setModel(oModel, "settings");
 
-            this.current_profile = oModel.getData()["CURRENT_PROFILE_CODE"];
-            this.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
+            that.current_profile = oModel.getData()["CURRENT_PROFILE_CODE"];
+            that.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
+            this.style_debit_numbers = Util.nvl(oModel.getData()["STYLE_DEBIT_NUMBERS"], "color:green");
+            this.style_credit_numbers = Util.nvl(oModel.getData()["STYLE_CREDIT_NUMBERS"], "color:red");
+
 
 
         });
@@ -578,7 +641,8 @@ sap.ui.jsview('bin.Dashboard', {
         var sett = sap.ui.getCore().getModel("settings").getData();
         this.current_profile = sett["CURRENT_PROFILE_CODE"];
         this.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
-
+        this.style_debit_numbers = Util.nvl(sett["STYLE_DEBIT_NUMBERS"], "color:green");
+        this.style_credit_numbers = Util.nvl(sett["STYLE_CREDIT_NUMBERS"], "color:red");
         return true;
         // document.location.href = "/bi.html" + (s.length > 0 ? "?" : "") + s;
 
@@ -649,7 +713,7 @@ sap.ui.jsview('bin.Dashboard', {
                         //     defaultSpan: "XL2 L3 M3 S12"
                         // })
                     }
-                    ;
+                        ;
                     secs[dtxM[i].MS_ID].msObj.addSubSection(secs[dtxM[i].MS_ID].ss[dtxM[i].SS_ID].ssObj);
                 }
 
@@ -713,52 +777,58 @@ sap.ui.jsview('bin.Dashboard', {
         var that = this;
 
         UtilGen.clearPage(this.pgMain);
+        var btnMnu = new sap.m.Button({
+            icon: "sap-icon://drop-down-list",
+            text: this.current_profile_name,
+            width: "100%",
 
+            press: function () {
+                if (sap.ui.getCore().getModel("profiles") == undefined) {
+                    pth = "exe?command=get-profile-list";
+                    Util.doAjaxGet(pth, "", false).done(function (data) {
+                        if (data != undefined) {
+                            var dt = JSON.parse(data);
+                            var oModel = new sap.ui.model.json.JSONModel(dt);
+                            sap.ui.getCore().setModel(oModel, "profiles");
+                        }
+                    });
+                }
+                var ps = sap.ui.getCore().getModel("profiles").getData();
+                var mnus = [];
+                var pList = ps.list;
+                for (var i in pList) {
+                    var mnu = new sap.m.MenuItem({
+                        text: pList[i].code + "-" + pList[i].name,
+                        customData: { key: pList[i].code + "::=" + pList[i].name },
+                        press: function (ev) {
+                            var cs = this.getCustomData()[0].getKey();
+                            that.current_profile = cs.split("::=")[0];
+                            that.current_profile_name = cs.split("::=")[1];
+                            this.setText(cs.split("::=")[1]);
+                            that.show_main_menus();
+                        }
+                    });
+                    mnus.push(mnu);
+                }
+                var mnu = new sap.m.Menu({
+                    title: "",
+                    items: mnus
+                }).addStyleClass("profileMenus");
+
+                mnu.openBy(this);
+            }
+        }).addStyleClass("profileMenus");
         var tb = new sap.m.Toolbar({
+            width: "100%",
             content: [
                 new sap.m.Button({
                     icon: "sap-icon://log", press: function () {
                         that.do_log_out();
                     }
                 }),
-                new sap.m.Button({
-                    icon: "sap-icon://drop-down-list",
-                    text: this.current_profile_name,
-                    press: function () {
-                        if (sap.ui.getCore().getModel("profiles") == undefined) {
-                            pth = "exe?command=get-profile-list";
-                            Util.doAjaxGet(pth, "", false).done(function (data) {
-                                if (data != undefined) {
-                                    var dt = JSON.parse(data);
-                                    var oModel = new sap.ui.model.json.JSONModel(dt);
-                                    sap.ui.getCore().setModel(oModel, "profiles");
-                                }
-                            });
-                        }
-                        var ps = sap.ui.getCore().getModel("profiles").getData();
-                        var mnus = [];
-                        var pList = ps.list;
-                        for (var i in pList)
-                            mnus.push(new sap.m.MenuItem({
-                                text: pList[i].code + "-" + pList[i].name,
-                                customData: {key: pList[i].code + "::=" + pList[i].name},
-                                press: function (ev) {
-                                    var cs = this.getCustomData()[0].getKey();
-                                    that.current_profile = cs.split("::=")[0];
-                                    that.current_profile_name = cs.split("::=")[1];
-                                    this.setText(cs.split("::=")[1]);
-                                    that.show_main_menus();
-                                }
-                            }));
-                        new sap.m.Menu({
-                            title: "",
-                            items: mnus
-                        }).openBy(this);
-
-                    }
-                })
+                btnMnu
             ]
-        });
+        }).addStyleClass("profileMenus");
         this.pgMain.removeAllHeaderContent();
         this.pgMain.addHeaderContent(tb);
 
@@ -782,7 +852,7 @@ sap.ui.jsview('bin.Dashboard', {
         mv.setJsonStr("{" + dt.data + "}");
 
         mv.mLctb.getColByName("MENU_CODE").getMUIHelper().display_width = "100";
-        mv.mLctb.getColByName("MENU_TITLE").getMUIHelper().display_width = "400";
+        mv.mLctb.getColByName("MENU_TITLE").getMUIHelper().display_width = "275";
         // mv.mLctb.getColByName("MENU_TITLE").mCfOperator = ":CHILDCOUNT>0";
         // mv.mLctb.getColByName("MENU_TITLE").mCfTrue = "color:blue;font-weight: bold;";
 
@@ -794,14 +864,19 @@ sap.ui.jsview('bin.Dashboard', {
         mv.mLctb.getColByName("SHORTCUT_ICON").mHideCol = true;
 
         mv.switchType("tree");
+        // var sc = new sap.m.ScrollContainer({ content: [mv.getControl()] });
+        // sc.setHeight("100%");
         this.pgMain.addContent(mv.getControl());
+        // this.pgMain.addContent(new sap.m.VBox({ height: "200px" }));
         mv.getControl().expandToLevel(10);
         mv.getControl().setFixedBottomRowCount(0);
+        // mv.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
+        // mv.getControl().setVisibleRowCount(100);
         mv.getControl().setSelectionMode(sap.ui.table.SelectionMode.Single);
         mv.getControl().setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
+
         mv.getControl().addStyleClass("sapUiSizeCondensed menuTable");
         mv.getControl().attachRowSelectionChange(undefined, function () {
-
 
             var sl = mv.getControl().getSelectedIndices();
             if (sl.length > 0) {
@@ -822,7 +897,25 @@ sap.ui.jsview('bin.Dashboard', {
     }
     ,
     do_log_out: function () {
-        this.do_logon();
+        var that = this;
+        if (sap.m.MessageBox == undefined)
+            jQuery.sap.require("sap.m.MessageBox");
+        sap.m.MessageBox.confirm("Are you sure to LOG OFF ?  ", {
+            title: "Confirm",                                    // default
+            onClose: function (oAction) {
+                if (oAction == sap.m.MessageBox.Action.OK) {
+                    var locUrl = location.href;
+                    var newURL = locUrl.split("?")[0] + "?" + "user= ";
+                    window.history.pushState({}, document.title, newURL);
+                    window.onbeforeunload = undefined;
+                    location.reload();
+                    window.onbeforeunload = function () { return " " }
+                }
+            },                                       // default
+            styleClass: "",                                      // default
+            initialFocus: null,                                  // default
+            textDirection: sap.ui.core.TextDirection.Inherit     // default
+        });
     },
     updateMenus: function () {
         var that = this;
@@ -843,7 +936,6 @@ sap.ui.jsview('bin.Dashboard', {
             new sap.m.MenuItem({
                 text: "Log out..", icon: "sap-icon://log", press: function () {
                     that.do_logon(true);
-
                 }
             }));
         // add all groups first
@@ -1063,4 +1155,4 @@ sap.ui.jsview('bin.Dashboard', {
 }
         */
 })
-;
+    ;

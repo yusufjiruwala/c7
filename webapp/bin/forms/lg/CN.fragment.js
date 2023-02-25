@@ -72,8 +72,8 @@ sap.ui.jsfragment("bin.forms.lg.CN", {
 
         this.frm.getToolbar().addContent(new sap.m.ToolbarSpacer());
         (this.view.byId("poMsgInv") != undefined ? this.view.byId("poMsgInv").destroy() : null);
-        this.frm.getToolbar().addContent(new sap.m.Text(view.createId("poMsgInv"), {text: ""}).addStyleClass("redText blinking"));
-        this.frm.getToolbar().addContent(new sap.m.Title({text: "Credit Note Request"}));
+        this.frm.getToolbar().addContent(new sap.m.Text(view.createId("poMsgInv"), { text: "" }).addStyleClass("redText blinking"));
+        this.frm.getToolbar().addContent(new sap.m.Title({ text: "Credit Note Request" }));
 
         var sc = new sap.m.ScrollContainer();
 
@@ -131,12 +131,12 @@ sap.ui.jsfragment("bin.forms.lg.CN", {
         this.o2.ord_amt = this.addControl(fe, "LC Amount", sap.m.Input, "poOrdAmt",
             {
                 editable: false,
-                layoutData: new sap.ui.layout.GridData({span: "XL2 L2 M2 S12"})
+                layoutData: new sap.ui.layout.GridData({ span: "XL2 L2 M2 S12" })
             }, "number", sett["FORMAT_MONEY_1"])
         this.o2.ord_amt_lc = this.addControl(fe, "Amount", sap.m.Input, "poOrdAmtLc",
             {
                 editable: false,
-                layoutData: new sap.ui.layout.GridData({span: "XL2 L2 M2 S12"})
+                layoutData: new sap.ui.layout.GridData({ span: "XL2 L2 M2 S12" })
             }, "number", sett["FORMAT_MONEY_1"])
 
         var frm = UtilGen.formCreate("", true, fe, undefined, undefined, [1, 1, 1]);
@@ -148,22 +148,22 @@ sap.ui.jsfragment("bin.forms.lg.CN", {
         var that = this;
         var fe = [];
         this.o1.oname = this.addControl(fe, "Items Type", sap.m.Input, "dnfrde",
-            {enabled: false}, "string");
+            { enabled: false }, "string");
         this.o1.ord_type = this.addControl(fe, "@Req Type", sap.m.ComboBox, "dnord_type",
             {
                 items: {
                     path: "/",
-                    template: new sap.ui.core.ListItem({text: "{CODE} - {NAME}", key: "{CODE}"}),
+                    template: new sap.ui.core.ListItem({ text: "{CODE} - {NAME}", key: "{CODE}" }),
                     templateShareable: true
                 },
                 enabled: false
             }, "string", undefined, "@1/Sales return,2/Sales Discount");
 
         this.o1.ord_no = this.addControl(fe, "Order No", sap.m.Input, "dnOrdNo",
-            {layoutData: new sap.ui.layout.GridData({span: "XL2 L2 M2 S12"})}, "number"),
+            { layoutData: new sap.ui.layout.GridData({ span: "XL2 L2 M2 S12" }) }, "number"),
             this.o1.ord_date = this.addControl(fe, "@Date", sap.m.DatePicker, "dnOrdDate",
                 {
-                    layoutData: new sap.ui.layout.GridData({span: "XL2 L2 M2 S12"}),
+                    layoutData: new sap.ui.layout.GridData({ span: "XL2 L2 M2 S12" }),
                     change: function () {
                         that.changeCurrency();
                     }
@@ -176,7 +176,7 @@ sap.ui.jsfragment("bin.forms.lg.CN", {
         //     }, "number");
         this.o1._jo_complete = this.addControl(fe, "@JO No", sap.m.Input, "dnOrdComNo",
             {
-                layoutData: new sap.ui.layout.GridData({span: "XL1 L1 M1 S12"}),
+                layoutData: new sap.ui.layout.GridData({ span: "XL1 L1 M1 S12" }),
                 enabled: false,
             }, "string");
         this.o1.ord_ref = this.addControl(fe, "Supplier", sap.m.SearchField, "dnSupplier",
@@ -199,13 +199,13 @@ sap.ui.jsfragment("bin.forms.lg.CN", {
                 }
             }, "string");
         this.o1.payterm = this.addControl(fe, "Remarks", sap.m.Input, "dnRemarks",
-            {enabled: true}, "string");
+            { enabled: true }, "string");
         this.o1.so_reference = this.addControl(fe, "@SO Ref #", sap.m.Input, "dnSoRefer",
-            {enabled: false}, "string");
+            { enabled: false }, "string");
         this.o1.ord_fc_main_descr = this.addControl(fe, "Main Currency", sap.m.Input, "socurrency",
-            {editable: false}, "string");
+            { editable: false }, "string");
         this.o1.ord_fc_main_rate = this.addControl(fe, "@Rate", sap.m.Input, "socurrRate",
-            {editable: false}, "number");
+            { editable: false }, "number");
 
         return UtilGen.formCreate("", true, fe, undefined, undefined, [1, 1, 1]);
 
@@ -291,11 +291,13 @@ sap.ui.jsfragment("bin.forms.lg.CN", {
             + this.vars.ord_code
             + " order by ord_pos";
         this.qv.getControl().setEditable(true);
-        Util.doAjaxJson("sqlmetadata", {sql: sq}, false).done(function (data) {
+        Util.doAjaxJson("sqlmetadata", { sql: sq }, false).done(function (data) {
             if (data.ret == "SUCCESS") {
                 that.qv.setJsonStrMetaData("{" + data.data + "}");
                 UtilGen.applyCols("C6LGREQ.CN1", that.qv, that);
                 that.qv.mLctb.parse("{" + data.data + "}", true);
+                var c = that.qv.mLctb.getColPos("ORD_PRICE");
+                that.qv.mLctb.cols[c].getMUIHelper().data_type = "NUMBER";
                 if (that.qv.mLctb.rows.length == 0)
                     that.qv.addRow();
                 that.qv.loadData();
@@ -310,7 +312,7 @@ sap.ui.jsfragment("bin.forms.lg.CN", {
         var idx = id;
         if (Util.nvl(id, "") == "")
             idx = lbl.replace(/ ||,||./g, "");
-//        setx["layoutData"] = new sap.ui.layout.GridData({span: "XL4 L4 M4 S12"});
+        //        setx["layoutData"] = new sap.ui.layout.GridData({span: "XL4 L4 M4 S12"});
         var cnt = UtilGen.createControl(cntClass, this.view, idx, setx, dataType, fldFormat, undefined, plist);
         if (lbl.length != 0)
             ar.push(lbl);
@@ -623,13 +625,13 @@ sap.ui.jsfragment("bin.forms.lg.CN", {
     showFRDE: function () {
         var that = this;
         var view = this.view;
-        var flx = new sap.m.VBox({alignItems: sap.m.FlexAlignItems.Center, height: "100%"});
+        var flx = new sap.m.VBox({ alignItems: sap.m.FlexAlignItems.Center, height: "100%" });
         var chkDisc = new sap.m.CheckBox({
             text: "Sales Discount",
             selected: false
         });
 
-        flx.addItem(new sap.m.Title({text: "Kind of Invoice FR De "}).addStyleClass("sapUiMediumMargin"));
+        flx.addItem(new sap.m.Title({ text: "Kind of Invoice FR De " }).addStyleClass("sapUiMediumMargin"));
         flx.addItem(new sap.m.HBox({
             items:
                 [
@@ -819,7 +821,7 @@ sap.ui.jsfragment("bin.forms.lg.CN", {
                 Util.toOraDateString(UtilGen.getControlValue(that.o1.ord_date)));
     }
 })
-;
+    ;
 
 
 

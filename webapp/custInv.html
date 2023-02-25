@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+
+<head>
+
+  <!--data-sap-ui-libs="sap.m,sap.viz,sap.ui.layout,sap.ui.table,sap.ui.commons"-->
+
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="stylesheet" href="css/prettify.css">
+  <!--<link rel="stylesheet" href="generic/lib/handsontable.full.min.css">-->
+
+<!-- <script id="sap-ui-bootstrap" src="https://openui5.hana.ondemand.com/resources/sap-ui-core.js" -->
+  <title>CHAINEL</title>
+
+  <script id="sap-ui-bootstrap" src="resources/sap-ui-core.js"
+    data-sap-ui-theme="sap_fiori_3" data-sap-ui-libs="" data-sap-ui-xx-bindingSyntax="complex"
+    data-sap-ui-preload="asynch" data-sap-ui-language="en" data-sap-ui-compatVersion="edge" data-sap-ui-resourceroots='{
+				"sap.ui.ce": "./",
+				"bin":"./bin",
+			    "lg":"./bin/forms/lg"
+			}'>
+      </script>
+</head>
+
+<script src="generic/DecimalFormat.js"></script>
+<script src="generic/SimpleDateFormat.js"></script>
+
+<link rel="stylesheet" type="text/css" href="css/style.css">
+
+<body class="sapUiBody">
+  <div id='content'></div>
+  <script id="jsbin-javascript">
+    jQuery.sap.require("sap.ui.layout.library");
+    jQuery.sap.require("sap.m.library");
+    var app = new sap.m.App({ initialPage: "idApp1" });
+    var view = sap.ui.view({ id: "idApp1", type: sap.ui.core.mvc.ViewType.JS, viewName: "bin.forms.yd.cu" });
+    app.addPage(view);
+    app.placeAt("content");  
+  </script>
+</body>
+
+</html>

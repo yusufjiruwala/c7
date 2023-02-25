@@ -27,7 +27,7 @@ public class SapTest01Application extends SpringBootServletInitializer {
 
 	private com.models.RepBatch7 repBat7 = new RepBatch7();
 
-	private com.models.Notifications notifications = new Notifications();
+	private com.models.Notifications notifications = null;//new Notifications();
 
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
@@ -69,7 +69,7 @@ public class SapTest01Application extends SpringBootServletInitializer {
 				((AbstractHttp11Protocol<?>) connector.getProtocolHandler()).setMaxSwallowSize(-1);
 			}
 		});
-
+		notifications=new Notifications();
 		return tomcat;
 
 	}
