@@ -80,6 +80,9 @@ sap.ui.jsfragment("bin.forms.gl.rp", {
         } else {
             var pac = Util.nvl(UtilGen.getControlValue(pacc), "");
             var nn = Util.getSQLValue("select to_number(nvl(max(code),0))+1 from c_ycust where parentcustomer=" + Util.quoted(pac));
+            if (nn == 1)
+                nn = pac + "001";
+
             UtilGen.setControlValue(accno, nn, nn, true);
         }
 
@@ -195,11 +198,44 @@ sap.ui.jsfragment("bin.forms.gl.rp", {
                         }
                     },
                     addSqlAfterInsert: function (qry, rn) {
-                        if (qry.name = "qry1" && Util.nvl(that.frm.getFieldValue("par"), "") == "") {
+                        if (qry.name == "qry1" && Util.nvl(that.frm.getFieldValue("par"), "") == "") {
+                            var pac = that.frm.getFieldValue("qry1.parentcustomer");
+                            var s1 = "";
+                            if (pac != "") {
+                                s1 = "update c_ycust set childcount=(select nvl(count(*),0) from c_ycust where parentcustomer=':qry1.parentcustomer') where code=':qry1.parentcustomer' ; "
+                                s1 = that.frm.parseString(s1);
+                            }
                             var sq = "insert into cbranch(BRNO, CODE, ACCNO, B_NAME) VALUES (1,':qry1.code',':qr1.ac_no',':qry1.name')";
                             sq = that.frm.parseString(sq) + ";";
-                            return sq;
+                            return s1 + sq;
                         }
+
+                        return "";
+                    },
+                    addSqlAfterUpdate: function (qry, rn) {
+                        if (qry.name == "qry1" && Util.nvl(that.frm.getFieldValue("par"), "") == "") {
+                            var pac = that.frm.getFieldValue("qry1.parentcustomer");
+                            var s1 = "";
+                            if (pac != "") {
+                                s1 = "update c_ycust set childcount=(select nvl(count(*),0) from c_ycust where parentcustomer=':qry1.parentcustomer') where code=':qry1.parentcustomer' ; "
+                                s1 = that.frm.parseString(s1);
+                            }
+                            return s1;
+                        }
+
+                        return "";
+                    },
+                    addSqlBeforeUpdate: function (qry, rn) {
+                        if (qry.name == "qry1" && Util.nvl(that.frm.getFieldValue("par"), "") == "") {
+                            var pac = Util.getSQLValue("select parentcustomer from c_ycust where code=" + that.frm.getFieldValue("qry1.code"));
+                            var s1 = "";
+                            if (pac != "") {
+                                s1 = "update c_ycust set childcount=(select nvl(count(*),0) from c_ycust where parentcustomer=':qry1.parentcustomer') where code=':qry1.parentcustomer' ; "
+                                s1 = that.frm.parseString(s1);
+                            }
+                            return s1;
+                        }
+
                         return "";
                     },
                     beforeLoadQry: function (qry, sql) {
@@ -230,6 +266,7 @@ sap.ui.jsfragment("bin.forms.gl.rp", {
                                 }
                             }
                             sqlRow["path"] = Util.quoted(that.generateCustPath(par, cod));
+                            sqlRow["levelno"] = (sqlRow["path"]).match((/\\/g) || []).length - 1;
                         }
 
                         return "";
@@ -271,6 +308,16 @@ sap.ui.jsfragment("bin.forms.gl.rp", {
 
                     },
                     afterDelRow: function (qry, ld, data) {
+                        if (qry.name == "qry1") {
+                            var pac = that.frm.getFieldValue("qry1.parentcustomer");
+                            var s1 = "";
+                            if (pac != "") {
+                                s1 = "update c_ycust set childcount=(select nvl(count(*),0) from c_ycust where parentcustomer=':qry1.parentcustomer') where code=':qry1.parentcustomer' ; "
+                                s1 = that.frm.parseString(s1);
+                            }
+
+                            return s1 + "delete from cbranch where code=:pac ;";
+                        }
 
                     },
                     onCellRender: function (qry, rowno, colno, currentRowContext) {
@@ -306,6 +353,57 @@ sap.ui.jsfragment("bin.forms.gl.rp", {
                         insert_allowed: true,
                         delete_allowed: false,
                         fields: {
+                            iscust: {
+                                colname: "iscust",
+                                data_type: FormView.DataType.String,
+                                class_name: FormView.ClassTypes.CHECKBOX,
+                                title: '{\"text\":\"Is Cust\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title2: "",
+                                canvas: "default_canvas",
+                                display_width: codSpan,
+                                display_align: "ALIGN_LEFT",
+                                display_style: "",
+                                display_format: "",
+                                other_settings: { width: "20%", trueValues: ["Y", "N"] },
+                                edit_allowed: true,
+                                insert_allowed: true,
+                                require: false,
+                                trueValues: ["Y", "N"]
+                            },
+                            issupp: {
+                                colname: "issupp",
+                                data_type: FormView.DataType.String,
+                                class_name: FormView.ClassTypes.CHECKBOX,
+                                title: '@{\"text\":\"Is Supp\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title2: "",
+                                canvas: "default_canvas",
+                                display_width: codSpan,
+                                display_align: "ALIGN_LEFT",
+                                display_style: "",
+                                display_format: "",
+                                other_settings: { width: "20%", trueValues: ["Y", "N"] },
+                                edit_allowed: true,
+                                insert_allowed: true,
+                                require: false,
+                                trueValues: ["Y", "N"]
+                            },
+                            isbankcash: {
+                                colname: "isbankcash",
+                                data_type: FormView.DataType.String,
+                                class_name: FormView.ClassTypes.CHECKBOX,
+                                title: '@{\"text\":\"Bank/Cash\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title2: "",
+                                canvas: "default_canvas",
+                                display_width: codSpan,
+                                display_align: "ALIGN_LEFT",
+                                display_style: "",
+                                display_format: "",
+                                other_settings: { width: "15%", trueValues: ["Y", "N"] },
+                                edit_allowed: true,
+                                insert_allowed: true,
+                                require: false,
+                                trueValues: ["Y", "N"]
+                            },
                             code: {
                                 colname: "code",
                                 data_type: FormView.DataType.String,
@@ -409,10 +507,25 @@ sap.ui.jsfragment("bin.forms.gl.rp", {
                                     change: function (e) {
                                         var control = this;
                                         var pacnm = thatForm.frm.objs["qry1.parentcustname"].obj;
+                                        UtilGen.setControlValue(pacnm, "", "", true);
+                                        var acn = thatForm.frm.objs["qry1.ac_no"].obj;
+                                        var iscust = thatForm.frm.objs["qry1.iscust"].obj;
+                                        var issupp = thatForm.frm.objs["qry1.issupp"].obj;
+                                        var isbc = thatForm.frm.objs["qry1.isbankcash"].obj;
                                         var vl = control.getValue();
-                                        var pnm = Util.getSQLValue("select name from c_ycust where code = " + Util.quoted(vl));
-                                        UtilGen.setControlValue(pacnm, pnm, pnm, true);
+                                        var dt = Util.execSQL("select name,ac_no,iscust,issupp,isbankcash from c_ycust where code = " + Util.quoted(vl));
+                                        if (dt.ret != "SUCCESS") {
+                                            sap.m.MessageToast.show("Err! ");
+                                            return;
+                                        }
+                                        var dtx = JSON.parse("{" + dt.data + "}").data;
+                                        // var pnm = Util.getSQLValue("select name from c_ycust where code = " + Util.quoted(vl));
+                                        UtilGen.setControlValue(pacnm, dtx[0].NAME, dtx[0].NAME, true);
                                         UtilGen.setControlValue(control, vl, vl, false);
+                                        UtilGen.setControlValue(acn, dtx[0].AC_NO, dtx[0].AC_NO, true);
+                                        UtilGen.setControlValue(iscust, dtx[0].ISCUST, dtx[0].ISCUST, true);
+                                        UtilGen.setControlValue(issupp, dtx[0].ISSUPP, dtx[0].ISSUPP, true);
+                                        UtilGen.setControlValue(isbc, dtx[0].ISBANKCASH, dtx[0].ISBANKCASH, true);
                                         that.get_new_cust(vl);
 
                                     }
@@ -435,8 +548,8 @@ sap.ui.jsfragment("bin.forms.gl.rp", {
                                 other_settings: {
                                     width: "64%"
                                 },
-                                edit_allowed: true,
-                                insert_allowed: true,
+                                edit_allowed: false,
+                                insert_allowed: false,
                                 require: false,
                             },
                             ac_no: {
@@ -467,6 +580,18 @@ sap.ui.jsfragment("bin.forms.gl.rp", {
                                             UtilGen.setControlValue(pacnm, val, val, true);
                                         }, "Select Controlled A/c");
                                     },
+                                    change: function (e) {
+
+                                        var control = this;
+                                        var vl = control.getValue();
+                                        var pacnm = thatForm.frm.objs["qry1.acname"].obj;
+                                        UtilGen.setControlValue(pacnm, "", "", true);
+                                        var pnm = Util.getSQLValue("select name from acaccount where accno = " + Util.quoted(vl));
+                                        UtilGen.setControlValue(pacnm, pnm, pnm, true);
+                                        UtilGen.setControlValue(control, vl, vl, false);
+
+
+                                    }
                                 },
                                 edit_allowed: false,
                                 insert_allowed: true,
@@ -504,7 +629,7 @@ sap.ui.jsfragment("bin.forms.gl.rp", {
                                 other_settings: { width: "35%" },
                                 edit_allowed: true,
                                 insert_allowed: true,
-                                require: false
+                                require: true
                             },
                             type: {
                                 colname: "type",

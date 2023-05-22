@@ -23,6 +23,7 @@ sap.ui.jsview('bin.Dashboard', {
         Util.setLanguageModel(this);
 
         var that = this;
+        UtilGen.DBView = this;
 
         that.screen = -1;
         that.screen_name = "";
@@ -41,7 +42,7 @@ sap.ui.jsview('bin.Dashboard', {
         });
 
         this.sp = new sap.f.ShellBar({
-            title: "General Ledger",
+            title: Util.getLangText("gl"),
             homeIcon: "./css/chn.png",
             showCopilot: true,
             showSearch: true,
@@ -101,7 +102,6 @@ sap.ui.jsview('bin.Dashboard', {
                 ]
             })
         }).addStyleClass("sapFShellBar");
-
         this.txtExeCmd = new sap.m.TextArea({ height: "25px", width: "100%" });
         this.txtExeCmd.attachBrowserEvent("dblclick", function (e) {
             that.showPopCmd();
@@ -116,8 +116,6 @@ sap.ui.jsview('bin.Dashboard', {
             });
         this.txtExeCmd.attachBrowserEvent("keydown", function (oEvent) {
             if (oEvent.key == 'Enter') {
-                // sap.ui.getCore().byId($('#navigation button').eq(0).attr("i=d")).firePress();
-                // that.cmdExe.firePress();
                 that.txtExeCmd.selectText();
                 that.showPopCmd();
 
@@ -154,8 +152,8 @@ sap.ui.jsview('bin.Dashboard', {
         this.pg = new sap.m.Page({
             showHeader: false,
             showSubHeader: true,
-            showFooter: true,
-            enableScrolling: false,
+            showFooter: false,
+            enableScrolling: true,
             content: [],
             floatingFooter: false,
         });
@@ -212,13 +210,24 @@ sap.ui.jsview('bin.Dashboard', {
 
         });
         this.txt = new sap.m.Text().addStyleClass("redMiniText blinking");
+        this.today_date = new sap.m.DatePicker({
+            width: "150px",
+            change: function () {
+                that.loadData(false, false);
+            }
+
+        });
+        Util.destroyID("lblLastDay" + this.timeInLong, this);
         var tb = new sap.m.Toolbar({
             content: [
                 new sap.m.Button({
-                    text: "Refresh", icon: "sap-icon://refresh", press: function () {
-                        that.loadData(false);
+                    text: Util.getLangText("refresh"),
+                    tooltip: Util.getLangText("refreshTip"),
+                    icon: "sap-icon://refresh", press: function () {
+                        that.loadData(false, false);
                     }
                 }),
+                this.today_date, new sap.m.Label(this.createId("lblLastDay" + this.timeInLong)),
                 new sap.m.ToolbarSpacer(), this.txt]
         });
         this.app2 = new sap.m.App({ pages: [this.mainPage], height: "99%", width: "100%" });
@@ -226,16 +235,47 @@ sap.ui.jsview('bin.Dashboard', {
         Util.Notifications.init(3000, this.sp, this);
 
         this.loadData();
-
+        this.mainPage.setShowSubHeader(true);
+        var tbS = new sap.m.Bar({
+        }).addStyleClass("toolBarBackgroundColor2");
+        this.mainPage.setSubHeader(tbS);
         setTimeout(function () {
             that.app.showMaster();
+            var tb = that.mainPage.getSubHeader();
             // that.show_main_menus();
         }, 10);
 
-        UtilGen.DBView = this;
+
         UtilGen.toolBarBackColor = "#addfad";
         return this.app2;
 
+    },
+    showShortcuts: function () {
+        var that = this;
+        var tb = that.mainPage.getSubHeader();
+        if (tb == null || tb == undefined) return;
+        var str = (this.sLangu == "AR" ? " nvl(nvl(short_titlea,menu_titlea),nvl(short_title,menu_title)) menu_title " : " nvl(short_title,menu_title) menu_title ");
+        var str2 = (this.sLangu == "AR" ? " nvl(menu_titlea,menu_title) menu_title2 " : " menu_title menu_title2 ");
+        var dt = Util.execSQL("select menu_code," + str + ",js_command,SHORTCUT_ICON," + str2 + " from c7_menus where shortcut = 'Y' and group_code = " + Util.quoted(that.current_profile) + " order by menu_path");
+        if (dt.ret != "SUCCESS")
+            Util.err(dt.ret);
+        var dtx = JSON.parse("{" + dt.data + "}").data;
+        tb.removeAllContentMiddle();
+        tb.removeAllContentRight();
+        for (var i = 0; i < dtx.length; i++) {
+            var bt = new sap.m.Button({
+                text: dtx[i].MENU_TITLE,
+                tooltip: dtx[i].MENU_TITLE2,
+                icon: Util.nvl(dtx[i].SHORTCUT_ICON, "sap-icon://form"),
+                customData: [{ key: dtx[i].CODE }, { key: dtx[i].JS_COMMAND }],
+                press: function () {
+                    var js = this.getCustomData()[1].getKey();
+                    UtilGen.execCmd(js, that, this, that.newPage);
+                }
+            }).addStyleClass("");
+            tb.addContentMiddle(bt);
+
+        }
     },
     showPopCmd: function () {
         var that = this;
@@ -345,6 +385,7 @@ sap.ui.jsview('bin.Dashboard', {
     do_logon: function (fnLoad) {
         var that = this;
         var sett = sap.ui.getCore().getModel("settings").getData();
+        var ln = sap.ui.getCore().getConfiguration().getLanguage();
         Util.destroyID("txtUser", this);
         Util.destroyID("txtPassword", this);
         Util.destroyID("txtFile", this);
@@ -371,6 +412,7 @@ sap.ui.jsview('bin.Dashboard', {
             selected: false,
             text: " Save credentials"
         }).addStyleClass("");
+
         var fnInitChange = function (ev) {
             var fl = UtilGen.getControlValue(cp2);
             Util.doAjaxGet("exe?command=get-init-data", "file=" + fl, false).done(function (data) {
@@ -464,11 +506,11 @@ sap.ui.jsview('bin.Dashboard', {
 
         var vb = new sap.m.VBox({
             items: [
-                new sap.m.Text({ text: "User Name " }),
+                new sap.m.Text({ text: Util.getLangText("loginName") }),
                 op,
-                new sap.m.Text({ text: "Password " }),
+                new sap.m.Text({ text: Util.getLangText("loginPwd") }),
                 np,
-                new sap.m.Text({ text: "Database" }),
+                new sap.m.Text({ text: Util.getLangText("loginDatabase") }),
                 cp,
                 new sap.m.HBox({ width: "100%", items: [al] }),
 
@@ -477,16 +519,32 @@ sap.ui.jsview('bin.Dashboard', {
 
         var bts = [
             new sap.m.Button({
-                text: "New Init", press: function () {
+                text: ln == "AR" ? "EN" : "عر",
+                icon: "sap-icon://keyboard-and-mouse",
+                press: function () {
+                    var ln2 = (ln == "AR" ? "EN" : "AR");
+                    var locUrl = location.href;
+                    var newURL = locUrl.split("?")[0] + "?" + "user=&sap-language=" + ln2;
+                    window.history.pushState({}, document.title, newURL);
+                    window.onbeforeunload = undefined;
+                    location.reload();
+                    window.onbeforeunload = function () { return " " }
+
+                }
+            }),
+            new sap.m.Button({
+                text: "New file", press: function () {
                     dlg.removeAllButtons();
                     dlg.removeAllContent();
                     dlg.addContent(vbInit);
                 }
             }),
             new sap.m.Button(this.createId("cmdLogon"), {
-                text: "Logon", press: function () {
+                text: Util.getLangText("loginCmd"),
+                icon: "sap-icon://initiative",
+                press: function () {
                     if (that.loginPress()) {
-                        sap.m.MessageToast.show("Logon successful !");
+                        sap.m.MessageToast.show(Util.getLangText("loginMsg1"));
                         that.loadData_main();
                         that.show_main_menus();
                         dlg.close();
@@ -503,11 +561,11 @@ sap.ui.jsview('bin.Dashboard', {
                 tb,
                 new sap.m.Text({ text: "Database" }),
                 cp2,
-                new sap.m.Text({ text: "User" }),
+                new sap.m.Text({ text: "{i18n>login_name}" }),
                 op2,
-                new sap.m.Text({ text: "Password " }),
+                new sap.m.Text({ text: "{i18n>login_pwd}" }),
                 np2,
-                new sap.m.Text({ text: "Host " }),
+                new sap.m.Text({ text: "{i18n>login_databaseHost}" }),
                 hs,
 
             ]
@@ -531,8 +589,9 @@ sap.ui.jsview('bin.Dashboard', {
 
     }
     ,
-    loadData: function (pexePara) {
+    loadData: function (pexePara, pChangeProfile) {
         var that = this;
+        var changeProfile = Util.nvl(pChangeProfile, true);
         var exePara = Util.nvl(pexePara, true);
         var mdl = sap.ui.getCore().getModel("settings");
         if (mdl == undefined) {
@@ -552,10 +611,11 @@ sap.ui.jsview('bin.Dashboard', {
             return;
         }
 
-        if (!(Object.keys(sett).length === 0
+        if (changeProfile && !(Object.keys(sett).length === 0
             && Object.getPrototypeOf(sett) === Object.prototype)) {
             this.current_profile = sett["CURRENT_PROFILE_CODE"];
-            this.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
+            var tit = (Util.getLangDescrAR("title", "nvl(titlea,title) title"));
+            this.current_profile_name = Util.getSQLValue("select " + tit + " from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
             this.style_debit_numbers = Util.nvl(sett["STYLE_DEBIT_NUMBERS"], "color:green");
             this.style_credit_numbers = Util.nvl(sett["STYLE_CREDIT_NUMBERS"], "color:red");
 
@@ -593,11 +653,10 @@ sap.ui.jsview('bin.Dashboard', {
         Util.doAjaxGet(pth, "", false).done(function (data) {
             dt = JSON.parse(data);
             var oModel = new sap.ui.model.json.JSONModel(dt);
-
             sap.ui.getCore().setModel(oModel, "settings");
-
+            var tit = (Util.getLangDescrAR("title", "nvl(titlea,title) title"));
             that.current_profile = oModel.getData()["CURRENT_PROFILE_CODE"];
-            that.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
+            that.current_profile_name = Util.getSQLValue("select " + tit + " from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
             this.style_debit_numbers = Util.nvl(oModel.getData()["STYLE_DEBIT_NUMBERS"], "color:green");
             this.style_credit_numbers = Util.nvl(oModel.getData()["STYLE_CREDIT_NUMBERS"], "color:red");
 
@@ -639,8 +698,9 @@ sap.ui.jsview('bin.Dashboard', {
         } else
             Util.cookiesClear();
         var sett = sap.ui.getCore().getModel("settings").getData();
+        var tit = (Util.getLangDescrAR("title", "nvl(titlea,title) title"));
         this.current_profile = sett["CURRENT_PROFILE_CODE"];
-        this.current_profile_name = Util.getSQLValue("select title from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
+        this.current_profile_name = Util.getSQLValue("select " + tit + " from C6_MAIN_GROUPS where code=" + Util.quoted(this.current_profile));
         this.style_debit_numbers = Util.nvl(sett["STYLE_DEBIT_NUMBERS"], "color:green");
         this.style_credit_numbers = Util.nvl(sett["STYLE_CREDIT_NUMBERS"], "color:red");
         return true;
@@ -652,18 +712,28 @@ sap.ui.jsview('bin.Dashboard', {
         var that = this;
         Util.Notifications.checkNewNotifications();
         var sett = sap.ui.getCore().getModel("settings").getData();
-        var cmp = sett["LOGON_USER"] + "@" + sett["COMPANY_NAME"];
+        that.today_date.setValueFormat(sett["ENGLISH_DATE_FORMAT"]);
+        that.today_date.setDisplayFormat(sett["ENGLISH_DATE_FORMAT"]);
+        var lstVouDate = Util.getSQLValue("select to_char(max(vou_date),'dd/mm/rrrr') from acvoucher1 ");
+        this.byId("lblLastDay" + this.timeInLong).setText(Util.getLangText("lastVouEntry")+" :" + lstVouDate);
+        if (Util.nvl(that.today_date.getDateValue(), undefined) == undefined) {
+            var svdt = Util.getSQLValue("select to_char(sysdate,'mm/dd/rrrr') from dual ");
+            that.today_date.setDateValue(new Date(svdt));
+        }
+        var cmp = sett["MASTER_USER"] + " >  " + sett["LOGON_USER"] + "@" + sett["COMPANY_NAME"];
         var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
         var sdf = new simpleDateFormat(sett["ENGLISH_DATE_FORMAT"]);
-
+        
         var secs = {};
 
         UtilGen.clearPage(this.pg);
 
         this.app.toDetail(this.pg);
 
+
+
         this.updateMenus();
-        var sq = "select v_secs.*  from v_secs where menu_id=1 order by ms_id,ss_id,tile_id";
+        var sq = "select v_secs.*  from v_secs where menu_group='" + that.current_profile + "' and menu_id=1 order by ms_id,ss_id,tile_id";
         var dt = Util.execSQL(sq);
 
         if (dt.ret == "SUCCESS" && dt.data.length > 0) {
@@ -672,6 +742,8 @@ sap.ui.jsview('bin.Dashboard', {
             Util.destroyID("ObjectPageLayout");
             var oObjectPage = new sap.uxap.ObjectPageLayout("ObjectPageLayout", {
                 subSectionLayout: sap.uxap.ObjectPageSubSectionLayout.TitleOnTop,
+                // showHeaderContent: false,
+                height: "80%"
             });
             // var sc = new sap.m.ScrollContainer({content: [oObjectPage], height: "100%", vertical: true});
             this.pg.addContent(oObjectPage);
@@ -806,6 +878,7 @@ sap.ui.jsview('bin.Dashboard', {
                             that.current_profile_name = cs.split("::=")[1];
                             this.setText(cs.split("::=")[1]);
                             that.show_main_menus();
+                            that.loadData_main();
                         }
                     });
                     mnus.push(mnu);
@@ -834,7 +907,8 @@ sap.ui.jsview('bin.Dashboard', {
 
         // if (this.mv == undefined)
         this.mv = new QueryView("mainMenus");
-        var dt = Util.execSQL("select menu_code,menu_title,parent_menucode,childcount,JS_COMMAND,JS_PARAMS,SHORTCUT_ICON" +
+        var mnuTit = Util.getLangDescrAR("MENU_TITLE", "NVL(MENU_TITLEA,MENU_TITLE) MENU_TITLE ");
+        var dt = Util.execSQL("select menu_code," + mnuTit + ",parent_menucode,childcount,JS_COMMAND,JS_PARAMS,SHORTCUT_ICON" +
             " from C7_MENUS where group_code='" + that.current_profile + "' order by menu_path")
         // var dt = Util.execSQL("select accno menu_code,name menu_title, parentacc from acaccount order by path ")
 
@@ -852,7 +926,8 @@ sap.ui.jsview('bin.Dashboard', {
         mv.setJsonStr("{" + dt.data + "}");
 
         mv.mLctb.getColByName("MENU_CODE").getMUIHelper().display_width = "100";
-        mv.mLctb.getColByName("MENU_TITLE").getMUIHelper().display_width = "275";
+        mv.mLctb.getColByName("MENU_TITLE").getMUIHelper().display_width = "250";
+        mv.mLctb.getColByName("MENU_TITLE").mTitle = Util.getLangText("mainMenus");
         // mv.mLctb.getColByName("MENU_TITLE").mCfOperator = ":CHILDCOUNT>0";
         // mv.mLctb.getColByName("MENU_TITLE").mCfTrue = "color:blue;font-weight: bold;";
 
@@ -868,18 +943,22 @@ sap.ui.jsview('bin.Dashboard', {
         // sc.setHeight("100%");
         this.pgMain.addContent(mv.getControl());
         // this.pgMain.addContent(new sap.m.VBox({ height: "200px" }));
-        mv.getControl().expandToLevel(10);
+        // mv.getControl().expandToLevel(10);
+        mv.getControl().collapseAll();
         mv.getControl().setFixedBottomRowCount(0);
         // mv.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
         // mv.getControl().setVisibleRowCount(100);
         mv.getControl().setSelectionMode(sap.ui.table.SelectionMode.Single);
         mv.getControl().setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
-
-        mv.getControl().addStyleClass("sapUiSizeCondensed menuTable");
+        mv.getControl().addStyleClass("sapUiSizeCondensed " + Util.getLangDescrAR("menuTable", "menuTableAR"));
         mv.getControl().attachRowSelectionChange(undefined, function () {
 
             var sl = mv.getControl().getSelectedIndices();
             if (sl.length > 0) {
+                if (mv.getControl().isExpanded(sl[0]))
+                    mv.getControl().collapse(sl[0]);
+                else mv.getControl().expand(sl[0]);
+
                 var odata = mv.getControl().getContextByIndex(sl[0]);
                 var data = (odata.getProperty(odata.getPath()));
                 UtilGen.execCmd(data.JS_COMMAND, that, this, that.newPage);
@@ -888,7 +967,11 @@ sap.ui.jsview('bin.Dashboard', {
 
         });
         mv.loadData();
+        mv.getControl().collapseAll();
+        setTimeout(function () {
+            that.showShortcuts();
 
+        });
     }
     ,
     new_tile: function () {
@@ -903,9 +986,10 @@ sap.ui.jsview('bin.Dashboard', {
         sap.m.MessageBox.confirm("Are you sure to LOG OFF ?  ", {
             title: "Confirm",                                    // default
             onClose: function (oAction) {
+                var ln = sap.ui.getCore().getConfiguration().getLanguage();
                 if (oAction == sap.m.MessageBox.Action.OK) {
                     var locUrl = location.href;
-                    var newURL = locUrl.split("?")[0] + "?" + "user= ";
+                    var newURL = locUrl.split("?")[0] + "?" + "user=&sap-language=" + ln;
                     window.history.pushState({}, document.title, newURL);
                     window.onbeforeunload = undefined;
                     location.reload();

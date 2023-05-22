@@ -178,7 +178,8 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 " type=" + thatForm.vars.type);
 
                             qry.formview.setFieldValue("qry1.no", vno, vno, true);
-                            qry.formview.setFieldValue("qry1.vou_date", new Date(new Date().toDateString()), new Date(new Date().toDateString()), true);
+                            var dt = thatForm.view.today_date.getDateValue();
+                            qry.formview.setFieldValue("qry1.vou_date", new Date(dt.toDateString()), new Date(dt.toDateString()), true);
 
 
                         }
@@ -208,9 +209,10 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                         if (qry.status == "edit" && qry.name == "qry2" && colno == 4) {
                             var oModel = qry.obj.getControl().getModel();
                             var cellVal = oModel.getProperty("CUST_CODE", currentRowContext)
-                            if (cellVal != "" && cellVal != undefined) {
+                            qry.obj.getControl().getRows()[rowno].getCells()[4].setEnabled(true);
+                            if (cellVal != "" && cellVal != undefined)
                                 qry.obj.getControl().getRows()[rowno].getCells()[4].setEnabled(false);
-                            }
+
                         }
                     },
                     beforePrint: function (rptName, params) {
@@ -365,6 +367,9 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                             "CREDIT": ":FCCREDIT",
                         },
                         table_name: "ACVOUCHER2",
+                        before_add_table: function (scrollObjs, qrj) {
+                            UtilGen.Vouchers.before_add_table(scrollObjs, qrj);
+                        },
                         when_validate_field: function (table, currentRowoIndexContext, cx, rowno, colno) {
                             var sett = sap.ui.getCore().getModel("settings").getData();
                             var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
@@ -389,7 +394,8 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                                 oModel.setProperty(currentRowoIndexContext.sPath + '/FCDEBIT', df.format(0));
                             // if (cx.mColName == "ACCNO")
                             //     sap.m.MessageToast.show(".....selected acc");
-
+                            if (des == "")
+                                oModel.setProperty(currentRowoIndexContext.sPath + '/DESCR', that.frm.getFieldValue("qry1.descr"));
                             return true;
                         },
                         eventCalc: function (qv, cx, rowno, reAmt) {
@@ -412,8 +418,6 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
                             thatForm.frm.setFieldValue('totDiff', df.format(sumDr - sumCr));
                             if (thatForm.view.byId("numtxt" + thatForm.timeInLong) != undefined)
                                 thatForm.view.byId("numtxt" + thatForm.timeInLong).setText("Amount : " + df.format(sumDr));
-
-
                         },
                         summary: {
                             totdebit: {
@@ -629,8 +633,6 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
     ,
     loadData: function () {
         UtilGen.Vouchers.formLoadData(this);
-
-
     }
     ,
     validateSave: function () {

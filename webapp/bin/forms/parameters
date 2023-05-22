@@ -1,0 +1,55 @@
+
+
+
+
+
+prefer: {
+    colname: "prefer",
+    data_type: FormView.DataType.String,
+    class_name: FormView.ClassTypes.TEXTFIELD,
+    title: '{\"text\":\"itemCode\",\"width\":\"15%\","textAlign":"End"}',
+    title2: "",
+    display_width: colSpan,
+    display_align: "ALIGN_RIGHT",
+    display_style: "",
+    display_format: "",
+    default_value: "",
+    other_settings: {
+        showValueHelp: true,
+        change: function (e) {
+
+            var vl = e.oSource.getValue();
+            thatForm.frm.setFieldValue("SB003@parameter.prefer", vl, vl, false);
+            var vlnm = Util.getSQLValue("select descr from items where reference =" + Util.quoted(vl));
+            thatForm.frm.setFieldValue("SB003@parameter.acname", vlnm, vlnm, false);
+
+        },
+        valueHelpRequest: function (event) {
+            Util.showSearchList("select reference,descr from items where itprice4=0 order by path", "DESCR", "REFERENCE", function (valx, val) {
+                thatForm.frm.setFieldValue("SB003@parameter.prefer", valx, valx, true);
+                thatForm.frm.setFieldValue("SB003@parameter.prefname", val, val, true);
+            });
+
+        },
+        width: "35%"
+    },
+}
+
+prefname: {
+    colname: "prefname",
+    data_type: FormView.DataType.String,
+    class_name: FormView.ClassTypes.TEXTFIELD,
+    title: '@{\"text\":\"\",\"width\":\"1%\","textAlign":"End"}',
+    title2: "",
+    display_width: colSpan,
+    display_align: "ALIGN_LEFT",
+    display_style: "",
+    display_format: "",
+    default_value: "",
+    other_settings: { width: "49%", editable: false },
+    list: undefined,
+    edit_allowed: false,
+    insert_allowed: false,
+    require: false,
+    dispInPara: true,
+},

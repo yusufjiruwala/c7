@@ -226,6 +226,46 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                     afterSaveForm: function (frm, nxtStatus) {
                         // that.frm.setQueryStatus(undefined, Util.nvl(nxtStatus, FormView.RecordStatus.NEW));
                     },
+                    addSqlAfterInsert: function (qry, rn) {
+                        if (qry.name == "qry1" && Util.nvl(that.frm.getFieldValue("par"), "") == "") {
+                            var pac = that.frm.getFieldValue("qry1.parentacc");
+                            var s1 = "";
+                            if (pac != "") {
+                                s1 = "update acaccount set childcount=(select nvl(count(*),0) from acaccount where parentacc=':qry1.parentacc') where accno=':qry1.parentacc' ; "
+                                s1 = that.frm.parseString(s1);
+                            }
+                            return s1;
+                        }
+
+                        return "";
+                    },
+                    addSqlBeforeUpdate: function (qry, rn) {
+                        if (qry.name == "qry1" && Util.nvl(that.frm.getFieldValue("par"), "") == "") {
+                            var pac = Util.getSQLValue("select parentacc from acaccount where accno=" + that.frm.getFieldValue("qry1.accno"));
+                            var s1 = "";
+                            if (pac != "") {
+                                s1 = "update acaccount set childcount=(select nvl(count(*),0) from acaccount where parentacc=':qry1.parentacc') where accno=':qry1.parentacc' ; "
+                                s1 = that.frm.parseString(s1);
+                            }
+                            return s1;
+                        }
+
+                        return "";
+                    },
+
+                    addSqlAfterUpdate: function (qry, rn) {
+                        if (qry.name == "qry1" && Util.nvl(that.frm.getFieldValue("par"), "") == "") {
+                            var pac = Util.getSQLValue("select parentacc from acaccount where accno=" + that.frm.getFieldValue("qry1.accno"));
+                            var s1 = "";
+                            if (pac != "") {
+                                s1 = "update acaccount set childcount=(select nvl(count(*),0) from acaccount where parentacc=':qry1.parentacc') where accno=':qry1.parentacc' ; "
+                                s1 = that.frm.parseString(s1);
+                            }
+                            return s1;
+                        }
+
+                        return "";
+                    },
                     beforeSaveQry: function (qry, sqlRow, rowNo) {
                         if (qry.name == "qry1") {
                             var par = that.frm.getFieldValue("qry1.parentacc");
@@ -233,13 +273,16 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                             if (!that.canAcParent(par))
                                 FormView.err(that.errStr);
                             sqlRow["path"] = Util.quoted(that.generateAcPath(par, ac));
+                            sqlRow["levelno"] = (sqlRow["path"]).match((/\\/g) || []).length - 1;
                         }
 
                         return "";
                     },
                     afterNewRow: function (qry, idx, ld) {
                         if (qry.name == "qry1") {
+                            var dt = new Date();
                             that.frm.setFieldValue("qry1.currency_code", sett["DEFAULT_CURRENCY"], sett["DEFAULT_CURRENCY"], true);
+                            that.frm.setFieldValue("qry1.start_date", dt, dt, true);
                             that.frm.setFieldValue("pac", "", "", true);
                             that.view.byId("txtMsg" + thatForm.timeInLong).setText("");
                             that.view.byId("numtxt" + thatForm.timeInLong).setText("");
@@ -273,6 +316,16 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
 
                     },
                     afterDelRow: function (qry, ld, data) {
+                        if (qry.name == "qry1") {
+                            var pac = that.frm.getFieldValue("qry1.parentacc");
+                            var s1 = "";
+                            if (pac != "") {
+                                s1 = "update acaccount set childcount=(select nvl(count(*),0) from ACACCOUNT where parentacc=':qry1.parentacc') where accno=':qry1.parentacc' ; "
+                                s1 = that.frm.parseString(s1);
+                            }
+
+                            return s1;
+                        }
 
                     },
                     onCellRender: function (qry, rowno, colno, currentRowContext) {
@@ -300,7 +353,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                         insert_default_values: {
                             "CREATDT": "sysdate",
                             "USERNM": Util.quoted(sett["LOGON_USER"]),
-                            "ACTYPE":0
+                            "ACTYPE": 0
                         },
                         update_default_values: {},
                         table_name: "ACACCOUNT",
@@ -312,7 +365,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "accno",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '{\"text\":\"A/c No\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '{\"text\":\"accNo\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -328,7 +381,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "name",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '@{\"text\":\"Title\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '@{\"text\":\"titleTxt\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "No",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -344,7 +397,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "namea",
                                 data_type: FormView.DataType.Date,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '{\"text\":\"Title2\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '{\"text\":\"titleTxt2\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -361,7 +414,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "parentacc",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '{\"text\":\"Parent A/c\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '{\"text\":\"parentAc\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -453,7 +506,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "closeacc",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '{\"text\":\"Close A/c\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '{\"text\":\"closeAc\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -500,7 +553,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "isbankcash",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.CHECKBOX,
-                                title: '{\"text\":\"Bank/Cash\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '{\"text\":\"isBankCash\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -516,7 +569,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "flag",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.CHECKBOX,
-                                title: '@{\"text\":\"Lock?\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '@{\"text\":\"lockAc\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -533,7 +586,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "start_date",
                                 data_type: FormView.DataType.Date,
                                 class_name: FormView.ClassTypes.DATEFIELD,
-                                title: '@{\"text\":\"Start Date\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '@{\"text\":\"startDate\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -549,7 +602,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "currency_code",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '{\"text\":\"Currency\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '{\"text\":\"currencyCode\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "No",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -565,7 +618,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "costcent",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.SEARCHFIELD,
-                                title: '@{\"text\":\"Cost Cent.\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '@{\"text\":\"costCent\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "No",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -581,7 +634,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                                 colname: "tit1",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.LABEL,
-                                title: '#{\"text\":\"Other Info\",\"width\":\"99%\","textAlign":"Begin","styleClass":"qrGroup","style":""}',
+                                title: '#{\"text\":\"otherInfo\",\"width\":\"99%\","textAlign":"Begin","styleClass":"qrGroup","style":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -625,7 +678,6 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                     {
                         name: "cmdNew",
                         canvas: "default_canvas",
-                        title: "New A/c",
                         onPress: function (e) {
                             that.frm.setFieldValue("pac", "", "", true);
                         }
@@ -642,8 +694,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                         name: "cmdPrint",
                         canvas:
                             "default_canvas",
-                        title:
-                            "SOA",
+                        title: Util.getLangText("soaTxt"),
                         onPress:
 
                             function (e) {
@@ -657,15 +708,13 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                         name: "cmdClose",
                         canvas:
                             "default_canvas",
-                        title:
-                            "Close",
-                        obj:
-                            new sap.m.Button({
-                                icon: "sap-icon://decline",
-                                press: function () {
-                                    that2.joApp.backFunction();
-                                }
-                            })
+                        obj: new sap.m.Button({
+                            icon: "sap-icon://decline",
+                            text: Util.getLangText("cmdClose"),
+                            press: function () {
+                                that2.joApp.backFunction();
+                            }
+                        })
                     }
                 ],
                 lists: [

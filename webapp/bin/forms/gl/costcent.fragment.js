@@ -269,7 +269,7 @@ sap.ui.jsfragment("bin.forms.gl.costcent", {
                                 colname: "code",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '{\"text\":\"A/c No\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '{\"text\":\"codeTxt\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -285,7 +285,7 @@ sap.ui.jsfragment("bin.forms.gl.costcent", {
                                 colname: "title",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '@{\"text\":\"Title\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '@{\"text\":\"titleTxt\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "No",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -301,7 +301,7 @@ sap.ui.jsfragment("bin.forms.gl.costcent", {
                                 colname: "titlea",
                                 data_type: FormView.DataType.Date,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '{\"text\":\"Title2\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '{\"text\":\"titleTxt2\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -318,7 +318,7 @@ sap.ui.jsfragment("bin.forms.gl.costcent", {
                                 colname: "parentcostcent",
                                 data_type: FormView.DataType.String,
                                 class_name: FormView.ClassTypes.TEXTFIELD,
-                                title: '{\"text\":\"Parent A/c\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                                title: '{\"text\":\"parentTxt\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "",
                                 canvas: "default_canvas",
                                 display_width: codSpan,
@@ -415,7 +415,6 @@ sap.ui.jsfragment("bin.forms.gl.costcent", {
                     {
                         name: "cmdNew",
                         canvas: "default_canvas",
-                        title: "New CC",
                         onPress: function (e) {
                             that.frm.setFieldValue("pac", "", "", true);
                         }
@@ -432,8 +431,7 @@ sap.ui.jsfragment("bin.forms.gl.costcent", {
                         name: "cmdPrint",
                         canvas:
                             "default_canvas",
-                        title:
-                            "SOA",
+                        title: Util.getLangText("soaTxt"),
                         onPress:
 
                             function (e) {
@@ -447,8 +445,7 @@ sap.ui.jsfragment("bin.forms.gl.costcent", {
                         name: "cmdClose",
                         canvas:
                             "default_canvas",
-                        title:
-                            "Close",
+                        text: Util.getLangText("cmdClose"),
                         obj:
                             new sap.m.Button({
                                 icon: "sap-icon://decline",

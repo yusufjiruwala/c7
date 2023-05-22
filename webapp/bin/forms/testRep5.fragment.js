@@ -8,8 +8,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
         // this.joApp = new sap.m.SplitApp({mode: sap.m.SplitAppMode.HideMode,});
         // this.joApp2 = new sap.m.App();
         this.timeInLong = (new Date()).getTime();
-
-
+        
         this.vars = {
             keyfld: -1,
             flag: 1,  // 1=closed,2 opened,
@@ -84,10 +83,16 @@ sap.ui.jsfragment("bin.forms.testRep5", {
             var typ = lctb.getFieldValue(rowno, "VOU_TYPE");
             var kfld = lctb.getFieldValue(rowno, "KEYFLD");
             var jvpos = lctb.getFieldValue(rowno, "JVPOS");
-            if (vcd == 1) {
+            if (vcd == 1 && typ == 1) {
                 UtilGen.execCmd("gl.jv formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, thatForm.view, obj, undefined);
             } else if (vcd == 3 && (typ == 1 || typ == 6)) {
                 UtilGen.execCmd("gl.pv formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, thatForm.view, obj, undefined);
+            } else if (vcd == 2 && (typ == 1 || typ == 6)) {
+                UtilGen.execCmd("gl.rv formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, thatForm.view, obj, undefined);
+            } else if (vcd == 2 && (typ == 2 || typ == 7)) {
+                UtilGen.execCmd("gl.rvc formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, thatForm.view, obj, undefined);
+            } else if (vcd == 3 && (typ == 2 || typ == 7)) {
+                UtilGen.execCmd("gl.pvc formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, thatForm.view, obj, undefined);
             }
             else {
                 sap.m.MessageToast.show("Not a JV..");
@@ -97,23 +102,23 @@ sap.ui.jsfragment("bin.forms.testRep5", {
         this.o1 = {};
         var fe = [];
 
-// this.frm = this.createViewHeader();
-// this.frm.getToolbar().addContent(this.bk);
+        // this.frm = this.createViewHeader();
+        // this.frm.getToolbar().addContent(this.bk);
 
-// Util.destroyID("poCmdSave", this.view);
-// this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdSave"), {
-//     icon: "sap-icon://save", press: function () {
-//         that.save_data();
-//     }
-// }));
-//
-// Util.destroyID("poCmdDel", this.view);
-// this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdDel"), {
-//     icon: "sap-icon://delete", press: function () {
-//         that.delete_data();
-//     }
-// }));
-// that.createScrollCmds(this.frm.getToolbar());
+        // Util.destroyID("poCmdSave", this.view);
+        // this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdSave"), {
+        //     icon: "sap-icon://save", press: function () {
+        //         that.save_data();
+        //     }
+        // }));
+        //
+        // Util.destroyID("poCmdDel", this.view);
+        // this.frm.getToolbar().addContent(new sap.m.Button(this.view.createId("poCmdDel"), {
+        //     icon: "sap-icon://delete", press: function () {
+        //         that.delete_data();
+        //     }
+        // }));
+        // that.createScrollCmds(this.frm.getToolbar());
 
         var sc = new sap.m.ScrollContainer();
 
@@ -156,7 +161,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                         vbPara.addItem(vb);
                     },
                     mainParaContainerSetting: {
-                        width: {"S": 400, "M": 500, "L": 650},
+                        width: { "S": 400, "M": 500, "L": 650 },
                         cssText: [
                             "padding-left:50px;" +
                             "padding-top:20px;" +
@@ -180,7 +185,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 display_style: "",
                                 display_format: "",
                                 default_value: "$FIRSTDATEOFYEAR",
-                                other_settings: {width: "35%"},
+                                other_settings: { width: "35%" },
                                 list: undefined,
                                 edit_allowed: true,
                                 insert_allowed: true,
@@ -199,7 +204,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 display_style: "",
                                 display_format: "",
                                 default_value: "$TODAY",
-                                other_settings: {width: "35%"},
+                                other_settings: { width: "35%" },
                                 list: undefined,
                                 edit_allowed: true,
                                 insert_allowed: true,
@@ -220,7 +225,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 default_value: "",
                                 other_settings: {
                                     width: "85%",
-                                    customData: [{key: ""}],
+                                    customData: [{ key: "" }],
                                     search: function (event) {
                                         if (event != undefined
                                             && (event.getParameters().clearButtonPressed
@@ -261,7 +266,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 default_value: "",
                                 other_settings: {
                                     width: "85%",
-                                    customData: [{key: ""}],
+                                    customData: [{ key: "" }],
                                     search: function (event) {
                                         if (event != undefined
                                             && (event.getParameters().clearButtonPressed
@@ -303,7 +308,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 default_value: "",
                                 other_settings: {
                                     width: "85%",
-                                    customData: [{key: ""}],
+                                    customData: [{ key: "" }],
                                     search: function (event) {
                                         if (event != undefined
                                             && (event.getParameters().clearButtonPressed
@@ -344,7 +349,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                     width: "85%",
                                     items: {
                                         path: "/",
-                                        template: new sap.ui.core.ListItem({text: "{NAME}", key: "{CODE}"}),
+                                        template: new sap.ui.core.ListItem({ text: "{NAME}", key: "{CODE}" }),
                                         templateShareable: true
                                     },
                                     selectedKey: "NONE",
@@ -376,7 +381,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 isMaster: false,
                                 masterToolbarInMain: false,
                                 dml: "select distinct accno,nvl(rfr_name,acname)||' '||COST_CENT_NAME name,b30,b60,b90,b120,b150,acbal from c6_gl1 " +
-                                "  order by accno ",
+                                    "  order by accno ",                                    
                                 // beforeLoadQry: function (sql, qryObj) {
                                 //     return "";
                                 // },
@@ -456,9 +461,9 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 type: "query",
                                 name: "qry2",
                                 // disp_class: "paddingLR5P",
-                                 disp_class: "reportTable2",
+                                disp_class: "reportTable2",
                                 showType: FormView.QueryShowType.QUERYVIEW,
-                                dispRecords: {"S": 5, "M": 8, "L": 12, "XL": 18, "XXL": 25},
+                                dispRecords: { "S": 5, "M": 8, "L": 12, "XL": 18, "XXL": 25 },
                                 execOnShow: false,
                                 canvas: "qry2Canvas",
                                 canvasType: ReportView.CanvasType.VBOX,
@@ -748,29 +753,29 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                                     var hp = "style=\"text-align:center;width:65px;background-color:yellow\"";
                                                     var h = UtilGen.toHTMLTableFromData(dtx, ["ACCNO", "NAME"], function (colName, attr) {
 
-                                                            var tit = "";
+                                                        var tit = "";
 
-                                                            if (colName == "BALANCE") {
-                                                                // hp = "onclick=\"UtilGen.execCmd('testRep5 formType=dialog repno=1 para_PARAFORM=false para_EXEC_REP=true fromacc=1 toacc=1 fromdate=@01/01/2020',UtilGen.DBView,UtilGen.DBView,UtilGen.DBView.newPage)\"" +
-                                                                //     "class=\"htmlLnk\" style=\"text-align:center;width:100px;background-color:yellow\"";
-                                                                hp = " style=\"text-align:center;width:100px;background-color:yellow\"";
-                                                                tit = "Balance"
-                                                            }
-                                                            if (colName == "B30")
-                                                                tit = "0-30";
-                                                            if (colName == "B60")
-                                                                tit = "31-60";
-                                                            if (colName == "B90")
-                                                                tit = "61-90";
-                                                            if (colName == "B120")
-                                                                tit = "91-120";
-                                                            if (colName == "B150")
-                                                                tit = "121-150";
+                                                        if (colName == "BALANCE") {
+                                                            // hp = "onclick=\"UtilGen.execCmd('testRep5 formType=dialog repno=1 para_PARAFORM=false para_EXEC_REP=true fromacc=1 toacc=1 fromdate=@01/01/2020',UtilGen.DBView,UtilGen.DBView,UtilGen.DBView.newPage)\"" +
+                                                            //     "class=\"htmlLnk\" style=\"text-align:center;width:100px;background-color:yellow\"";
+                                                            hp = " style=\"text-align:center;width:100px;background-color:yellow\"";
+                                                            tit = "Balance"
+                                                        }
+                                                        if (colName == "B30")
+                                                            tit = "0-30";
+                                                        if (colName == "B60")
+                                                            tit = "31-60";
+                                                        if (colName == "B90")
+                                                            tit = "61-90";
+                                                        if (colName == "B120")
+                                                            tit = "91-120";
+                                                        if (colName == "B150")
+                                                            tit = "121-150";
 
 
-                                                            return {title: tit, prop: hp};
+                                                        return { title: tit, prop: hp };
 
-                                                        },
+                                                    },
                                                         function (colName, attr, val) {
                                                             var vl;
                                                             var sett = sap.ui.getCore().getModel("settings").getData();
@@ -816,7 +821,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                     clearCatchReportImmediate: false,
                     saveReportBeforeClear: true,
                     mainParaContainerSetting: {
-                        width: {"S": 400, "M": 500, "L": 650},
+                        width: { "S": 400, "M": 500, "L": 650 },
                         cssText: [
                             "padding-left:50px;" +
                             "padding-top:20px;" +
@@ -839,7 +844,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 display_style: "",
                                 display_format: "",
                                 default_value: "$FIRSTDATEOFYEAR",
-                                other_settings: {width: "35%"},
+                                other_settings: { width: "35%" },
                                 list: undefined,
                                 edit_allowed: true,
                                 insert_allowed: true,
@@ -858,7 +863,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 display_style: "",
                                 display_format: "",
                                 default_value: "$TODAY",
-                                other_settings: {width: "35%"},
+                                other_settings: { width: "35%" },
                                 list: undefined,
                                 edit_allowed: true,
                                 insert_allowed: true,
@@ -879,7 +884,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 default_value: "",
                                 other_settings: {
                                     width: "85%",
-                                    customData: [{key: ""}],
+                                    customData: [{ key: "" }],
                                     search: function (event) {
                                         if (event != undefined
                                             && (event.getParameters().clearButtonPressed
@@ -920,7 +925,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 default_value: "",
                                 other_settings: {
                                     width: "85%",
-                                    customData: [{key: ""}],
+                                    customData: [{ key: "" }],
                                     search: function (event) {
                                         if (event != undefined
                                             && (event.getParameters().clearButtonPressed
@@ -967,7 +972,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 isMaster: true,
                                 masterToolbarInMain: true,
                                 dml: "select accno,acname,acbal from c7_gl_ac1" +
-                                " where usernm=c6_session.get_user_session  and acbal!=0  order by accno ",
+                                    " where usernm=c6_session.get_user_session  and acbal!=0  order by accno ",
                                 // beforeLoadQry: function (sql, qryObj) {
                                 //     return "";
                                 // },
@@ -996,7 +1001,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                         onPrintField: function () {
                                             return this.obj.$().outerHTML();
                                         },
-                                        other_settings: {width: "20%", editable: false},
+                                        other_settings: { width: "20%", editable: false },
                                     },
                                     acname: {
                                         colname: "acname",
@@ -1012,7 +1017,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                         onPrintField: function () {
                                             return this.obj.$().outerHTML();
                                         },
-                                        other_settings: {width: "50%", editable: false},
+                                        other_settings: { width: "50%", editable: false },
                                     }
 
                                 }
@@ -1025,7 +1030,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
                                 canvas: "qryAc2Canvas",
                                 showToolbar: true,
                                 canvasType: ReportView.CanvasType.VBOX,
-                                dispRecords: {"S": 6, "M": 11, "L": 16, "XL": 22, "XXL": 35},
+                                dispRecords: { "S": 6, "M": 11, "L": 16, "XL": 22, "XXL": 35 },
                                 execOnShow: false,
                                 masterQry: "SOA002@qryAc1",
                                 masterDetailRelation: ":accno==accno",   //  .match(/=\s*([A-Za-z_0-9.]*)/gm)
@@ -1237,6 +1242,67 @@ sap.ui.jsfragment("bin.forms.testRep5", {
 
                                 }
                             },
+                            {
+                                type: "query",
+                                name: "qryAc3",
+                                showType: FormView.QueryShowType.FORM,
+                                dispRecords: -1,
+                                canvas: "qryAc1Canvas2",
+                                canvasType: ReportView.CanvasType.FORMCREATE2,
+                                execOnShow: false,
+                                showToolbar: false,
+                                masterQry: "SOA002@qryAc1",
+                                masterDetailRelation: "",
+                                masterToolbarInMain: true,
+                                dml: "select 0 totob,0 totdeb, 0 totcrd from dual",
+                                fields: {
+                                    totob: {
+                                        colname: "totob",
+                                        data_type: FormView.DataType.String,
+                                        class_name: FormView.ClassTypes.TEXTFIELD,
+                                        title: '{\"text\":\"openBal\",\"width\":\"10%\","textAlign":"End"}',
+                                        title2: "",
+                                        parentTitle: "",
+                                        parentSpan: 1,
+                                        display_width: "",
+                                        display_align: "ALIGN_RIGHT",
+                                        display_style: "",
+                                        display_format: "",
+                                        default_value: "",
+                                        other_settings: { width: "20%", editable: false },
+                                    },
+                                    totdeb: {
+                                        colname: "totdeb",
+                                        data_type: FormView.DataType.String,
+                                        class_name: FormView.ClassTypes.TEXTFIELD,
+                                        title: '@{\"text\":\"debitTxt\",\"width\":\"10%\","textAlign":"End"}',
+                                        title2: "",
+                                        parentTitle: "",
+                                        parentSpan: 1,
+                                        display_width: "",
+                                        display_align: "ALIGN_RIGHT",
+                                        display_style: "",
+                                        display_format: "",
+                                        default_value: "",
+                                        other_settings: { width: "20%", editable: false },
+                                    },
+                                    totcrd: {
+                                        colname: "totcrd",
+                                        data_type: FormView.DataType.String,
+                                        class_name: FormView.ClassTypes.TEXTFIELD,
+                                        title: '@{\"text\":\"creditTxt\",\"width\":\"10%\","textAlign":"End"}',
+                                        title2: "",
+                                        parentTitle: "",
+                                        parentSpan: 1,
+                                        display_width: "",
+                                        display_align: "ALIGN_RIGHT",
+                                        display_style: "",
+                                        display_format: "",
+                                        default_value: "",
+                                        other_settings: { width: "20%", editable: false },
+                                    }
+                                }
+                            }
                         ]
 
                     }
@@ -1284,7 +1350,7 @@ sap.ui.jsfragment("bin.forms.testRep5", {
     }
 
 })
-;
+    ;
 
 
 

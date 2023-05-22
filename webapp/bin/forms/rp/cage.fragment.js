@@ -6,6 +6,7 @@ sap.ui.jsfragment("bin.forms.rp.cage", {
         this.qryStr = "";
         // this.joApp = new sap.m.SplitApp({mode: sap.m.SplitAppMode.HideMode,});
         // this.joApp2 = new sap.m.App();
+                
         this.timeInLong = (new Date()).getTime();
 
         this.bk = new sap.m.Button({

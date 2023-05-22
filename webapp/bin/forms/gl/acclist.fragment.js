@@ -25,7 +25,7 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
         });
 
         this.pgDetail = new sap.m.Page({
-            showHeader: false,
+            showHeader: true,
             showFooter: false,
             content: []
         });
@@ -34,6 +34,7 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
             enableScrolling: false,
             content: []
         });
+
         this.pgMain = new sap.m.Page({
             showHeader: true,
             content: [this.joApp]
@@ -46,8 +47,8 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
         this.joApp.addMasterPage(this.pgMaster);
         this.joApp.toDetail(this.pgDetail, "show");
         this.joApp.toMaster(this.pgMaster, "show");
-
-        return this.pgMain;
+        this.app = new sap.m.App({ height: "90%", pages: this.pgMain });
+        return this.app;
     },
     createView: function () {
         var that = this;
@@ -60,11 +61,26 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
         UtilGen.clearPage(this.pgMaster);
 
         // UtilGen.clearPage(this.pgMain);
-
-        var srch = new sap.m.SearchField({
-            liveChange: function (e) {
-                UtilGen.doFilterLiveTable(e, that.acqv, ["ACCNO", "ACNAME"]);
-            }
+        var srch = new sap.m.Toolbar({
+            content: [
+                new sap.m.SearchField({
+                    liveChange: function (e) {
+                        UtilGen.doFilterLiveTable(e, that.acqv, ["ACCNO", "ACNAME"]);
+                    }
+                }),
+                new sap.m.Button({
+                    icon: "sap-icon://negative",
+                    press: function () {
+                        that.acqv.getControl().collapseAll();
+                    }
+                }),
+                new sap.m.Button({
+                    icon: "sap-icon://positive",
+                    press: function () {
+                        that.acqv.getControl().expandToLevel(255);
+                    }
+                })
+            ]
         });
         this.modeList = UtilGen.createControl(sap.m.ComboBox, this.view, "ord_type", {
             customData: [{ key: "" }],
@@ -105,54 +121,15 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
                 }),
                 new sap.m.Button({
                     icon: "sap-icon://create-form",
-                    text: "New A/c",
+                    text: Util.getLangText("newAc"),
                     press: function (e) {
                         UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,400px status=new",
                             that2.view, e.getSource());
                     }
                 }),
                 new sap.m.Button({
-                    icon: "sap-icon://sys-prev-page",
-                    text: "Up A/c",
-                    press: function () {
-                        if (that2.current_ac != "") {
-                            var sq =
-                                "select ac.parentacc," +
-                                "(select childcount from acaccount where acaccount.accno=ac.parentacc ) childcount" +
-                                " from acaccount ac where ac.accno=" + that2.current_ac
-                            if (that2.mode == "cc")
-                                sq =
-                                    "select ac.parentcostcent parentacc," +
-                                    "(select childcount from accostcent1 where accostcent1.code=ac.parentcostcent ) childcount" +
-                                    " from accostcent1 ac where ac.code=" + that2.current_ac;
-                            else if (that2.mode == "rp")
-                                sq =
-                                    "select ac.parentcustomer parentacc," +
-                                    "(select childcount from c_ycust where c_ycust.code=ac.parentcustomer ) childcount" +
-                                    " from c_ycust ac where ac.code=" + that2.current_ac;
-                            var dt = Util.execSQLWithData(sq);
-
-                            if (dt != "" && dt.length > 0 && Util.nvl(dt[0].PARENTACC, "") != "")
-                                that2.loadData_details(dt[0].PARENTACC, dt[0].CHILDCOUNT);
-                        }
-
-
-                    }
-                }),
-                new sap.m.Button({
-                    icon: "sap-icon://print",
-                    text: "Print",
-                    press: function () {
-                        that.view.colData = {};
-                        that.view.reportsData = {
-                            report_info: { report_name: "Account Details" }
-                        };
-                        that.acDet.printHtml(that.view, "para");
-                    }
-                }),
-                new sap.m.Button({
                     icon: "sap-icon://refresh",
-                    text: "Refresh",
+                    text: Util.getLangText("refresh"),
                     press: function () {
                         var ca = that2.current_ac;
                         var sq = "select childcount from acaccount where accno=" + Util.quoted(ca);
@@ -168,10 +145,10 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
                 }),
                 new sap.m.ToolbarSpacer(),
                 new sap.m.Button({
-                    text: "Close",
-                    icon: "sap-icon://nav-back",
+                    text: Util.getLangText("cmdClose"),
+                    icon: "sap-icon://decline",
                     press: function () {
-                        that2.pgMain.backFunction();
+                        that2.app.backFunction();
                     }
                 })
             ]
@@ -195,7 +172,7 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
 
 
         this.acqv = new QueryView("aclistAccs" + this.timeInLong);
-        this.acDet = new QueryView("aclistAccDet" + this.timeInLong);
+        // this.acDet = new QueryView("aclistAccDet" + this.timeInLong);
         this.acDet = new QueryView("aclistAccTrans" + this.timeInLong);
 
         this.acqv.switchType("tree", this.pgMaster);
@@ -213,48 +190,133 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
         this.acDet.getControl().setSelectionMode(sap.ui.table.SelectionMode.Single);
         this.acDet.getControl().setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
 
+        this.acDet.showToolbar.showBar = true;
+        this.acDet.showToolbar.showFilter = false;
+        this.acDet.showToolbar.filterCols = false;
+        this.acDet.showToolbar.showPersonalization = false;
+
+        this.acDet.createToolbar("", ["ACCNO", "NAME"],
+            // EVENT ON APPLY PERSONALIZATION
+            function (prsn, qv) {
+            },
+            // EVENT ON REVERT PERSONALIZATION TO ORIGINAL
+            function (qv) {
+            }
+        );
+        this.acDet.showToolbar.toolbar.addContent(new sap.m.Button({
+            icon: "sap-icon://sys-prev-page",
+            tooltip: "Up a/c",
+            press: function () {
+                if (that2.current_ac != "") {
+                    // var sq =
+                    //     "select ac.parentacc," +
+                    //     "(select childcount from acaccount where acaccount.accno=ac.parentacc ) childcount" +
+                    //     " from acaccount ac where ac.accno=" + that2.current_ac
+                    // if (that2.mode == "cc")
+                    //     sq =
+                    //         "select ac.parentcostcent parentacc," +
+                    //         "(select childcount from accostcent1 where accostcent1.code=ac.parentcostcent ) childcount" +
+                    //         " from accostcent1 ac where ac.code=" + that2.current_ac;
+                    // else if (that2.mode == "rp")
+                    //     sq =
+                    //         "select ac.parentcustomer parentacc," +
+                    //         "(select childcount from c_ycust where c_ycust.code=ac.parentcustomer ) childcount" +
+                    //         " from c_ycust ac where ac.code=" + that2.current_ac;
+                    // var dt = Util.execSQLWithData(sq);
+                    if (that.acqv.getControl().getSelectedIndices().length > 0) {
+                        var n = that.acqv.getControl().getSelectedIndices()[0];
+                        var oData = that.acqv.getControl().getContextByIndex(n);
+                        var sp = oData.getPath().split("/");
+                        var prntSp = "", fnd = false;
+
+                        for (var ss in sp)
+                            if (ss != sp.length - 1)
+                                prntSp += (prntSp.length > 0 ? "/" : "") + sp[ss];
+                        for (var si = n; si > 0; si--) {
+                            if (that.acqv.getControl().getContextByIndex(si).getPath() == "/" + prntSp) {
+                                that.acqv.getControl().setSelectedIndex(si);
+                                // that.acqv.getControl().setFirstVisibleRow(si);
+                                fnd = true;
+                                break;
+                            }
+
+                        }
+                        if (!fnd) {
+                            that.acqv.getControl().setSelectedIndex(0);
+                            that.acqv.getControl().setFirstVisibleRow(0);
+                        }
+                    }
+
+                    // if (dt != "" && dt.length > 0 && Util.nvl(dt[0].PARENTACC, "") != "") {
+
+                    //     that2.loadData_details(dt[0].PARENTACC, dt[0].CHILDCOUNT);
+                    // }
+                }
+
+
+            }
+        }));
+        this.acDet.showToolbar.toolbar.addContent(new sap.m.Button({
+            icon: "sap-icon://print",
+            tooltip: "Print",
+            press: function () {
+                that.view.colData = {};
+                that.view.reportsData = {
+                    report_info: { report_name: "Account Details" }
+                };
+                that.acDet.printHtml(that.view, "para");
+            }
+        }));
+        Util.destroyID("chkUnpost", that.view);
+        this.acDet.showToolbar.toolbar.addContent(new sap.m.CheckBox(that.view.createId("chkUnpost"), {
+            text: Util.getLangText("auditedTxt"),
+            select: function () {
+                that.loadData();
+            }
+        }));
 
         this.acqv.mColCode = "ACCNO";
         this.acqv.mColName = "NAME";
         this.acqv.mColParent = "PARENTACC";
         this.acqv.mColLevel = "LEVELNO";
         this.acqv.getControl().attachRowSelectionChange(function (ev) {
-            // var indicOF = that2.acqv.getControl().getBinding("rows").aIndices;
+            // var indicOF = that2.acqv.getControl().getBinding("rows").aIndices;            
             var indic = that2.acqv.getControl().getSelectedIndices();
             var oData = that2.acqv.getControl().getContextByIndex(indic[0]);
+            if (oData == undefined || indic.length <= 0) return;
             var accno = oData.getProperty(oData.getPath())[that2.mColCode];
             var childs = oData.getProperty(oData.getPath())["CHILDCOUNT"];
             var acname = oData.getProperty(oData.getPath())[that2.mColCodName];
             sap.m.MessageToast.show(acname);
             that.loadData_details(accno, childs);
         })
-
-
+        this.pgDetail.removeAllHeaderContent();
+        this.pgDetail.addHeaderContent(this.acDet.showToolbar.toolbar);
         this.pgDetail.addContent(this.acDet.getControl());
 
-        this.acDet.getControl().attachBrowserEvent("click", function () {
-            that2.clicks++;
-            if (that2.clicks == 1) {
-                setTimeout(function () {
-                    that2.clicks = 0;
-                    that2.selectedIndex = -1;
-                }, 500);
-            } else if (that2.clicks == 2) {
-                if (that2.acqv.getControl().getSelectedIndices().length <= 0) return;
-                that2.selectedIndex = that2.acDet.getControl().getSelectedIndices()[0];
-            }
-        });
-        this.acDet.getControl().attachBrowserEvent("dblclick", function (e) {
-            if (that2.selectedIndex <= -1) return;
-            var oData = that2.acDet.getControl().getContextByIndex(that2.selectedIndex);
-            var accno = oData.getProperty(oData.getPath())[that2.mColCode];
-            var acname = oData.getProperty(oData.getPath())[that2.mColName];
-            var childs = oData.getProperty(oData.getPath())["CHILDCOUNT"];
-            if (accno == undefined) return;
-            sap.m.MessageToast.show(acname);
-            that.loadData_details(accno, childs);
+        // this.acDet.getControl().attachBrowserEvent("click", function () {
+        //     that2.clicks++;
+        //     if (that2.clicks == 1) {
+        //         setTimeout(function () {
+        //             that2.clicks = 0;
+        //             that2.selectedIndex = -1;
+        //         }, 500);
+        //     } else if (that2.clicks == 2) {
+        //         if (that2.acqv.getControl().getSelectedIndices().length <= 0) return;
+        //         that2.selectedIndex = that2.acDet.getControl().getSelectedIndices()[0];
+        //     }
+        // });
+        // this.acDet.getControl().attachBrowserEvent("dblclick", function (e) {
+        //     if (that2.selectedIndex <= -1) return;
+        //     var oData = that2.acDet.getControl().getContextByIndex(that2.selectedIndex);
+        //     var accno = oData.getProperty(oData.getPath())[that2.mColCode];
+        //     var acname = oData.getProperty(oData.getPath())[that2.mColName];
+        //     var childs = oData.getProperty(oData.getPath())["CHILDCOUNT"];
+        //     if (accno == undefined) return;
+        //     sap.m.MessageToast.show(acname);
+        //     that.loadData_details(accno, childs);
 
-        });
+        // });
 
         this.acqv.getControl().setContextMenu(new sap.m.Menu());
         this.acqv.getControl().attachBeforeOpenContextMenu(function (e) {
@@ -262,6 +324,7 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
             if (rn <= -1) {
                 return false;
             }
+
             var oData = that2.acqv.getControl().getContextByIndex(rn);
             var childs = oData.getProperty(oData.getPath())["CHILDCOUNT"];
             var usecount = oData.getProperty(oData.getPath())["USECOUNT"];
@@ -273,7 +336,13 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
                 mnu.addItem(new sap.m.MenuItem({
                     text: "Add child AC",
                     press: function () {
-                        UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,400px status=new parentacc=" + accno, that2.view, e.getSource().getParent().getParent());
+                        var fv = Util.nvl(that.acqv.getControl().getFirstVisibleRow(), 0);
+                        UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,400px status=new parentacc=" + accno, that2.view, e.getSource().getParent().getParent(), undefined, function () {
+                            that.loadData();
+                            var iin = that.acqv.mLctb.find("ACCNO", accno);
+                            // that.acqv.getControl().addSelectionInterval(iin, iin);
+                            // that.acqv.getControl().fireRowSelectionChange();
+                        });
                     }
                 }));
             mnu.addItem(new sap.m.MenuItem({
@@ -346,34 +415,82 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
         var that = this;
         var pacc = Util.nvl(pacn, "");
         var cs = Util.nvl(childs, 0);
+        var up = that.view.byId("chkUnpost").getSelected() ? 2 : 0;
 
-
-        var sql = "select ac.accno,ac.name,ac.childcount, (select sum(debit-credit) from ACC_TRANSACTION where path like ac.path||'%' and flag=2) balance" +
+        var sql = "select ac.accno,ac.name,ac.childcount, (select sum(debit-credit) from ACC_TRANSACTION_UP where " + " (flag=" + up + " or " + up + "=0" + ") and path like ac.path||'%') balance" +
             "  from acaccount ac" +
             " where ac.parentacc=" + Util.quoted(pacc) + " order by ac.path";
         if (cs > 0)
             if (this.mode == "rp") {
                 sql = "select y.code,y.name ,y.childcount ," +
                     " (select sum(debit-credit) from ACC_TRANSACTION_cust ay " +
-                    " where ay.custpath like y.path||'%' and ay.flag=2) balance" +
+                    " where ay.custpath like y.path||'%' " + " and (flag=" + up + " or " + up + "=0" + ") ) balance" +
                     "  from c_ycust y" +
                     " where y.parentcustomer=" + Util.quoted(pacc) + " order by y.path";
             } else if (this.mode == "cc") {
                 sql = "select cc.costcent,cc.title name ,cc.childcount childcount, " +
-                    "(select sum(debit-credit) from ACC_TRANSACTION " +
-                    " where cspath like cc.path||'%' and ACC_TRANSACTION.flag=2) balance" +
+                    "(select sum(debit-credit) from ACC_TRANSACTION_UP " +
+                    " where cspath like cc.path||'%' and " + " and (ACC_TRANSACTION_UP.flag=" + up + " or " + up + "=0" + ") ) balance" +
                     "  from accostcent1 cc" +
                     " where cc.parentcostcent=" + Util.quoted(pacc) + " order by cc.path";
             }
 
         if (cs == 0) {
-            sql = "select vou_date,GRPNAME_A jv_type,no,descr,debit,credit from acc_transaction where accno=" + Util.quoted(pacc) + " order by vou_date,keyfld";
+            sql = "select vou_date,nvl(STAT_NAME_2,STAT_NAME_1) jv_type,no,descr,debit,credit,vou_code,type vou_type,pos jvpos ,keyfld from ACC_TRANSACTION_UP where accno=" + Util.quoted(pacc) + " and (flag=" + up + " or " + up + "=0" + ") order by vou_date, keyfld";
             if (this.mode == "rp")
-                sql = "select vou_date,GRPNAME_A jv_type,no,descr,debit,credit from acc_transaction_cust where code=" + Util.quoted(pacc) + " order by vou_date,keyfld";
+                sql = "select vou_date,nvl(STAT_NAME_2,STAT_NAME_1) jv_type,no,descr,debit,credit ,vou_code,type vou_type,pos jvpos ,keyfld from acc_transaction_cust where code=" + Util.quoted(pacc) + " and (flag=" + up + " or " + up + "=0" + ") order by vou_date,keyfld";
             else if (this.mode == "cc")
-                sql = "select vou_date,GRPNAME_A jv_type,no,descr,debit,credit from acc_transaction where costcent=" + Util.quoted(pacc) + " order by vou_date,keyfld";
+                sql = "select vou_date,nvl(STAT_NAME_2,STAT_NAME_1) jv_type,no,descr,debit,credit, vou_code,type vou_type,pos jvpos ,keyfld from acc_transaction where costcent=" + Util.quoted(pacc) + " and (flag=" + up + " or " + up + "=0" + ") order by vou_date,keyfld";
         }
         var dat = Util.execSQL(sql);
+        var cmdLink = function (obj, rowno, colno, lctb, frm) {
+            var vcd = lctb.getFieldValue(rowno, "VOU_CODE");
+            var accno = lctb.getFieldValue(rowno, "ACCNO");
+            var acname = lctb.getFieldValue(rowno, "NAME");
+            var childs = parseFloat(lctb.getFieldValue(rowno, "CHILDCOUNT"));
+            if (accno == undefined) return;
+            sap.m.MessageToast.show(acname);
+            if (that.acqv.getControl().getSelectedIndices().length > 0) {
+                var n = that.acqv.getControl().getSelectedIndices()[0];
+                that.acqv.getControl().expand(n);
+                var oData = that.acqv.getControl().getContextByIndex(n);
+                var kys = Object.keys(oData.getObject());
+                var n1 = 1;
+                for (var ki in kys) {
+                    if (kys[ki].startsWith("childeren_")) {
+                        if (oData.getObject()[kys[ki]]["ACCNO"] == accno) {
+                            that.acqv.getControl().expand(n + n1);
+                            that.acqv.getControl().setSelectedIndex(n + n1);
+                            break;
+                        } else n1++;
+                    }
+                }
+
+            }
+            // that.loadData_details(accno, childs);
+
+
+        };
+        var cmdLink2 = function (obj, rowno, colno, lctb, frm) {
+            var vcd = lctb.getFieldValue(rowno, "VOU_CODE");
+            var typ = lctb.getFieldValue(rowno, "VOU_TYPE");
+            var kfld = lctb.getFieldValue(rowno, "KEYFLD");
+            var jvpos = lctb.getFieldValue(rowno, "JVPOS");
+            if (vcd == 1) {
+                UtilGen.execCmd("gl.jv formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, that.view, obj, undefined);
+            } else if (vcd == 3 && (typ == 1 || typ == 6)) {
+                UtilGen.execCmd("gl.pv formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, that.view, obj, undefined);
+            } else if (vcd == 3 && (typ == 2 || typ == 7)) {
+                UtilGen.execCmd("gl.pvc formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, that.view, obj, undefined);
+            } else if (vcd == 2 && (typ == 1 || typ == 6)) {
+                UtilGen.execCmd("gl.rv formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, that.view, obj, undefined);
+            } else if (vcd == 3 && (typ == 2 || typ == 7)) {
+                UtilGen.execCmd("gl.rvc formType=dialog formSize=100%,80% status=view keyfld=" + kfld + " jvpos=" + jvpos, that.view, obj, undefined);
+            }
+            else {
+                sap.m.MessageToast.show("Not a JV..");
+            }
+        };
         if (dat.ret == "SUCCESS") {
             that.acDet.setJsonStr("{" + dat.data + "}");
             if (cs > 0) {
@@ -382,6 +499,11 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
                 that.acDet.mLctb.cols[c].mSummary = "SUM";
                 c = that.acDet.mLctb.getColPos("CHILDCOUNT");
                 that.acDet.mLctb.cols[c].mHideCol = true;
+                c = that.acDet.mLctb.getColPos("ACCNO");
+                that.acDet.mLctb.cols[c].commandLinkClick = cmdLink;
+                c = that.acDet.mLctb.getColPos("NAME");
+                that.acDet.mLctb.cols[c].commandLinkClick = cmdLink;
+
 
             } else {
 
@@ -395,9 +517,28 @@ sap.ui.jsfragment("bin.forms.gl.acclist", {
 
                 c = that.acDet.mLctb.getColPos("VOU_DATE");
                 that.acDet.mLctb.cols[c].getMUIHelper().display_format = "SHORT_DATE_FORMAT";
+                that.acDet.mLctb.cols[c].commandLinkClick = cmdLink2;
 
+                c = that.acDet.mLctb.getColPos("JV_TYPE");
+                that.acDet.mLctb.cols[c].getMUIHelper().display_width = "100";
+                that.acDet.mLctb.cols[c].commandLinkClick = cmdLink2;
+
+                c = that.acDet.mLctb.getColPos("KEYFLD");
+                that.acDet.mLctb.cols[c].getMUIHelper().mHideCol = true;
+
+                c = that.acDet.mLctb.getColPos("VOU_CODE");
+                that.acDet.mLctb.cols[c].getMUIHelper().mHideCol = true;
+
+                c = that.acDet.mLctb.getColPos("VOU_TYPE");
+                that.acDet.mLctb.cols[c].getMUIHelper().mHideCol = true;
+
+                c = that.acDet.mLctb.getColPos("JVPOS");
+                that.acDet.mLctb.cols[c].getMUIHelper().mHideCol = true;
+
+                // that.acDet.mLctb.cols[c].commandLinkClick = cmdLink;
 
             }
+            //colring of negative and positive balance column
             that.acDet.onRowRender = function (qv, dispRow, rowno, currentRowContext, startCell, endCell) {
                 var oModel = this.getControl().getModel();
                 if (oModel.getProperty("BALANCE", currentRowContext) != undefined) {

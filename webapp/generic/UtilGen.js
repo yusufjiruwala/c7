@@ -585,8 +585,15 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         var ar = [].concat(contSetting["cssText"]);
                         for (var ix in ar)
                             sc.$().css("cssText", ar);
-                    }, 200);
+                    }, 50);
                 }
+                if (Util.nvl(contSetting, {}).hasOwnProperty("css")) {
+                    setTimeout(function () {
+                        var ar = {}.concat(contSetting["css"]);
+                        sc.$().css(contSetting["css"]);
+                    }, 50);
+                }
+
                 var totWd = Util.nvl(Util.nvl(contSetting, {})["width"], "600px").replace("px", "");
 
                 var fnAdd = function (cnt) {
@@ -595,6 +602,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     else if (typeof sc.addContent == "function")
                         sc.addContent(cnt);
                 };
+
                 var cnt = [];
                 var hz = [];
                 var hbSet = Util.nvl(pHbSet, {});
@@ -623,6 +631,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             var wd = (totWd / 100) * Util.extractNumber(setx["width"]);
                             setx["width"] = wd + "px";
                         }
+                        if (Util.isCamelCase(setx["text"])) setx["text"] = Util.getLangText(setx["text"]);
                         var lbl = new sap.m.Label(setx);
                         if (setx.hasOwnProperty("styleClass"))
                             lbl.addStyleClass(setx["styleClass"]);
@@ -643,6 +652,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             var wd = (totWd / 100) * Util.extractNumber(setx["width"]);
                             setx["width"] = wd + "px";
                         }
+                        if (Util.isCamelCase(setx["text"])) setx["text"] = Util.getLangText(setx["text"]);
                         var lbl = new sap.m.Label(setx);
                         if (setx.hasOwnProperty("styleClass"))
                             lbl.addStyleClass(setx["styleClass"]);
@@ -655,7 +665,6 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         } catch (e) {
                             cn = { text: content[i].substr(1) };
                         }
-
                         var setx = cn;
                         if (setx.hasOwnProperty("width") && setx["width"].endsWith("%")) {
                             var wd = (totWd / 100) * Util.extractNumber(setx["width"]);
@@ -666,7 +675,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                             lbl.addStyleClass(setx["styleClass"]);
                         if (setx.hasOwnProperty("style"))
                             lbl.$().attr("style", setx["style"]);
-
+                        if (Util.isCamelCase(setx["text"])) setx["text"] = Util.getLangText(setx["text"]);
                         hb = new sap.m.HBox(hbSet);
                         fnAdd(hb);
                         hb.addItem(lbl);
@@ -730,7 +739,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         if (prev_span != "")
                             setx["layoutData"] = new sap.ui.layout.GridData({ span: prev_span });
 
-
+                        if (Util.isCamelCase(setx["text"])) setx["text"] = Util.getLangText(setx["text"]);
                         cnt.push(new sap.m.Label(setx));
                     }
                     else if (typeof content[i] === "string" && content[i].startsWith("@")) {
@@ -749,10 +758,13 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         setx["width"] = "auto";
                         delete cn.width;
                         delete cn.textAlign;
+                        if (Util.isCamelCase(setx["text"])) setx["text"] = Util.getLangText(setx["text"]);
                         cnt.push(new sap.m.Text(setx));
                     }
                     else if (typeof content[i] === "string" && content[i].startsWith("#")) {
-                        cnt.push(new sap.ui.core.Title({ text: content[i].substr(1) }));
+                        var str = content[i].substr(1);
+                        if (Util.isCamelCase(str)) str = Util.getLangText(str);
+                        cnt.push(new sap.ui.core.Title({ text: str }));
                     } else {
                         if (typeof content[i].setWidth == "function")
                             content[i].setWidth("auto");
@@ -939,8 +951,8 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
             ,
             doFilterLiveTable(event, qv, flcol) {
                 var flts = [];
-                var val = event.getParameter("newValue");
-
+                var val = event.oSource.getValue();
+                if (Util.nvl(val, "") == "") return;
                 for (var i in qv.mLctb.cols) {
                     var f = sap.ui.model.FilterOperator.Contains;
                     // if (qv.mLctb.cols[i].getMUIHelper().data_type == "NUMBER")
@@ -973,7 +985,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                 if (typeof retVal == "string" && retVal.startsWith("#NUMBER_"))
                     retVal = parseFloat(vl.replace("#NUMBER_", ""));
                 if (typeof retVal == "string" && retVal == "$TODAY")
-                    retVal = new Date();
+                    retVal = Util.nvl(UtilGen.DBView.today_date.getDateValue(), new Date());
                 if (typeof retVal == "string" && retVal == "$FIRSTDATEOFMONTH") {
                     retVal = new Date();
                     retVal.setDate(1);
@@ -1833,7 +1845,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                 }
             },
             Search: {
-                do_quick_search: function (e, control, pSq, pSqGetTitle, titObj) {
+                do_quick_search: function (e, control, pSq, pSqGetTitle, titObj, eventAfterSelect) {
                     if (e.getParameters().clearButtonPressed || e.getParameters().refreshButtonPressed) {
                         UtilGen.setControlValue(control, "", "", false);
                         if (titObj != undefined)
@@ -1861,11 +1873,13 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         var acn = vldt[0].CODE;
                         var nm = vldt[0].TITLE;
                         if (titObj == undefined)
-                            UtilGen.setControlValue(control, nm + "-" + acn, acn, false);
+                            UtilGen.setControlValue(control, nm + "-" + acn, acn, true);
                         else {
-                            UtilGen.setControlValue(control, acn, acn, false);
+                            UtilGen.setControlValue(control, acn, acn, true);
                             UtilGen.setControlValue(titObj, nm, nm, false);
                         }
+                        if (eventAfterSelect != undefined)
+                            eventAfterSelect();
                     });
                 },
                 getLOVSearchField: function (sql, control, nullValid, titObj) {
@@ -1999,6 +2013,141 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     if (frag.qryStr != "")
                         frag.frm.loadData(undefined, frag.oController.status);
 
+                },
+                before_add_table: function (scrollObjs, qrj) {
+                    var that = this;
+                    var sett = sap.ui.getCore().getModel("settings").getData();
+                    var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
+                    qrj.showToolbar.showSearch = false;
+                    qrj.showToolbar.showFilter = false;
+                    qrj.showToolbar.showGroupFilter = false;
+                    qrj.showToolbar.showPersonalization = false;
+                    qrj.createToolbar("", [],
+                        // EVENT ON APPLY PERSONALIZATION
+                        function (prsn, qv) {
+                        },
+                        // EVENT ON REVERT PERSONALIZATION TO ORIGINAL
+                        function (qv) {
+                        }
+                    );
+                    var txt = new sap.m.Input({ width: "100px" });
+                    var btf = new sap.m.Button({
+                        icon: "sap-icon://sys-find",
+                        tooltip: "click to find next..",
+                        press: function () {
+                            var bi = 0;
+                            if (qrj.getControl().getSelectedIndices().length > 0) {
+                                bi = qrj.getControl().getSelectedIndices()[0] + 1;
+                            }
+                            var rn = qrj.mLctb.findAny(["CUST_CODE", "DESCR", "DESCR2", "ACCNO", "COSTCENT"], txt.getValue(), bi);
+                            if (rn < 0) {
+                                qrj.getControl().setSelectedIndex(-1);
+                                return;
+                            }
+                            qrj.getControl().setSelectedIndex(rn);
+                            if (rn > 1) {
+                                qrj.getControl().setFirstVisibleRow(rn - 1);
+                            } else
+                                qrj.getControl().setFirstVisibleRow(rn);
+                        }
+                    });
+                    var btDelRow = new sap.m.Button({
+                        icon: "sap-icon://sys-minus",
+                        tooltip: "select and delete a row ",
+                        press: function () {
+                            if (qrj.getControl().getSelectedIndices().length == 0) {
+                                sap.m.MessageToast.show("Must select a row !");
+                                return;
+                            }
+                            var sl = qrj.getControl().getSelectedIndices();
+                            for (var s = sl.length - 1; s >= -1; s--)
+                                qrj.deleteRow(sl[s]);
+                        }
+                    });
+                    var btAddRow = new sap.m.Button({
+                        icon: "sap-icon://sys-add",
+                        tooltip: "select add a row ",
+                        press: function () {
+                            if (qrj.getControl().getSelectedIndices().length == 0) {
+                                sap.m.MessageToast.show("Must select a row !");
+                                return;
+                            }
+                            var sl = qrj.getControl().getSelectedIndices()[0];
+                            qrj.insertRow(sl);
+                        }
+                    });
+                    var btNewAc = new sap.m.Button({
+                        icon: "sap-icon://account",
+                        tooltip: "Create new A/c",
+                        press: function () {
+                            UtilGen.execCmd("bin.forms.gl.masterAc formSize=650px,400px status=new", UtilGen.DBView, UtilGen.DBView.txtExeCmd, UtilGen.DBView.newPage);
+                        }
+                    });
+                    var btPos = new sap.m.Button({
+                        icon: "sap-icon://bullet-text",
+                        tooltip: "Re-positioning",
+                        press: function () {
+                            if (!qrj.editable)
+                                return;
+                            var n = 1;
+                            var lc = qrj.mLctb;
+                            for (var i = 0; i < lc.rows.length; i++)
+                                lc.setFieldValue(i, "POS", n++);
+                            qrj.updateDataToControl();
+                        }
+                    });
+                    var btSOA = new sap.m.Button({
+                        icon: "sap-icon://document-text",
+                        tooltip: "Re-positioning",
+                    });
+                    btSOA.attachBrowserEvent("mousedown", function () {
+                        var rowno = -1;
+                        var colno = -1;
+                        if (qrj.getControl().getSelectedIndices().length == 0) {
+                            const currentFocusedControlId = sap.ui.getCore().getCurrentFocusedControlId();
+                            var _input = sap.ui.getCore().byId(currentFocusedControlId);
+                            // if (_input != undefined || (!_input.getParent() instanceof sap.ui.table.Row)) return;
+                            rowno = qrj.getControl().indexOfRow(_input.getParent());
+                            colno = _input.getParent().indexOfCell(_input);
+                            qrj.getControl().setSelectedIndex(rowno);
+                        } else
+                            rowno = qrj.getControl().getSelectedIndices()[0];
+                        var oModel = qrj.getControl().getModel();
+                        var currentRowContext = qrj.getControl().getContextByIndex(rowno + qrj.getControl().getFirstVisibleRow());
+                        var accno = oModel.getProperty("ACCNO", currentRowContext);
+                        var cc = oModel.getProperty("CUST_CODE", currentRowContext);
+                        if (Util.nvl(cc, "") != "") {
+                            UtilGen.execCmd("testRep5 formType=dialog formSize=100%,80% repno=0 para_PARAFORM=false para_EXEC_REP=true pref=" + cc + " fromdate=@01/01/2020", UtilGen.DBView, qrj.getControl(), UtilGen.DBView.newPage);
+                        } else if (Util.nvl(accno, "") != "") {
+                            UtilGen.execCmd("testRep5 formType=dialog formSize=100%,80% repno=1 para_PARAFORM=false para_EXEC_REP=true fromacc=" + accno + " toacc=" + accno + " fromdate=@01/01/2020", UtilGen.DBView, qrj.getControl(), UtilGen.DBView.newPage);
+                        }
+                        if (colno != -1) {
+                            setTimeout(function () {
+                                if (Util.nvl(cc, "") != "") {
+                                    var bl = Util.getSQLValue("select sum(debit-credit) from acvoucher2 where cust_code=" + Util.quoted(cc));
+                                    sap.m.MessageToast.show("#" + cc + " Balance is : " + df.format(bl));
+                                } else if (Util.nvl(accno, "") != "") {
+                                    var bl = Util.getSQLValue("select sum(debit-credit) from acvoucher2 where accno=" + Util.quoted(accno));
+                                    sap.m.MessageToast.show("#" + accno + " Balance is : " + df.format(bl));
+                                }
+
+                            });
+                        }
+                        qrj.getControl().setSelectedIndex(-1);
+
+                    });
+                    qrj.showToolbar.toolbar.removeAllContent();
+                    qrj.showToolbar.toolbar.addStyleClass("toolBarBackgroundColor1");
+
+                    qrj.showToolbar.toolbar.addContent(btAddRow);
+                    qrj.showToolbar.toolbar.addContent(btDelRow);
+                    qrj.showToolbar.toolbar.addContent(btNewAc);
+                    qrj.showToolbar.toolbar.addContent(btPos);
+                    qrj.showToolbar.toolbar.addContent(btSOA);
+                    qrj.showToolbar.toolbar.addContent(new sap.m.ToolbarSpacer());
+                    qrj.showToolbar.toolbar.addContent(txt);
+                    qrj.showToolbar.toolbar.addContent(btf);
+                    scrollObjs.push(qrj.showToolbar.toolbar);
                 }
             },
             setFormTitle: function (frm, tit, mainPage) {
@@ -2008,9 +2157,23 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     mainPage.setShowHeader(true);
                     mainPage.setTitle(tit);
                 }
-
-
             },
+            showBalanceAccno: function (cd) {
+                var sett = sap.ui.getCore().getModel("settings").getData();
+                var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
+                var bl = Util.getSQLValue('select sum(debit-credit) from acvoucher2 where accno=' + Util.quoted(cd));
+                sap.m.MessageToast.show("#" + cd + "# Balance is : " + df.format(bl));
+            },
+            setColorCellDrCr: function (qv, startCell, endCell, dispRow, css, colName) {
+                // var qt = oModel.getProperty(colName, currentRowContext);
+                // var css = (val > 0 ? UtilGen.DBView.style_debit_numbers + ";text-align:center;" : UtilGen.DBView.style_credit_numbers + ";text-align:center;");
+                for (var i = startCell; i < endCell; i++)
+                    if (qv.getControl()._getVisibleColumns()[i - startCell].tableCol.mColName == colName) {
+                        qv.getControl().getRows()[dispRow].getCells()[i - startCell].$().css("cssText", css);
+                        qv.getControl().getRows()[dispRow].getCells()[i - startCell].$().parent().parent().css("cssText", css);
+                    }
+
+            }
 
         };
         return UtilGen;

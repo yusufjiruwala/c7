@@ -43,7 +43,14 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                     return acc.concat(val.constructor === Array ? that.flatten(val) : val);
                 }, []);
             },
-
+            addDaysFromDate(dt, days) {
+                var d = new Date(dt);
+                if (days >= 0)
+                    d.setDate(dt.getDate() + days);
+                else
+                    d.setDate(dt.getDate() - Math.abs(days));
+                return d;
+            },
             doAjaxGetSpin: function (path,
                 content,
                 async, fnDone, fnFail, chk) {
@@ -310,6 +317,9 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                     al = sap.ui.core.TextAlign.Center;
                 if (cc == "end" || cc == "ALIGN_END")
                     al = sap.ui.core.TextAlign.End;
+                if (cc == "begin" || cc == "ALIGN_BEGIN")
+                    al = sap.ui.core.TextAlign.Begin;
+
                 return al;
             },
             createParas: function (view, pg, st, idAdd, pShowAll, pWidth, forceshowGroups) {
@@ -811,6 +821,9 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 //     '' + Util.nvl(vl, "") + "".replace(/\"/g, "'").replace(/\n/, "\\r").replace(/\r/, "\\r").replace(/\\/g, "\\\\").trim() + '');
                 //
             },
+            getLangText: function (str) {
+                return UtilGen.DBView.getModel("i18n").getResourceBundle().getText(str);
+            },
             setLanguageModel: function (view) {
                 var ResourceModel = sap.ui.model.resource.ResourceModel;
                 var sLangu =
@@ -841,6 +854,7 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 }
                 return "";
             },
+
             cookieSet: function setCookie(cname, cvalue, exdays) {
                 var d = new Date();
                 d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
@@ -860,10 +874,36 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                     document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
                 }
             },
+            getLangCaption: function (str, optStr) {
+                if (this.isCamelCase(str))
+                    return this.getLangText(str);
+                else
+                    return this.nvl(optStr, str);
+
+            },
             getLangDescrAR: function (enStr, otStr, sLang) {
                 var s = Util.nvl(sLang, sap.ui.getCore().getConfiguration().getLanguage());
                 return (s == "AR" ? this.nvl(otStr, enStr) : enStr);
 
+            },
+            isCamelCase: function (str) {
+                //chatGPT
+                // Check if string starts with a lowercase letter
+                if (/^[a-z]/.test(str)) {
+                    // Check if string contains any uppercase letters
+                    if (/[A-Z]/.test(str)) {
+                        // Check if string contains any underscores or spaces
+                        if (/[_\s]/.test(str)) {
+                            return false; // Not in camelCase format
+                        } else {
+                            return true; // In camelCase format
+                        }
+                    } else {
+                        return false; // Not in camelCase format
+                    }
+                } else {
+                    return false; // Not in camelCase format
+                }
             },
             showSearchTable: function (sql, container, pflcol, fnOnselect, multiSelect, ppms, dta, jsCmd) {
 
@@ -1125,6 +1165,12 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                         btn.firePress();
 
                 });
+                var btn1 = new sap.m.Button({
+                    text: "Close",
+                    press: function () {
+                        dlg.close();
+                    }
+                });
                 var btn = new sap.m.Button({
                     text: "Select", press: function () {
                         var sl = qv.getControl().getSelectedIndices();
@@ -1179,6 +1225,7 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 if (fnShowSel != undefined)
                     fnShowSel(qv);
 
+                dlg.addButton(btn1);
                 dlg.addButton(btn);
                 dlg.open();
             },
@@ -1262,8 +1309,8 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                             }
                             else {
                                 nx = (cf + 1 >= flds2.length ? 0 : cf + 1);
-                                    while (!(flds2[nx] instanceof sap.m.InputBase))
-                                        nx = (nx + 1 >= flds2.length ? 0 : nx + 1);
+                                while (!(flds2[nx] instanceof sap.m.InputBase))
+                                    nx = (nx + 1 >= flds2.length ? 0 : nx + 1);
                             }
                             setTimeout(function () {
                                 flds2[nx].focus();

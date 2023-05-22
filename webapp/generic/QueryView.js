@@ -7,7 +7,8 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             this.mJsonString = "";
             this.prsnEventAfterApply = undefined;
             this.prsnEventAfterRevert = undefined;
-            this.tableId = tableId;
+            this.timeInLong = (new Date()).getTime();
+            this.tableId = tableId + this.timeInLong;
             this.mViewSettings = {};
             this.colMerged = false;
             this.onRowRender = undefined;
@@ -25,6 +26,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 showBar: Util.nvl(pShowBar, false),
                 showSearch: true,
                 showFilter: true,
+                showNewWnd: true,
                 showPersonalization: true,
                 showExpand: false,
                 showCollapse: false,
@@ -137,6 +139,73 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             q.mJsonObject = q.mLctb.getData();
             return q;
         };
+        QueryView.prototype.createNewWnd = function () {
+            var that = this;
+            var neQr = new QueryView(this.tableId + "_copy");
+            // neQr.mTable = this.mTable;
+            // neQr.mTree = this.mTree;
+            // neQr.mList = this.mList;
+            var lc = neQr.mLctb;
+            lc.cols = this.mLctb.cols.slice(0);
+            lc.rows = this.mLctb.rows.slice(0);
+            lc.masterRows = this.mLctb.rows.slice(0);
+            neQr.switchType(this.queryType);
+            neQr.mColParent = this.mColParent;
+            neQr.mColCode = this.mColCode;
+            neQr.mColLevel = this.mColLevel;
+            neQr.mColTitle = this.mColTitle;
+
+            var vb = new sap.m.Page({ showHeader: true });
+            var dlg = new sap.m.Dialog({
+                showHeader: false,
+                contentHeight: "100%",
+                contentWidth: "100%",
+                content: [vb]
+            });
+            vb.addContent(neQr.getControl());
+            // neQr.loadData();
+            neQr.getControl().addStyleClass("sapUiSizeCondensed");
+            neQr.getControl().setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
+            neQr.getControl().setSelectionMode(sap.ui.table.SelectionMode.None);
+            neQr.getControl().setFixedBottomRowCount(this.getControl().getFixedBottomRowCount());
+            neQr.getControl().setFixedColumnCount(this.getControl().getFixedColumnCount());
+            neQr.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Auto);
+
+            neQr.showToolbar.showSearch = true;
+            neQr.showToolbar.showFilter = true;
+            neQr.showToolbar.showNewWnd = false;
+            neQr.showToolbar.showPersonalization = false;
+            if (neQr.queryType == "tree") {
+                neQr.showToolbar.showExpand = true;
+                neQr.showToolbar.showCollapse = true;
+            }
+
+            neQr.showToolbar.showGroupFilter = false;
+            neQr.createToolbar("", this.showToolbar.filterCols,
+                function (prsn, qv) {
+                },
+
+                function (qv) {
+                }
+            );
+            neQr.showToolbar.toolbar.addContent(new sap.m.Button({
+                icon: "sap-icon://decline",
+                text: "Close",
+                press: function () {
+                    dlg.close();
+                }
+            }))
+            vb.insertHeaderContent(neQr.showToolbar.toolbar);
+
+            if (this.onRowRender != undefined)
+                neQr.onRowRender = this.onRowRender;
+
+            dlg.open();
+            setTimeout(function () {
+                // sap.ui.getCore().byId(that.tableId + "txtSearch").fireLiveChange();
+                neQr.loadData();
+            }, 100);
+        };
         QueryView.prototype.createToolbar = function (addClass, filterCols, prsnEventAfterApply, prsnEventAfterRevert) {
             var that = this;
             this.showToolbar.showBar = true;
@@ -165,6 +234,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             } else
                 this.showToolbar.lstFltGroup = undefined;
             if (this.showToolbar.showExpand) {
+                Util.destroyID(this.tableId + "cmdExpandAll");
                 cont.push(new sap.m.Button(this.tableId + "cmdExpandAll", {
                     icon: "sap-icon://positive", press: function () {
                         that.getControl().expandToLevel(255);
@@ -173,6 +243,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
             }
             if (this.showToolbar.showCollapse) {
+                Util.destroyID(this.tableId + "cmdCollapseALl");
                 cont.push(new sap.m.Button(this.tableId + "cmdCollapseALl", {
                     icon: "sap-icon://negative", press: function () {
                         that.getControl().collapseAll();
@@ -181,10 +252,12 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
             }
 
-            if (this.showToolbar.showSearch)
-                cont.push(new sap.m.Input({
+            if (this.showToolbar.showSearch) {
+                Util.destroyID(this.tableId + "txtSearch");
+                cont.push(new sap.m.Input(this.tableId + "txtSearch", {
                     placeholder: "search text here",
                     width: "150px",
+                    value: "",
                     liveChange: function (ev) {
                         UtilGen.doFilterLiveTable(ev, that, that.showToolbar.filterCols);
                         var val = ev.getParameter("newValue");
@@ -198,6 +271,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                             that.getControl().setFixedBottomRowCount(0);
                     }
                 }));
+            }
             if (this.showToolbar.showFilter) {
                 Util.destroyID(this.tableId + "cmdFilter");
                 cont.push(new sap.m.Button(this.tableId + "cmdFilter", {
@@ -215,6 +289,14 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 cont.push(new sap.m.Button(this.tableId + "cmdPersonalization", {
                     icon: "sap-icon://settings", press: function () {
                         that.showPersonalization(this);
+                    }
+                }));
+            }
+            if (this.showToolbar.showNewWnd) {
+                Util.destroyID(this.tableId + "cmdNewWnd");
+                cont.push(new sap.m.Button(this.tableId + "cmdNewWnd", {
+                    icon: "sap-icon://full-screen", press: function () {
+                        that.createNewWnd();
                     }
                 }));
             }
@@ -612,7 +694,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
         };
 
         QueryView.prototype.insertRow = function (idx, dontReload) {
-            if (!this.insertable)
+            if (!this.editable || !this.insertable)
                 return;
             if (this.mLctb.rows.length > 0)
                 this.updateDataToTable();
@@ -661,7 +743,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             return idx;
 
         };
-
+        
         QueryView.prototype.loadData = function (noDestroy) {
             //resetingg,
             var that = this;
@@ -695,12 +777,13 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 cc = this.mLctb.cols[i];
                 var a = cc.getMUIHelper().display_align;
                 var f = cc.getMUIHelper().display_format;
+
                 if (cc.getMUIHelper().display_format == "MONEY_FORMAT") {
                     a = "end";
                     f = sett["FORMAT_MONEY_1"];
                 }
                 if (cc.getMUIHelper().display_format == "QTY_FORMAT") {
-                    a = "center";
+                    // a = "end";
                     f = sett["FORMAT_QTY_1"];
                 }
                 if (cc.getMUIHelper().display_format == "SHORT_DATE_FORMAT") {
@@ -713,6 +796,9 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 }
                 if (cc.getMUIHelper().display_format == "NONE")
                     f = "";
+
+                if (UtilGen.DBView.sLangu == "AR" && a != "center")
+                    a = "begin";
 
                 var colClass = eval(UtilGen.nvl(cc.mColClass, "sap.ui.commons.Label"));
                 var ssql = Util.nvl(cc.mSearchSQL, "");
@@ -763,7 +849,6 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                             var totalRows = that.getControl().getModel().getData().length;
                             var firstVis = that.getControl().getFirstVisibleRow();
                             var dispRows = that.getControl().getRows().length;
-
 
                             if (that.getControl().getRows()[rowno].getCells()[colno + 1] != undefined) {
                                 colno++;
@@ -1072,20 +1157,20 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     }
                 };
                 l["multiLabels"] = [new sap.ui.commons.TextView({
-                    text: Util.getLangDescrAR(cc.mTitle, cc.mTitleAr),
+                    text: Util.getLangCaption(cc.mTitle),
                     wrapping: true
                 })];
                 // if multilabel then add objects for multiLabel
                 if (Util.nvl(cc.mTitleParent, "").length > 0) {
                     l["multiLabels"] = [
                         new sap.ui.commons.TextView({
-                            text: cc.mTitleParent,
+                            text: Util.getLangCaption(cc.mTitleParent),
                             textAlign: "Center",
                             width: "100%",
                             wrapping: true
                         }).addStyleClass("multiLabel1"),
                         new sap.ui.commons.TextView({
-                            text: Util.getLangDescrAR(cc.mTitle, cc.mTitleAr),
+                            text: Util.getLangCaption(cc.mTitle),
                             textAlign: "Center",
                             wrapping: true
                         })
@@ -1264,6 +1349,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             ) {
                 if (this.mLctb.cols[1].mGrouped) {
                     this.mLctb.setColumnMerge(0, 1, true);
+                    this.mLctb.sortCol(0, true);
                     this.colMerged = true;
                     //this._sort(0, true);
 
@@ -1314,7 +1400,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                             grp = o[i][v];
                             if (this.mLctb.getColByName(vv).getMUIHelper().display_format === "SHORT_DATE_FORMAT") {
                                 if (Util.nvl(o[i][v], "").length > 0) {
-                                    var dt = new Date(o[i][v]);
+                                    var dt = new Date(Util.nvl(o[i][v], "").replaceAll(".", ":"));//o[i][v].replaceAll(".",":") );
                                     grp = sf.format(dt);
                                 }
                             }
@@ -1406,8 +1492,8 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                     var nxt = o[i + 1][t];
                     if (t != undefined && this.mLctb.getColByName(t).getMUIHelper().display_format === "SHORT_DATE_FORMAT") {
                         if (Util.nvl(o[i][t], "").length > 0) {
-                            var dt = new Date(o[i + 1][t]);
-                            nxt = dt;//sf.format(dt);
+                            var dt = new Date(Util.nvl(o[i + 1][t], "").replaceAll(".", ":"));
+                            nxt = sf.format(dt);
                         }
                     }
                     if (t != undefined && this.mLctb.getColByName(t).getMUIHelper().display_format === "MONEY_FORMAT")
@@ -1457,6 +1543,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             if (this.mLctb.cols.length == 0)
                 return null;
 
+            this.applySettings();
             var items = this.mLctb.getData(true);
             if (items == null)
                 return;
@@ -1529,12 +1616,12 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
 
                     if (this.mLctb.cols[k].getMUIHelper().data_type == "DATE" &&
                         this.mLctb.cols[k].getMUIHelper().display_format == "SHORT_DATE_FORMAT") {
-                        var dt = new Date(vl);
+                        var dt = new Date(Util.nvl(vl, "").replaceAll(".", ":"));
                         vl = dt;// sf.format(dt);
                     }
                     if (this.mLctb.cols[k].getMUIHelper().data_type != "DATE" &&
                         this.mLctb.cols[k].getMUIHelper().display_format == "SHORT_DATE_FORMAT") {
-                        var dt = new Date(vl);
+                        var dt = new Date(Util.nvl(vl, "").replaceAll(".", ":"));
                         vl = sf.format(dt);
                     }
 
@@ -2446,7 +2533,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                 (view.byId("txtflt" + i) != undefined ? view.byId("txtflt" + i).destroy() : null);
                 var t = new sap.m.Input(view.createId("txtflt" + i), {
                     width: "100%",
-                    placeholder: "Filter for field # " + Util.getLangDescrAR(qv.mLctb.cols[i].mTitle, qv.mLctb.cols[i].mTitleAr),
+                    placeholder: "Filter for field # " + Util.getLangCaption(qv.mLctb.cols[i].mTitle),
                     value: Util.nvl(view.filterData[qv.mLctb.cols[i].mColName], "")
                 });
                 txts.push(t);

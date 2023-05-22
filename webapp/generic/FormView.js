@@ -26,7 +26,6 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                 "cmdEdit": undefined,
                 "cmdNew": undefined,
                 "cmdPrint": undefined,
-
             };
         };
         FormView.err = function (msg) {
@@ -43,11 +42,13 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
             FORM: "form",
             QUERYVIEW: "QueryView"
         };
+
         FormView.aligns = {
             "ALIGN_LEFT": "left",
             "ALIGN_RIGHT": "right",
             "ALIGN_CENTER": "center"
         };
+
         FormView.DataType = {
             "Number": "number",
             "String": "string",
@@ -185,6 +186,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                 qr.delete_before_update = Util.nvl(qrys[i].delete_before_update, {});
                 qr.update_default_values = Util.nvl(qrys[i].update_default_values, {});
                 qr.when_validate_field = Util.nvl(qrys[i].when_validate_field, undefined);
+                qr.before_add_table = Util.nvl(qrys[i].before_add_table, undefined);
                 qr.eventCalc = Util.nvl(qrys[i].eventCalc, undefined);
                 qr.edit_allowed = Util.nvl(qrys[i].edit_allowed, true);
                 qr.insert_allowed = Util.nvl(qrys[i].insert_allowed, true);
@@ -443,6 +445,11 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                     qr.obj.insertable = qr.insert_allowed;
                     qr.obj.deletable = qr.delete_allowed;
                     thatForm.loadQueryView(qr, true);
+
+                    if (qr.hasOwnProperty("before_add_table") && qr.before_add_table != undefined) {
+                        qr.before_add_table(scrollObjs, qr.obj);
+                    }
+
                     scrollObjs.push(qr.obj.getControl());
 
                     if (this.firstObj == undefined)
@@ -639,7 +646,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
             Util.destroyID("cmdSave" + this.timeInLong, this.view);
             this.cmdButtons.cmdSave = new sap.m.Button(this.view.createId("cmdSave" + this.timeInLong), {
                 icon: "sap-icon://save",
-                text: "Save",
+                text: Util.getLangText("saveRec"),
                 press: function (e) {
                     that.save_data();
                     // that.cmdButtons.cmdNew.firePress();
@@ -649,7 +656,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
             Util.destroyID("cmdDel" + this.timeInLong, this.view);
             this.cmdButtons.cmdDel = new sap.m.Button(this.view.createId("cmdDel" + this.timeInLong), {
                 icon: "sap-icon://delete",
-                text: "Del",
+                text: Util.getLangText("delRec"),
                 press: function () {
                     that.delete_data();
                 }
@@ -658,7 +665,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
             Util.destroyID("cmdList" + this.timeInLong, this.view);
             this.cmdButtons.cmdList = new sap.m.Button(this.view.createId("cmdList" + this.timeInLong), {
                 icon: "sap-icon://list",
-                text: "List",
+                text: Util.getLangText("listRec"),
                 press: function () {
                     var ob = that.getObjectByObj(this);
                     if (ob.list_name == undefined)
@@ -669,7 +676,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
             Util.destroyID("cmdEdit" + this.timeInLong, this.view);
             this.cmdButtons.cmdEdit = new sap.m.ToggleButton(this.view.createId("cmdEdit" + this.timeInLong), {
                 icon: "sap-icon://edit",
-                text: "Edit",
+                text: Util.getLangText("editRec"),
                 pressed: false,
                 press: function () {
                     var ob = that.getObjectByObj(this);
@@ -690,7 +697,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
             Util.destroyID("cmdNew" + this.timeInLong, this.view);
             this.cmdButtons.cmdNew = new sap.m.Button(this.view.createId("cmdNew" + this.timeInLong), {
                 icon: "sap-icon://add-document",
-                text: "New",
+                text: Util.getLangText("newRec"),
                 press: function (e) {
                     that.form.readonly = false;
                     var ob = that.getObjectByObj(this);
@@ -698,7 +705,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                         ob.onPress(e);
 
                     that.setQueryStatus(undefined, FormView.RecordStatus.NEW);
-                    if (that.cmdButtons.cmdEdit != undefined) {
+                    if (that.cmdButttons.cmdEdit != undefined) {
                         that.cmdButtons.cmdEdit.setEnabled(false);
                         that.cmdButtons.cmdEdit.setPressed(false);
                     }
@@ -708,7 +715,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
             Util.destroyID("cmdPrint" + this.timeInLong, this.view);
             this.cmdButtons.cmdPrint = new sap.m.Button(this.view.createId("cmdPrint" + this.timeInLong), {
                 icon: "sap-icon://print",
-                text: "Templates",
+                text: Util.getLangText("printRec"),
                 visible: true,
                 press: function (e) {
 
@@ -819,13 +826,18 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                 if (this.objs[i].obj == obj) return this.objs[i];
             }
         };
+
         FormView.prototype.parseString = function (str) {
             var lst = str.match(/:[a-zA-Z0-9_.]*/gi);
             var sst = str;
             for (var i = 0; i < Util.nvl(lst, []).length; i++) {
                 var vl = this.getFieldValue(lst[i].replaceAll(':', ''));
-                if (vl instanceof Date)
-                    vl = Util.toOraDateTimeString(vl);
+                if (vl instanceof Date) {
+                    if (vl.getTime() === vl.setHours(0, 0, 0, 0))
+                        vl = Util.toOraDateString(vl);
+                    else
+                        vl = Util.toOraDateTimeString(vl);
+                }
                 sst = sst.replaceAll(lst[i], vl);
             }
             return sst;
@@ -1022,10 +1034,11 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                 if (qryObj.status == FormView.RecordStatus.VIEW ||
                     qryObj.status == FormView.RecordStatus.EDIT) {
                     var sq = "delete from " + qryObj.table_name +
-                         ((Util.nvl(qryObj.where_clause, "") != "") ? " where " + qryObj.where_clause + ";" : "");
+                        ((Util.nvl(qryObj.where_clause, "") != "") ? " where " + qryObj.where_clause + ";" : "");
                     sql += this.parseString(sq);
                     if (thatForm.form.events.hasOwnProperty("afterDelRow")) {
                         var sqAdd = Util.nvl(thatForm.form.events.afterDelRow(qryObj), "");
+                        sqAdd = this.parseString(sqAdd);
                         sql += sqAdd
                     }
                     sv++;
@@ -1338,13 +1351,17 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                             if (er != "")
                                 this.err();
                         }
-                        sq2 = this.getSQLUpdateString(qryObj,
+                        if (this.form.events.hasOwnProperty("addSqlBeforeUpdate")) {
+                            var adSq = this.form.events.addSqlBeforeUpdate(qryObj, undefined)
+                            sq2 = sq2 + adSq;
+                        }
+                        sq2 += this.getSQLUpdateString(qryObj,
                             qryObj.update_default_values,
                             qryObj.update_exclude_fields,
                             qryObj.where_clause);
                         sq2 = this.parseString(sq2) + ";";
-                        if (this.form.events.hasOwnProperty("addSqlAfterInsert")) {
-                            var adSq = this.form.events.addSqlAfterInsert(qryObj, undefined)
+                        if (this.form.events.hasOwnProperty("addSqlAfterUpdate")) {
+                            var adSq = this.form.events.addSqlAfterUpdate(qryObj, undefined)
                             // if (er != "")
                             sq2 = sq2 + adSq;
                         }
@@ -1365,7 +1382,6 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                             sq2 += sqlRow;
                             if (this.form.events.hasOwnProperty("addSqlAfterInsert")) {
                                 var adSq = this.form.events.addSqlAfterInsert(qryObj, undefined)
-                                // if (er != "")
                                 sq2 = sq2 + adSq;
                             }
                         }
@@ -1380,12 +1396,11 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                             if (er != "")
                                 this.err();
                         }
-                        // if (this.form.events.hasOwnProperty("addSqlAfterInsert")) {
-                        //     var adSq = this.form.events.addSqlAfterInsert(qryObj, undefined)
-                        //     if (er != "")
-                        //         sq2 = sq2 + adSq;
-                        // }
-                        sq2 = this.getSQLInsertString(qryObj,
+                        if (this.form.events.hasOwnProperty("addSqlBeforeInsert")) {
+                            var adSq = this.form.events.addSqlBeforeInsert(qryObj, undefined)
+                            sq2 = sq2 + adSq;
+                        }
+                        sq2 += this.getSQLInsertString(qryObj,
                             qryObj.insert_default_values,
                             qryObj.insert_exclude_fields
                         ) + ";";

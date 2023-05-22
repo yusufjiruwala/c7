@@ -1,0 +1,20 @@
+invoice_date: {
+    colname: "invoice_date",
+    data_type: FormView.DataType.Date,
+    class_name: FormView.ClassTypes.LABEL,
+    title: "invoiceDate",
+    title2: "",
+    parentTitle: "",
+    parentSpan: 1,
+    display_width: "150",
+    display_align: "ALIGN_CENTER",
+    grouped: false,
+    display_style: "",
+    display_format: "SHORT_DATE_FORMAT",
+    default_value: "",
+    other_settings: {},
+    commandLinkClick: cmdLink
+}
+
+
+

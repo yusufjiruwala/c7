@@ -1,6 +1,7 @@
 {
 	"sap.app": {
 		"id": "sap.f.sample.ShellBar",
+		"i18n": "i18n/i18n.properties",
 		"applicationVersion": {
 			"version": "1.0.0"
 		}
@@ -11,10 +12,20 @@
 			"type": "XML",
 			"async": true
 		},
+		"models": {
+			"i18n": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"settings": {
+					"bundleName": "sap.f.sample.ShellBar.i18n.i18n"
+				}
+			}
+		},
 		"dependencies": {
 			"libs": {
 				"sap.f": {},
-				"sap.m": {"lazy":true},
+				"sap.m": {
+					"lazy": true
+				},
 				"sap.ui.layout": {}
 			}
 		},

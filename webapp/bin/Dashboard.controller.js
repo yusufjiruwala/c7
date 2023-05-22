@@ -9,7 +9,7 @@ sap.ui.controller('bin.Dashboard', {
         this.getView().addStyleClass(sap.ui.Device.support.touch ? "sapUiSizeCozy" : "sapUiSizeCompact");
         // sap.m.TreeItemBase.prototype.ExpandedIconURI = sap.ui.core.IconPool.getIconURI("less");
         // sap.m.TreeItemBase.prototype.CollapsedIconURI = sap.ui.core.IconPool.getIconURI("add");
-
+        Util.setLanguageModel(this.getView());
     },
 
     /**

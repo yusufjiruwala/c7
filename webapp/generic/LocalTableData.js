@@ -33,7 +33,29 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             DELETED: "DELETED",
             QUERY: "QUERY",
         };
+        LocalTableData.prototype.addColumn = function (cnm, prop, mUIHelper) {
+            if (Util.nvl(cnm, "") == "") return;
+            var c = new Column();
+            c.mColName = cnm;
+            c.mColpos = this.cols.length;
+            c.parentmLcTb = this;
+            if (mUIHelper != undefined)
+                Object.keys(mUIHelper).forEach(ky => {
+                    c.mUIHelper[key] = mUIHelper[key];
+                });
+            if (prop != undefined)
+                Object.keys(prop).forEach(ky => {
+                    c[key] = prop[key];
+                });
+            this.cols.push(c);
+            for (var i = 0; i < this.rows.length; i++)
+                this.rows[i].cells.push(new DataCell());
 
+            this.masterRows = [];
+            this.masterRows = this.rows.slice(0);
+            return c;
+
+        };
         LocalTableData.prototype.showDataByCondition = function (pCnd, setCndFilter) {
             var cnd = Util.nvl(pCnd, "");
 
@@ -216,6 +238,16 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             this.parsedLstCols.valHeadObj = {};
             this.parsedLstCols.valHeadCols = []; // must be same column index of valCols
 
+            /// move group column to be first
+            var els = [];
+            for (var ci = 0; ci < this.cols.length; ci++) {
+                if (this.cols[ci].mGrouped && !this.cols[0].mGrouped && ci > 0)
+                    els.push(this.cols.splice(this.cols.indexOf(this.cols[ci--]), 1)[0]);
+
+            }
+            for (var ci = els.length-1; ci >-1; ci--)
+                this.cols.splice(0, 0, els[ci]);
+
             for (var rn in this.dataJson.data) {
                 var r = new Row(this.cols.length);
                 for (var key in this.dataJson.data[rn]) {
@@ -293,7 +325,7 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
                 var col = this.cols[this.getColPos(tmcl[ci].replaceAll("tot__", ""))].getClone();
                 col.mColName = tmcl[ci];
                 if (col.mColName.includes("__")) {
-                    col.mTitleParent = "Total";
+                    col.mTitleParent = "summaryBalTxt";
                     col.mTitle = this.parsedLstCols.valCols[ci].split("__")[1];
                     col.mTitleParentSpan = this.parsedLstCols.valCols.length;
                 }
@@ -363,8 +395,8 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             this.rows.push(r);
             var rn = this.rows.length - 1;
             for (var k in this.cols) {
-                if (this.cols[k].mDefaultValue != undefined)
-                    this.setFieldValue(rn, this.cols[k].mColName, this.cols[k].mDefaultValue);
+                if (this.cols[k].mDefaultValue != undefined) 
+                this.setFieldValue(rn, this.cols[k].mColName, this.cols[k].mDefaultValue);
                 if (this.cols[k].mDefaultValue == "#AUTONUMBER_")
                     this.setFieldValue(rn, this.cols[k].mColName, rn + 1);
             }
@@ -446,7 +478,20 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             for (var i = 0; i < this.rows.length; i++)
                 if (this.getFieldValue(i, fld) == val)
                     return i;
+            return -1;
+        };
 
+        LocalTableData.prototype.findAny = function (fld, val, beginIndex) {
+            //var cp = this.getColPos(fld);
+            var flds = (typeof fld == "string" ? [fld] : fld);
+            var st = Util.nvl(beginIndex, 0);
+            for (var i = st; i < this.rows.length; i++) {
+                var vl = "";
+                for (var j = 0; j < flds.length; j++)
+                    vl += this.getFieldValue(i, flds[j]);
+                if (vl.toUpperCase().indexOf((val + "").toUpperCase()) >= 0)
+                    return i;
+            }
             return -1;
         };
 
