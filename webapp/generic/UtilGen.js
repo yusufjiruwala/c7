@@ -2173,6 +2173,13 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         qv.getControl().getRows()[dispRow].getCells()[i - startCell].$().parent().parent().css("cssText", css);
                     }
 
+            },
+            getTableColNo: function (tbl, colName) {
+                var endCell = tbl.getColumns().length;
+                for (var i = 0; i < endCell; i++)
+                    if (tbl._getVisibleColumns()[i].tableCol.mColName == colName)
+                        return i;
+                return -1;
             }
 
         };

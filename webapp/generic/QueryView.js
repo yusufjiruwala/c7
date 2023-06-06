@@ -743,7 +743,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
             return idx;
 
         };
-        
+
         QueryView.prototype.loadData = function (noDestroy) {
             //resetingg,
             var that = this;
@@ -1721,7 +1721,7 @@ sap.ui.define("sap/ui/ce/generic/QueryView", ["./LocalTableData", "./DataFilter"
                         if (oModel.getData()[rowStart + i] != undefined) {
                             // var rd = oModel.getData()[rowStart + i]._rowid;
                             this.b4_cf_val1[j - cellAdd] = this.getControl().getRows()[i].getCells()[j - cellAdd].$().parent().parent().attr("style");
-                            this.b4_cf_val[j - cellAdd] = this.getControl().getRows()[i].getCells()[j - cellAdd].$().attr("style");
+                            this.b4_cf_val[j - cellAdd] = this.getControl().getRows()[i].getCells()[j - cellAdd].$().attr("style");                           
                         }
                     }
 

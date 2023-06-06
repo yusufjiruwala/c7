@@ -154,7 +154,7 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
                 if (Util.nvl(this.cndFilter, "") != "")
                     this.showDataByCondition(this.cndFilter);
 
-                frmt = this.format();
+                frmt = this.format().replaceAll("\n", "\\n");
                 dt = JSON.parse(frmt).data;
             } else {
                 dt = this.dataJson.data;
@@ -245,7 +245,7 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
                     els.push(this.cols.splice(this.cols.indexOf(this.cols[ci--]), 1)[0]);
 
             }
-            for (var ci = els.length-1; ci >-1; ci--)
+            for (var ci = els.length - 1; ci > -1; ci--)
                 this.cols.splice(0, 0, els[ci]);
 
             for (var rn in this.dataJson.data) {
@@ -395,8 +395,8 @@ sap.ui.define("sap/ui/ce/generic/LocalTableData", ["./DataCell", "./Column", "./
             this.rows.push(r);
             var rn = this.rows.length - 1;
             for (var k in this.cols) {
-                if (this.cols[k].mDefaultValue != undefined) 
-                this.setFieldValue(rn, this.cols[k].mColName, this.cols[k].mDefaultValue);
+                if (this.cols[k].mDefaultValue != undefined)
+                    this.setFieldValue(rn, this.cols[k].mColName, this.cols[k].mDefaultValue);
                 if (this.cols[k].mDefaultValue == "#AUTONUMBER_")
                     this.setFieldValue(rn, this.cols[k].mColName, rn + 1);
             }

@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+
+<head>
+
+  <!--data-sap-ui-libs="sap.m,sap.viz,sap.ui.layout,sap.ui.table,sap.ui.commons"-->
+
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="stylesheet" href="css/prettify.css">
+  <!--<link rel="stylesheet" href="generic/lib/handsontable.full.min.css">-->
+
+  <!-- <script id="sap-ui-bootstrap" src="https://openui5.hana.ondemand.com/resources/sap-ui-core.js" -->
+  <title>CHAINEL</title>
+
+  <script id="sap-ui-bootstrap" src="resources/sap-ui-core.js" data-sap-ui-theme="sap_fiori_3" data-sap-ui-libs=""
+    data-sap-ui-xx-bindingSyntax="complex" data-sap-ui-preload="asynch" data-sap-ui-language="en"
+    data-sap-ui-compatVersion="edge" data-sap-ui-resourceroots='{
+				"sap.ui.ce": "./",
+				"bin":"./bin",
+			    "lg":"./bin/forms/lg"
+			}'>
+      </script>
+</head>
+
+<script src="generic/DecimalFormat.js"></script>
+<script src="generic/SimpleDateFormat.js"></script>
+<script src="generic/UtilGen.js"></script>
+<script src="generic/Util.js"></script>
+<script src="generic/ReportUtils.js"></script>
+<script src="generic/LocalTableData.js"></script>
+<script src="generic/Column.js"></script>
+<script src="generic/Gauge.js"></script>
+<script src="generic/DecimalFormat.js"></script>
+<script src="generic/SimpleDateFormat.js"></script>
+<script src="generic/QueryView.js"></script>
+<script src="generic/FormView.js"></script>
+<script src="generic/ReportView.js"></script>
+<!--<script src="generic/lib/handsontable.full.js"></script>-->
+<script src="generic/GridView.js"></script>
+<script src="generic/SearchText.js"></script>
+<script src="generic/SelectTextRenderer.js"></script>
+<script src="generic/SelectText.js"></script>
+
+<link rel="stylesheet" type="text/css" href="css/style.css">
+
+<body class="sapUiBody">
+  <div id='content'></div>
+  <script id="jsbin-javascript">
+
+    sap.ui.localResources("bin");
+    sap.ui.localResources("i18n");
+
+    var UtilGen;
+    var Util;
+    var LocalTableData;
+    var Column;
+    var Gauge;
+    var QueryView;
+    var GridView;
+    var SearchText;
+    var SelectText;
+    var ReportUtils;
+
+    jQuery.sap.require("sap.ui.layout.library");
+    jQuery.sap.require("sap.m.library");
+
+    Util = sap.ui.require("sap/ui/ce/generic/Util");
+    UtilGen = sap.ui.require("sap/ui/ce/generic/UtilGen");
+    ReportUtils = sap.ui.require("sap/ui/ce/generic/ReportUtils");
+    SearchText = sap.ui.require("sap/ui/ce/generic/SearchText");
+    SelectText = sap.ui.require("sap/ui/ce/generic/SelectText");
+
+    LocalTableData = sap.ui.require("sap/ui/ce/generic/LocalTableData");
+    Column = sap.ui.require("sap/ui/ce/generic/Column");
+    Gauge = sap.ui.require("sap/ui/ce/generic/Gauge");
+    QueryView = sap.ui.require("sap/ui/ce/generic/QueryView");
+    FormView = sap.ui.require("sap/ui/ce/generic/FormView");
+    ReportView = sap.ui.require("sap/ui/ce/generic/ReportView");
+
+    var app = new sap.m.App({ initialPage: "idApp1" });
+    var view = sap.ui.view({ id: "idApp1", type: sap.ui.core.mvc.ViewType.JS, viewName: "bin.forms.rm.mo" });
+    app.addPage(view);
+    app.placeAt("content");
+  </script>
+</body>
+
+</html>
