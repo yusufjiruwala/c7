@@ -131,7 +131,7 @@ sap.ui.jsfragment("bin.forms.gl.pvc", {
                                 }
 
                             }
-
+                            UtilGen.Vouchers.attachLoadQry(that2, qry);
 
                         }
 
@@ -158,18 +158,18 @@ sap.ui.jsfragment("bin.forms.gl.pvc", {
                         frm.setQueryStatus(undefined, FormView.RecordStatus.NEW);
                     },
                     beforeSaveQry: function (qry, sqlRow, rowno) {
+                        UtilGen.Vouchers.getNewKF(qry, sqlRow, rowno);
+                        UtilGen.Vouchers.validateDetails(qry, sqlRow, rowno);
 
                         if (qry.name == "qry1") {
 
                             UtilGen.Vouchers.validateTotDrTotCr(qry, sqlRow, rowno);
                             UtilGen.Vouchers.validatePostedVocher(qry, sqlRow, rowno);
-
                             UtilGen.Vouchers.validateFieldsBeforeSave(qry, sqlRow, rowno);
+                            UtilGen.Vouchers.attachSaveQry(that2);
 
                         }
 
-                        UtilGen.Vouchers.getNewKF(qry, sqlRow, rowno);
-                        UtilGen.Vouchers.validateDetails(qry, sqlRow, rowno);
 
                         return "";
                     },
@@ -216,9 +216,13 @@ sap.ui.jsfragment("bin.forms.gl.pvc", {
 
                     },
                     afterDelRow: function (qry, ld, data) {
+                        var delAdd = "";
+                        if (qry.name == "qry1")
+                            delAdd += "delete from c7_attach where keyfld=:qry1.keyfld ;";
+
                         if (qry.name == "qry2" && qry.insert_allowed && ld != undefined && ld.rows.length == 0)
                             qry.obj.addRow();
-
+                        return delAdd;
                     },
                     onCellRender(qry, rowno, colno, currentRowContext) {
                         if (qry.status == "edit" && qry.name == "qry2" && colno == 3) {
@@ -281,8 +285,8 @@ sap.ui.jsfragment("bin.forms.gl.pvc", {
                         name: "qry1",
                         dml: "select *from acvoucher1 where keyfld=:pac",
                         where_clause: " keyfld=':keyfld' ",
-                        update_exclude_fields: ['keyfld', "codename", "costcentname", "slsmnname"],
-                        insert_exclude_fields: ["codename", "costcentname", "slsmnname"],
+                        update_exclude_fields: ['keyfld', "codename", "costcentname", "slsmnname","attachment"],
+                        insert_exclude_fields: ["codename", "costcentname", "slsmnname","attachment"],
                         insert_default_values: {
                             "PERIODCODE": Util.quoted(sett["CURRENT_PERIOD"]),
                             "VOU_CODE": this.vars.vou_code,
@@ -326,6 +330,33 @@ sap.ui.jsfragment("bin.forms.gl.pvc", {
                                 edit_allowed: false,
                                 insert_allowed: false,
                                 require: true
+                            },
+                            attachment: {
+                                colname: "attachment",
+                                data_type: FormView.DataType.String,
+                                class_name: FormView.ClassTypes.TEXTFIELD,
+                                title: '@{\"text\":\"Attachment\",\"width\":\"35%\","textAlign":"End","styleClass":""}',
+                                title2: "",
+                                canvas: "default_canvas",
+                                display_width: codSpan,
+                                display_align: "ALIGN_BEGIN",
+                                display_style: "",
+                                display_format: "",
+                                other_settings: {
+                                    showValueHelp: true,
+                                    editable: false,
+                                    width: "20%",
+                                    valueHelpRequest: function (e) {
+                                        if (that2.frm.objs["qry1"].status != FormView.RecordStatus.EDIT &&
+                                            that2.frm.objs["qry1"].status != FormView.RecordStatus.NEW)
+                                            return;
+                                        UtilGen.Vouchers.attachShowUpload(that2);
+                                    }
+                                },
+
+                                edit_allowed: true,
+                                insert_allowed: true,
+                                require: false
                             },
                             no: {
                                 colname: "no",
@@ -575,7 +606,7 @@ sap.ui.jsfragment("bin.forms.gl.pvc", {
                         },
                         table_name: "ACVOUCHER2",
                         before_add_table: function (scrollObjs, qrj) {
-                            UtilGen.Vouchers.before_add_table(scrollObjs, qrj);
+                            UtilGen.Vouchers.before_add_table(scrollObjs, qrj, that2.vars);
                         },
                         when_validate_field: function (table, currentRowoIndexContext, cx, rowno, colno) {
                             var sett = sap.ui.getCore().getModel("settings").getData();
@@ -714,6 +745,18 @@ sap.ui.jsfragment("bin.forms.gl.pvc", {
                         name: "cmdPrint",
                         canvas: "default_canvas",
                         title: "Print",
+                    },
+                    {
+                        name: "cmdAttach",
+                        canvas: "default_canvas",
+                        title: "Attachment",
+
+                        obj: new sap.m.Button({
+                            icon: "sap-icon://pdf-attachment",
+                            press: function () {
+                                UtilGen.Vouchers.attachShowUpload(that2, false);
+                            }
+                        })
                     },
                     {
 

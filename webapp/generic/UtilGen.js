@@ -2014,7 +2014,42 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         frag.frm.loadData(undefined, frag.oController.status);
 
                 },
-                before_add_table: function (scrollObjs, qrj) {
+                copyDataFromVou: function (data, qrj, vars) {
+                    if (data == null || data == undefined || data.length <= 0)
+                        return false;
+                    if (qrj.getControl().view.objs["qry1"].status != FormView.RecordStatus.NEW && qrj.getControl().view.objs["qry1"].status != FormView.RecordStatus.EDIT) {
+                        sap.m.MessageToast.show("Not in new / edit mode !");
+                        return;
+                    }
+                    for (var d in data) {
+                        var dat = Util.execSQL("select V.ACCNO,V.FCDEBIT,V.FCCREDIT,V.DEBIT,V.CREDIT,A.NAME ACNAME,DESCR from ACVOUCHER2 V,ACACCOUNT A where A.ACCNO=V.ACCNO AND  V.keyfld=" + data[d].KEYFLD + " order by pos");
+                        if (dat.ret == "SUCCESS" && dat.data.length > 0) {
+                            var dtx = JSON.parse("{" + dat.data + "}").data;
+                            for (var i in dtx) {
+                                if (vars.vou_code == 2 && dtx[i].DEBIT > 0)
+                                    continue;
+                                if (vars.vou_code == 3 && dtx[i].CREDIT > 0)
+                                    continue;
+                                var r = qrj.mLctb.rows.length - 1;
+                                if (Util.nvl(qrj.mLctb.getFieldValue(qrj.mLctb.rows.length - 1, "ACCNO"), "") != "")
+                                    r = qrj.mLctb.addRow();
+                                qrj.mLctb.setFieldValue(r, "POS", r + 1);
+                                qrj.mLctb.setFieldValue(r, "ACCNO", dtx[i].ACCNO);
+                                qrj.mLctb.setFieldValue(r, "FCDEBIT", dtx[i].FCDEBIT);
+                                qrj.mLctb.setFieldValue(r, "FCCREDIT", dtx[i].FCCREDIT);
+                                qrj.mLctb.setFieldValue(r, "DEBIT", dtx[i].DEBIT);
+                                qrj.mLctb.setFieldValue(r, "CREDIT", dtx[i].CREDIT);
+                                qrj.mLctb.setFieldValue(r, "DESCR2", dtx[i].ACNAME);
+                                qrj.mLctb.setFieldValue(r, "ACNAME", dtx[i].ACNAME);
+                                qrj.mLctb.setFieldValue(r, "DESCR", qrj.getControl().view.objs["qry1.descr"].obj.getValue());
+
+                            }
+                        }
+                    }
+                    qrj.updateDataToControl();
+                    qrj.eventCalc(qrj, undefined, -1, false);
+                },
+                before_add_table: function (scrollObjs, qrj, vars) {
                     var that = this;
                     var sett = sap.ui.getCore().getModel("settings").getData();
                     var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
@@ -2098,7 +2133,7 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     });
                     var btSOA = new sap.m.Button({
                         icon: "sap-icon://document-text",
-                        tooltip: "Re-positioning",
+                        tooltip: "SOA",
                     });
                     btSOA.attachBrowserEvent("mousedown", function () {
                         var rowno = -1;
@@ -2136,6 +2171,35 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                         qrj.getControl().setSelectedIndex(-1);
 
                     });
+                    var btCpyFromVou = new sap.m.Button({
+                        icon: "sap-icon://copy",
+                        tooltip: "Copy line items from another voucher..",
+                    });
+                    btCpyFromVou.attachBrowserEvent("mousedown", function () {
+                        var sq = "SELECT V.VOU_CODE,V.TYPE,nvl(AG.NAMEa,ag.name) name,COUNT(*) VOUCHERS_CNT FROM ACVOUCHER1 V,ACGRPJVS AG " +
+                            " WHERE V.VOU_CODE=AG.VOU_CODE AND V.TYPE=AG.VOU_TYPE " +
+                            " GROUP BY V.VOU_CODE,V.TYPE,nvl(AG.NAMEa,ag.name) " +
+                            " ORDER BY V.VOU_CODE,V.TYPE";
+                        Util.show_list(sq, ["NAME", "VOUCHERS_CNT"], "", function (data) {
+                            if (data == null || data == undefined || data.length <= 0)
+                                return false;
+                            var vc = data.VOU_CODE;
+                            var vt = data.TYPE;
+                            setTimeout(() => {
+                                var sq2 = "select no,TO_CHAR(vou_date,'DD/MM/RRRR') VOU_DATE ,descr,keyfld ,DEBAMT DEBAMT" +
+                                    " from acvoucher1 where vou_code=" + vc +
+                                    " and type=" + vt + " order by acvoucher1.vou_date desc,no desc";
+                                Util.show_list(sq2, ["NO", "VOU_DATE", "DESCR", "DEBAMT"], "", function (data) {
+                                    that.copyDataFromVou(data, qrj, vars);
+                                    return true;
+                                }, "100%", "100%", undefined, true);
+
+
+                            }, 100);
+                            return true;
+                        }, "100%", "50%", undefined, false);
+
+                    });
                     qrj.showToolbar.toolbar.removeAllContent();
                     qrj.showToolbar.toolbar.addStyleClass("toolBarBackgroundColor1");
 
@@ -2144,11 +2208,325 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     qrj.showToolbar.toolbar.addContent(btNewAc);
                     qrj.showToolbar.toolbar.addContent(btPos);
                     qrj.showToolbar.toolbar.addContent(btSOA);
+                    qrj.showToolbar.toolbar.addContent(btCpyFromVou);
                     qrj.showToolbar.toolbar.addContent(new sap.m.ToolbarSpacer());
                     qrj.showToolbar.toolbar.addContent(txt);
                     qrj.showToolbar.toolbar.addContent(btf);
                     scrollObjs.push(qrj.showToolbar.toolbar);
-                }
+                },
+                attachLoadQry: function (frm, qry) {
+                    frm.fileUpload = undefined;
+                    var kf = qry.formview.getFieldValue("keyfld");
+                    var desc = Util.getSQLValue("select descr from c7_attach where keyfld=" + kf)
+                    qry.formview.setFieldValue("attachment", desc);
+                    Util.doXhr("getAttachVou?keyfld=" + kf, true, function (e) {
+                        if (this.status == 200 && this.response.byteLength > 0)
+                            frm.fileUpload = new Blob([this.response], { type: "application/pdf" });
+                    });
+
+                },
+                attachSaveQry: function (that2) {
+                    // if (that2.fileUpload != undefined) {
+                    var kf = that2.frm.getFieldValue("keyfld");
+                    var tx = that2.frm.getFieldValue("attachment");
+                    Util.doXhrUpdateVouAttach("uploadAttachPdfVou", true, that2.fileUpload, kf, tx);
+                    // }
+
+                },
+                attachShowUpload: function (that2, pChange) {
+                    var change = Util.nvl(pChange, true);
+                    var vb = new sap.m.VBox();
+                    // var tx = new sap.m.Input({ placeholder: "Descr" });
+                    var pv = new sap.m.PDFViewer({
+                        displayType: sap.m.PDFViewerDisplayType.Embedded,
+                        showDownloadButton: false,
+                        height: "500px",
+                        width: "100%",
+                    });
+                    var onLoad = function (e) {
+                        var pdfData = new Uint8Array(e.target.result);
+                        var blob = new Blob([pdfData], { type: "application/pdf" });
+                        var link = document.createElement('a');
+                        link.href = window.URL.createObjectURL(blob);
+                        link.target = "_blank";
+                        link.style.display = "none";
+                        document.body.appendChild(link);
+                        link.download = "rpt" + new Date() + ".pdf";
+                        // Util.printPdf(link.href);
+                        jQuery.sap.addUrlWhitelist("blob");
+                        pv.setSource(link.href);
+
+                    };
+
+                    if (that2.fileUpload != undefined) {
+                        var file = that2.fileUpload;
+                        var reader = new FileReader();
+                        reader.onload = onLoad;
+                        reader.readAsArrayBuffer(file);
+                        that2.fileUpload = file;
+                    }
+
+                    var fu = new sap.ui.unified.FileUploader({
+                        fileType: ["pdf"],
+                        onFileUpload: function (event) {
+                            var file = event.getParameter("files")[0];
+                            that2.fileUpload = file;
+                        },
+                        change: function (e) {
+                            var files = e.getParameters("files").files;
+                            if (files.length < 1) {
+                                alert('select a file...');
+                                return;
+                            }
+                            var file = files[0];
+                            var reader = new FileReader();
+                            reader.onload = onLoad;
+                            reader.readAsArrayBuffer(file);
+                            that2.fileUpload = file;
+                        },
+                    });
+                    if (change)
+                        vb.addItem(fu);
+                    // vb.addItem(tx);
+                    // vb.addItem(bt);
+                    vb.addItem(pv);
+
+                    var dlg = new sap.m.Dialog({
+                        content: vb,
+                        title: "Select PDF file to attach voucher",
+                        contentWidth: "100%",
+                        buttons: [
+                            new sap.m.Button({
+                                text: "Delete",
+                                press: function () {
+                                    if (!change) { sap.m.MessageToast.show("Cant delete !"); return; }
+                                    pv.setSource(undefined);
+                                    that2.fileUpload = undefined;
+                                }
+                            }),
+                            new sap.m.Button({
+                                text: "Close",
+                                press: function () {
+                                    dlg.close();
+                                }
+                            }),
+                        ]
+                    });
+                    dlg.open();
+                    setTimeout(function () {
+                        sap.m.MessageToast.show("Open again in case you dont see attachment !!!");
+                    });
+                },
+                showRVByInvs: function (that2) {
+                    // var that2 = this;
+                    var sc = new sap.m.ScrollContainer().addStyleClass("sapUiMediumMargin");
+                    sc.addContent(new sap.m.Text({ text: "Enter customer code:" }));
+                    var txtPaidAmt = new sap.m.Input({
+                        editable: false
+                    });
+                    var fetchData = function (pIsLifo) {
+                        var isLifo = Util.nvl(pIsLifo, false);
+                        var pdamt = parseFloat(txtAmount.getValue());
+                        if (pdamt <= 0) FormView.err("Cant be 0 amount !");
+                        var custCode = txtCustCode.getValue();
+                        if (Util.nvl(custCode, "") == "")
+                            FormView.err("Customer is not selected !")
+                        var dt = Util.execSQL("SELECT INVOICE_NO,CUSNO,NAME,invoice_date,(NET_AMT-(PAID_AMT+RETURN_AMT)) NETPAY,PAID_AMT+RETURN_AMT PD ,INVUNPAID.KEYFLD,NET_AMT ,0 PAID_AMT" +
+                            " FROM INVUNPAID,C_YCUST WHERE " +
+                            " CUSNO IN (SELECT CODE FROM C_YCUST WHERE PATH LIKE (select path from c_ycust where code='" + txtCustCode.getValue() + "')||'%') " +
+                            " AND CUSNO=CODE " +
+                            " AND (NET_AMT-(PAID_AMT+RETURN_AMT))>0 AND INVOICE_CODE=21 " +
+                            (isLifo ? " ORDER BY INVOICE_DATE desc,INVUNPAID.keyfld desc" : " ORDER BY INVOICE_DATE,INVUNPAID.keyfld "));
+                        if (dt.ret == "SUCCESS") {
+                            qr.setJsonStrMetaData("{" + dt.data + "}");
+                            qr.mLctb.cols[qr.mLctb.getColPos("PAID_AMT")].mColClass = "sap.m.Input";
+                            qr.mLctb.cols[qr.mLctb.getColPos("INVOICE_DATE")].getMUIHelper().display_format = "SHORT_DATE_FORMAT";
+                            qr.mLctb.cols[qr.mLctb.getColPos("NETPAY")].getMUIHelper().display_format = "MONEY_FORMAT";
+                            qr.mLctb.cols[qr.mLctb.getColPos("PD")].getMUIHelper().display_format = "MONEY_FORMAT";
+                            qr.mLctb.cols[qr.mLctb.getColPos("NET_AMT")].getMUIHelper().display_format = "MONEY_FORMAT";
+                            qr.mLctb.cols[qr.mLctb.getColPos("PAID_AMT")].getMUIHelper().display_format = "MONEY_FORMAT";
+
+                            qr.mLctb.cols[qr.mLctb.getColPos("INVOICE_NO")].getMUIHelper().display_width = 80;
+                            qr.mLctb.cols[qr.mLctb.getColPos("CUSNO")].getMUIHelper().display_width = 80;
+                            qr.mLctb.cols[qr.mLctb.getColPos("NAME")].getMUIHelper().display_width = 130;
+                            qr.mLctb.cols[qr.mLctb.getColPos("INVOICE_DATE")].getMUIHelper().display_width = 90;
+                            qr.mLctb.cols[qr.mLctb.getColPos("NETPAY")].getMUIHelper().display_width = 90;
+                            qr.mLctb.cols[qr.mLctb.getColPos("PD")].getMUIHelper().display_width = 90;
+                            qr.mLctb.cols[qr.mLctb.getColPos("NET_AMT")].getMUIHelper().display_width = 90;
+                            qr.mLctb.cols[qr.mLctb.getColPos("PAID_AMT")].getMUIHelper().display_width = 90;
+
+                            qr.mLctb.cols[qr.mLctb.getColPos("KEYFLD")].mHideCol = true;
+                            qr.mLctb.cols[qr.mLctb.getColPos("PAID_AMT")].eValidateColumn = function (evtx) {
+                                if (qr.eventCalc != undefined)
+                                    if (!qr.eventCalc(qr, this, -1, true))
+                                        evtx.getSource().focus();
+
+                            };
+                            qr.eventCalc = function (qv, cx, rowno, reAmt) {
+                                var sett = sap.ui.getCore().getModel("settings").getData();
+                                var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
+
+                                if (reAmt)
+                                    qv.updateDataToTable();
+
+                                var ld = qv.mLctb;
+                                var sumPaidAmt = 0;
+                                for (var i = 0; i < ld.rows.length; i++) {
+                                    sumPaidAmt += Util.nvl(Util.extractNumber(ld.getFieldValue(i, "PAID_AMT"), df), 0);
+                                }
+                                txtPaidAmt.setValue(df.format(sumPaidAmt));
+                                return true;
+                            };
+                            qr.mLctb.parse("{" + dt.data + "}", true);
+
+                            var pdamt = parseFloat(txtAmount.getValue());
+                            var pa = 0;
+                            for (var i = 0; i < qr.mLctb.rows.length; i++) {
+                                var pa = qr.mLctb.getFieldValue(i, "NETPAY");
+                                if (pdamt - pa < 0)
+                                    pa = pdamt;
+                                if (pa > 0)
+                                    qr.mLctb.setFieldValue(i, "PAID_AMT", pa);
+                                pdamt = pdamt - pa;
+                            }
+                            qr.loadData();
+
+                        }
+                    }
+                    var txtCustCode = new sap.m.Input({
+                        width: "100px",
+                        showValueHelp: true,
+                        valueHelpRequest: function (e) {
+                            if (e.getParameters().clearButtonPressed || e.getParameters().refreshButtonPressed) {
+                                UtilGen.setControlValue(this, "", "", true);
+                                UtilGen.setControlValue(txtParentName, "", "", true);
+                                return;
+                            }
+                            var control = this;
+                            var pacnm = txtCustName;
+                            var sq = "select code, name from c_ycust where iscust='Y' order by path";
+                            Util.showSearchList(sq, "NAME", "CODE", function (valx, val) {
+                                UtilGen.setControlValue(control, valx, valx, true);
+                                UtilGen.setControlValue(pacnm, val, val, true);
+                            }, "Select a customer ...");
+                        },
+                        change: function (e) {
+                            var control = this;
+                            var vl = control.getValue();
+                            var pacnm = txtCustName
+                            UtilGen.setControlValue(pacnm, "", "", true);
+                            var pnm = Util.getSQLValue("select name from c_ycust where code=" + Util.quoted(vl));
+                            UtilGen.setControlValue(pacnm, pnm, pnm, true);
+                            UtilGen.setControlValue(control, vl, vl, false);
+                        }
+                    });
+                    var txtCustName = new sap.m.Input({
+                        width: "200px",
+                        editable: false
+                    });
+
+                    var txtAmount = new sap.m.Input({
+                        width: "100px",
+                        value: "0"
+                    });
+
+                    var btFifo = new sap.m.Button({
+                        text: "FIFO Invoices",
+                        press: function () {
+                            fetchData(false);
+
+                        }
+                    });
+
+                    var btLifo = new sap.m.Button({
+                        text: "LIFO Invoices",
+                        press: function () {
+                            fetchData(true);
+                        }
+                    }).addStyleClass("sapUiSmallMarginBegin sapUiSmallMarginEnd");
+
+                    var h1 = new sap.m.HBox({
+                        alignItems: sap.m.FlexAlignItems.Center,
+                        items: [txtCustCode, txtCustName, new sap.m.Text({ text: "Amount:" }).addStyleClass("sapUiSmallMarginBegin sapUiSmallMarginEnd"), txtAmount, btFifo, btLifo]
+                    });
+
+                    sc.addContent(h1);
+
+                    var qr = new QueryView("qryRcptInvs" + that2.timeInLong);
+                    qr.getControl().setEditable(true);
+
+                    qr.getControl().view = that2;
+                    qr.getControl().addStyleClass("sapUiSizeCondensed sapUiSmallMarginTop");
+                    qr.getControl().setSelectionMode(sap.ui.table.SelectionMode.Single);
+                    qr.getControl().setFixedBottomRowCount(0);
+                    qr.getControl().setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
+                    qr.getControl().setVisibleRowCount(10);
+                    qr.insertable = false;
+                    qr.deletable = false;
+                    qr.editable = true;
+                    sc.addContent(qr.getControl());
+                    sc.addContent(new sap.m.VBox({ height: "50px" }));
+                    sc.addContent(new sap.m.HBox({
+                        alignItems: sap.m.FlexAlignItems.Center,
+                        items: [new sap.m.Text({ text: "Amount:" }).addStyleClass("sapUiSmallMarginBegin sapUiSmallMarginEnd"), txtPaidAmt]
+                    }
+                    ));
+                    var dlg = new sap.m.Dialog({
+                        contentHeight: "80%",
+                        contentWidth: "90%",
+                        content: sc,
+                        buttons: [
+                            new sap.m.Button({
+                                text: "OK",
+                                press: function () {
+                                    var amt = parseFloat(Util.extractNumber(txtAmount.getValue()));
+                                    var totpd = parseFloat(Util.extractNumber(txtPaidAmt.getValue()));
+                                    if (amt != totpd)
+                                        FormView.err("Amount not matched with # " + amt);
+                                    var ld = that2.frm.objs["qry2"].obj.mLctb;
+                                    var ldinv = qr.mLctb;
+                                    var ldi = 0;
+                                    var des = that2.frm.getFieldValue("qry1.descr");
+                                    ld.removeAllRows();
+                                    ld.addRow();
+                                    for (var i = 0; i < ldinv.rows.length; i++) {
+                                        var pd = ldinv.getFieldValue(i, "PAID_AMT");
+                                        if (pd > 0) {
+                                            ld.setFieldValue(ldi, "CUST_CODE", ldinv.getFieldValue(i, "CUSNO"));
+                                            ld.setFieldValue(ldi, "CREDIT", pd);
+                                            ld.setFieldValue(ldi, "FCCREDIT", pd);
+                                            ld.setFieldValue(ldi, "INVKEYFLD", ldinv.getFieldValue(i, "KEYFLD"));
+                                            var nm = Util.getSQLValue("select name from c_ycust where code=" + Util.quoted(ldinv.getFieldValue(i, "CUSNO")));
+                                            var acn = Util.getSQLValue("select ac_no from c_ycust where code=" + Util.quoted(ldinv.getFieldValue(i, "CUSNO")));
+                                            var invdes = Util.getSQLValue("SELECT MAX('Inv # '||invoice_no||', Location ='||location_code ) from pur1 where keyfld=" + ldinv.getFieldValue(i, "KEYFLD"));
+                                            ld.setFieldValue(ldi, "ACNAME", nm);
+                                            ld.setFieldValue(ldi, "DESCR", des);
+                                            ld.setFieldValue(ldi, "ACCNO", acn);
+                                            ld.setFieldValue(ldi, "INV_DESCR", invdes);
+
+                                            if (ld.rows.length >= ldi)
+                                                ld.addRow();
+                                            ldi++;
+                                        }
+                                    }
+                                    if (ld.rows.length > 1)
+                                        ld.deleteRow(ld.rows.length - 1);
+
+                                    that2.frm.objs["qry2"].obj.updateDataToControl();
+                                    that2.frm.objs["qry2"].obj.eventCalc(that2.frm.objs["qry2"].obj, undefined, -1, true);
+                                    dlg.close();
+                                }
+                            }),
+                            new sap.m.Button({
+                                text: "Cancel",
+                                press: function () {
+                                    dlg.close();
+                                }
+                            })
+                        ]
+                    }).addStyleClass("sapUiSizeCondensed sapUiSizeCompact");
+                    dlg.open();
+                },
             },
             setFormTitle: function (frm, tit, mainPage) {
                 if (typeof frm.getParent != "undefined" && (frm.getParent() instanceof sap.m.Dialog))
@@ -2180,9 +2558,22 @@ sap.ui.define("sap/ui/ce/generic/UtilGen", [],
                     if (tbl._getVisibleColumns()[i].tableCol.mColName == colName)
                         return i;
                 return -1;
-            }
-
+            },
+            getPathAccsBalances: function (accs, dt) {
+                var sqlStr = "select path from acaccount where '" + accs + "' like '%\"'||accno||'\"%' order by path"
+                var dat = Util.execSQL(sqlStr);
+                if (dat.ret == "SUCCESS" && dat.data.length > 0) {
+                    var dtx = JSON.parse("{" + dat.data + "}").data;
+                    var tot = 0;
+                    var dtstr = (dt != undefined ? " and vou_date<=" + Util.toOraDateString(dt) : "");
+                    for (var i in dtx)
+                        tot += Util.getSQLValue("select nvl(sum(debit-credit),0) from acc_transaction_up where path like '" + dtx[i].PATH + "%' " + dtstr);
+                    return tot;
+                }
+                return 0;
+            },
         };
+
         return UtilGen;
     });
 

@@ -1482,7 +1482,7 @@ sap.ui.jsfragment("bin.Queries", {
             title: "Will Upload following images for PDF reports..",
             content: [tabs],
             buttons: [new sap.m.Button({
-                text: "Download PDF",
+                text: "Download PDF",                
                 press: function (e) {
                     for (var v = 0; v < tabs.getItems().length; v++) {
                         view.uploading = true;

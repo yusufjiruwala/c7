@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -165,7 +166,6 @@ public class UserRoute {
 				ret = getInitFileData(params);
 				return ret;
 			}
-
 			// ------------if-not-logon
 			if (!instanceInfo.isMlogonSuccessed())
 				throw new Exception("Access denied !");
@@ -434,10 +434,13 @@ public class UserRoute {
 	@RequestMapping(value = "/bat7ClrRep", method = RequestMethod.POST)
 	public ResponseEntity<BatchSqlJson> bat7ClrRep(@RequestBody BatchSqlJson sql,
 			@RequestParam Map<String, String> params) {
+
 		if (sql.getP1().equals("true"))
 			repBat7.saveToTmp(instanceInfo, sql.getRepCode(), sql.getRepNo());
 		String ret = repBat7.clearReport(instanceInfo, sql.getRepCode(), sql.getRepNo());
-		sql.setRet(ret);		
+
+		sql.setRet(ret);
+
 		return new ResponseEntity<BatchSqlJson>(sql, HttpStatus.OK);
 	}
 
@@ -687,6 +690,45 @@ public class UserRoute {
 
 	}
 
+	@RequestMapping(value = "/getAttachVou", method = RequestMethod.POST, produces = "application/pdf")
+	public ResponseEntity<InputStreamResource> getAttachVou(@RequestParam Map<String, String> params) {
+		String kf = params.get("keyfld");
+
+		byte[] pdfFile = null;
+		Connection con = instanceInfo.getmDbc().getDbConnection();
+		try {
+			PreparedStatement ps = con.prepareStatement("select pdf_data from c7_attach where keyfld=" + kf,
+					ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			ResultSet rst = ps.executeQuery();
+			if (rst.first()) {
+				pdfFile = rst.getBytes(1);
+			}
+			rst.close();
+			ps.close();
+			if (pdfFile != null) {
+				HttpHeaders headers = new HttpHeaders();
+				headers.setContentType(MediaType.parseMediaType("application/pdf"));
+				headers.add("Access-Control-Allow-Origin", "*");
+				headers.add("Access-Control-Allow-Methods", "GET, POST, PUT");
+				headers.add("Access-Control-Allow-Headers", "Content-Type");
+				headers.add("Content-Disposition", "filename=file_" + kf + ".pdf");
+				headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+				headers.add("Pragma", "no-cache");
+				headers.add("Expires", "0");
+				ByteArrayInputStream bt = new ByteArrayInputStream(pdfFile);
+				ResponseEntity<InputStreamResource> response = new ResponseEntity<InputStreamResource>(
+						new InputStreamResource(bt), headers, HttpStatus.OK);
+				return response;
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return null;
+
+	}
+
 	@PostMapping("/upload/report/pic")
 	public ResponseEntity<?> uploadFileMulti(@RequestParam("extraField") String extraField,
 			@RequestParam("files") MultipartFile[] uploadfiles) {
@@ -725,7 +767,7 @@ public class UserRoute {
 
 	}
 
-	@PostMapping("/uploadImageRep")
+	@RequestMapping("/uploadImageRep")
 	public ResponseEntity<?> uploadImageRep(@RequestParam("data") MultipartFile avatar,
 			@RequestParam("filename") String fn) {
 		try {
@@ -741,6 +783,53 @@ public class UserRoute {
 		return null;
 	}
 
+	@RequestMapping("/uploadAttachPdfVou")
+	public ResponseEntity<?> uploadAttachPdfVou(@RequestParam("data") MultipartFile avatar,
+			@RequestParam("keyfld") double kf, @RequestParam("descr") String descr) {
+		Connection con = instanceInfo.getmDbc().getDbConnection();
+		try {
+
+			byte[] bytes = avatar.getBytes();
+//			String directory = servletContext.getRealPath("/") + "reports/" + fn + ".jpg";
+//			new FileOutputStream(directory).write(bytes);
+
+			String sq = "begin delete from c7_attach where keyfld=?;"
+					+ " INSERT INTO C7_ATTACH(KEYFLD,DESCR,PDF_DATA) VALUES (?,?,? );END;";
+			if (bytes.length == 0) {
+				sq = "begin delete from c7_attach where keyfld=?;end;";
+				PreparedStatement ps = con.prepareStatement(sq);
+				ps.setDouble(1, kf);
+				ps.executeUpdate();
+				ps.close();
+
+			} else {
+				con.setAutoCommit(false);
+				PreparedStatement ps = con.prepareStatement(sq);
+
+				ps.setDouble(1, kf);
+				ps.setDouble(2, kf);
+				ps.setString(3, descr);
+				ps.setBytes(4, bytes);
+				ps.executeUpdate();
+				ps.close();
+			}
+
+			con.commit();
+			
+			return new ResponseEntity("Successfully uploaded ", HttpStatus.OK);
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			try {
+				con.rollback();
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+		}
+		return null;
+	}
 	// ---------------all--helper-functions---
 
 	private String getBatchStatus(Map<String, String> params) throws Exception {
@@ -867,7 +956,6 @@ public class UserRoute {
 
 		return ret;
 	}
-
 	private String getInitFileData(Map<String, String> params) {
 		String ret = "";
 		String fn = "";

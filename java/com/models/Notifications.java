@@ -69,7 +69,7 @@ public class Notifications {
 
 			while (1 == 1) {
 				try {
-					Thread.sleep(15000);
+					Thread.sleep(30000);
 					System.out.println("Running notification loop for " + this.mLoginFile);
 					this.refreshSetupData();
 					if (this.mLctb.getRowCount() <= 0)

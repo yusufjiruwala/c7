@@ -164,7 +164,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
 
                 if (qrys[i].type != "query")
                     this.err("Err !  query # " + qrys[i].name);
-                qr.formview = this;
+                qr.formview = this;                
                 qr.objType = FormView.ObjTypes.QUERY;
                 qr.showType = Util.nvl(qrys[i].showType, FormView.QueryShowType.FORM);
                 qr.applyCol = Util.nvl(qrys[i].applyCol, "");
@@ -705,7 +705,7 @@ sap.ui.define("sap/ui/ce/generic/FormView", ["./QueryView"],
                         ob.onPress(e);
 
                     that.setQueryStatus(undefined, FormView.RecordStatus.NEW);
-                    if (that.cmdButttons.cmdEdit != undefined) {
+                    if (that.cmdButtons.cmdEdit != undefined) {
                         that.cmdButtons.cmdEdit.setEnabled(false);
                         that.cmdButtons.cmdEdit.setPressed(false);
                     }

@@ -107,11 +107,65 @@ sap.ui.define("sap/ui/ce/generic/ReportUtils", [],
                         dispInPara: true,
                     };
                 },
+
                 getRecalcChk: function () {
 
                 },
-                getShowBalChk: function (cmdLink) {
-                }
+                getShowBalChk: function () {
+                    return {
+                        colname: "showbal",
+                        data_type: FormView.DataType.String,
+                        class_name: FormView.ClassTypes.CHECKBOX,
+                        title: '{\"text\":\"showBal\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                        title2: "",
+                        display_width: this.colSpan,
+                        display_align: "ALIGN_LEFT",
+                        display_style: "",
+                        display_format: "",
+                        other_settings: { selected: true, width: "20%", trueValues: ["Y", "N"] },
+                        edit_allowed: true,
+                        insert_allowed: true,
+                        require: false,
+                        dispInPara: true,
+                        trueValues: ["Y", "N"]
+                    }
+                },
+                getCharFromNo: function () {
+                    return {
+                        colname: "fromno",
+                        data_type: FormView.DataType.String,
+                        class_name: FormView.ClassTypes.TEXTFIELD,
+                        title: '{\"text\":\"fromNo\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                        title2: "",
+                        display_width: this.colSpan,
+                        display_align: "ALIGN_LEFT",
+                        display_style: "",
+                        display_format: "",
+                        other_settings: { width: "20%" },
+                        edit_allowed: true,
+                        insert_allowed: true,
+                        require: false,
+                        dispInPara: true,
+                    };
+                },
+                getCharToNo: function () {
+                    return {
+                        colname: "tono",
+                        data_type: FormView.DataType.String,
+                        class_name: FormView.ClassTypes.TEXTFIELD,
+                        title: '{\"text\":\"toNo\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
+                        title2: "",
+                        display_width: this.colSpan,
+                        display_align: "ALIGN_LEFT",
+                        display_style: "",
+                        display_format: "",
+                        other_settings: { width: "20%" },
+                        edit_allowed: true,
+                        insert_allowed: true,
+                        require: false,
+                        dispInPara: true,
+                    }
+                },
             },
             Fields: {
                 getItemReference: function (obj) {
@@ -125,6 +179,48 @@ sap.ui.define("sap/ui/ce/generic/ReportUtils", [],
                             parentTitle: "",
                             parentSpan: 1,
                             display_width: "140",
+                            display_align: "ALIGN_BEGIN",
+                            grouped: false,
+                            display_style: "",
+                            display_format: "",
+                            default_value: "",
+                            other_settings: {},
+                            commandLinkClick: undefined,
+                        }, ...obj
+                    };
+                },
+                getCustCode: function (obj) {
+                    return {
+                        ...{
+                            colname: "code",
+                            data_type: FormView.DataType.String,
+                            class_name: FormView.ClassTypes.LABEL,
+                            title: "custCode",
+                            title2: "",
+                            parentTitle: "",
+                            parentSpan: 1,
+                            display_width: "100",
+                            display_align: "ALIGN_BEGIN",
+                            grouped: false,
+                            display_style: "",
+                            display_format: "",
+                            default_value: "",
+                            other_settings: {},
+                            commandLinkClick: undefined,
+                        }, ...obj
+                    };
+                },
+                getCustName: function (obj) {
+                    return {
+                        ...{
+                            colname: "name",
+                            data_type: FormView.DataType.String,
+                            class_name: FormView.ClassTypes.LABEL,
+                            title: "custName",
+                            title2: "",
+                            parentTitle: "",
+                            parentSpan: 1,
+                            display_width: "100",
                             display_align: "ALIGN_BEGIN",
                             grouped: false,
                             display_style: "",

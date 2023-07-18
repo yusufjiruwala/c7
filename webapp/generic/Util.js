@@ -87,6 +87,32 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
                 xhr.send();
                 return xhr;
             },
+            doXhrUpdateVouAttach: function (path,
+                async, file, kf, descr) {
+                var formData = new FormData();
+                if (file != undefined) {
+                    formData.append("data", file);
+                    formData.append("keyfld", kf);
+                    formData.append("descr", descr);
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', path, async);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                sap.m.MessageToast.show("File uploaded successfully!");
+                            } else {
+                                sap.m.MessageToast.show("Failed to upload file.");
+                            }
+                        }
+                    };
+                    xhr.send(formData);
+                    return xhr;
+                }
+                else {
+                    Util.execSQL("delete from c7_attach where keyfld=" + kf);
+                }
+                return ;
+            },
             doAjaxPost: function (path,
                 content,
                 async) {
@@ -1570,7 +1596,6 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
 
             },
             printPdf: function (url) {
-
                 var iframe = this._printIframe;
                 if (!this._printIframe) {
                     iframe = this._printIframe = document.createElement('iframe');
@@ -1587,6 +1612,46 @@ sap.ui.define("sap/ui/ce/generic/Util", [],
 
                 iframe.src = url;
             },
+            getLabelTxt: function (ptxt, pwidth, preText, styleText) {
+                return Util.nvl(preText, "") + '{\"text\":\"' + ptxt + '\",\"width\":\"' + Util.nvl(pwidth, "15%") + '\","textAlign":"End","styleClass":"' + Util.nvl(styleText, "") + '"}'
+            },
+            abbreviateNumber: function (number) {
+                var sett = sap.ui.getCore().getModel("settings").getData();
+                if (sett["DEFAULT_CURRENCY"] == "INR")
+                    return this.abbreviateNumberIndian(number);
+
+                const SI_SYMBOLS = ['', 'k', 'M', 'G', 'T', 'P', 'E'];
+
+                // Convert the number to absolute value
+                const absNumber = Math.abs(number);
+
+                // Determine the appropriate SI symbol index
+                const tier = Math.log10(absNumber) / 3 | 0;
+
+                // If the number is 0 or smaller than 1,000, return the number as is
+                if (tier === 0) {
+                    return number.toString();
+                }
+
+                // Calculate the scaled number and add the SI symbol
+                const scaled = absNumber / Math.pow(10, tier * 3);
+                const symbol = SI_SYMBOLS[tier];
+
+                // Format the number with a maximum of 2 decimal places
+                const formattedNumber = scaled.toFixed(2);
+
+                // Return the abbreviated string
+                return (number < 0 ? '-' : '') + formattedNumber + symbol;
+            },
+            abbreviateNumberIndian: function (value) {
+                const val = Math.abs(value);
+                if (val >= 10000000) return `${(value / 10000000).toFixed(2)} Cr`;
+                if (val >= 100000) return `${(value / 100000).toFixed(2)} Lac`;
+                if (val >= 1000) return `${(value / 1000).toFixed(2)} k`;
+                return value.toFixed(2);
+            }
+
+
         };
 
         return Util;

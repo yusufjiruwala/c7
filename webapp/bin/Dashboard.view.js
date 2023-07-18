@@ -19,7 +19,7 @@ sap.ui.jsview('bin.Dashboard', {
         jQuery.sap.require("sap.ui.commons.library");
         jQuery.sap.require("sap.f.ShellBar");
         this.addStyleClass("sapUiSizeCompact");
-
+        this.timeInLong = (new Date()).getTime();
         Util.setLanguageModel(this);
 
         var that = this;
@@ -405,7 +405,7 @@ sap.ui.jsview('bin.Dashboard', {
                 path: "/",
                 template: new sap.ui.core.ListItem({ text: "{file}", key: "{file}" }),
                 templateShareable: true
-            }
+            },
         });// Database
         var al = new sap.m.CheckBox(this.createId("chkAuto"), {
             width: "100%",
@@ -441,6 +441,7 @@ sap.ui.jsview('bin.Dashboard', {
         var op2 = new sap.m.Input(this.createId("txtUser2")); // User name
         var np2 = new sap.m.Input(this.createId("txtPassword2"), { type: sap.m.InputType.Password }); // New Password
         var hs = new sap.m.Input(this.createId("txtHost"), { value: "jdbc:oracle:thin:@HOST:1521:orcl" });
+
 
         Util.doAjaxGet("exe?command=get-init-files", "", false).done(function (data) {
             var oModel = new sap.ui.model.json.JSONModel();
@@ -481,7 +482,8 @@ sap.ui.jsview('bin.Dashboard', {
         if (url.searchParams.get("password") != undefined)
             np.setValue(url.searchParams.get("password"));
         if (url.searchParams.get("file") != undefined)
-            cp.setValue(url.searchParams.get("file"));
+            Util.setComboValue(cp, url.searchParams.get("file"));
+        // cp.setValue(url.searchParams.get("file"));
         if (Util.nvl(np.getValue(), "") != "" &&
             Util.nvl(op.getValue(), "") != "" &&
             Util.nvl(cp.getValue(), "") != "")
@@ -715,7 +717,7 @@ sap.ui.jsview('bin.Dashboard', {
         that.today_date.setValueFormat(sett["ENGLISH_DATE_FORMAT"]);
         that.today_date.setDisplayFormat(sett["ENGLISH_DATE_FORMAT"]);
         var lstVouDate = Util.getSQLValue("select to_char(max(vou_date),'dd/mm/rrrr') from acvoucher1 ");
-        this.byId("lblLastDay" + this.timeInLong).setText(Util.getLangText("lastVouEntry")+" :" + lstVouDate);
+        this.byId("lblLastDay" + this.timeInLong).setText(Util.getLangText("lastVouEntry") + " :" + lstVouDate);
         if (Util.nvl(that.today_date.getDateValue(), undefined) == undefined) {
             var svdt = Util.getSQLValue("select to_char(sysdate,'mm/dd/rrrr') from dual ");
             that.today_date.setDateValue(new Date(svdt));
@@ -723,7 +725,7 @@ sap.ui.jsview('bin.Dashboard', {
         var cmp = sett["MASTER_USER"] + " >  " + sett["LOGON_USER"] + "@" + sett["COMPANY_NAME"];
         var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
         var sdf = new simpleDateFormat(sett["ENGLISH_DATE_FORMAT"]);
-        
+
         var secs = {};
 
         UtilGen.clearPage(this.pg);
@@ -908,7 +910,7 @@ sap.ui.jsview('bin.Dashboard', {
         // if (this.mv == undefined)
         this.mv = new QueryView("mainMenus");
         var mnuTit = Util.getLangDescrAR("MENU_TITLE", "NVL(MENU_TITLEA,MENU_TITLE) MENU_TITLE ");
-        var dt = Util.execSQL("select menu_code," + mnuTit + ",parent_menucode,childcount,JS_COMMAND,JS_PARAMS,SHORTCUT_ICON" +
+        var dt = Util.execSQL("select menu_code," + mnuTit + ",parent_menucode,childcount,JS_COMMAND,JS_PARAMS,SHORTCUT_ICON,TYPE_OF_EXEC " +
             " from C7_MENUS where group_code='" + that.current_profile + "' order by menu_path")
         // var dt = Util.execSQL("select accno menu_code,name menu_title, parentacc from acaccount order by path ")
 
@@ -968,11 +970,414 @@ sap.ui.jsview('bin.Dashboard', {
         });
         mv.loadData();
         mv.getControl().collapseAll();
+        mv.getControl().setContextMenu(new sap.m.Menu());
+        mv.getControl().attachBeforeOpenContextMenu(function (e) {
+            var rn = e.getParameter("rowIndex");
+            if (rn <= -1) {
+                return false;
+            }
+            var oData = mv.getControl().getContextByIndex(rn);
+            var childs = oData.getProperty(oData.getPath())["CHILDCOUNT"];
+            var mc = oData.getProperty(oData.getPath())["MENU_CODE"];
+            var toe = oData.getProperty(oData.getPath())["TYPE_OF_EXEC"];
+            var mnu = e.getParameter("contextMenu");
+            mnu.removeAllItems();
+            if (toe == "PARENT") {
+                mnu.addItem(new sap.m.MenuItem({
+                    text: "New Menu..",
+                    press: function () {
+                        that.showMenuForm("", mc);
+                    }
+                }));
+                mnu.addItem(new sap.m.MenuItem({
+                    text: "Copy menus..",
+                    press: function () {
+                        that.copyMenus(mc);
+                    }
+                }));
+
+            } else {
+                mnu.addItem(new sap.m.MenuItem({
+                    text: "Edit..",
+                    press: function () {
+                        that.showMenuForm(mc);
+                    }
+                }));
+
+            }
+            mnu.addItem(new sap.m.MenuItem({
+                text: "Delete..",
+                press: function () {
+                    that.deleteMenu(mc);
+                }
+            }));
+
+        });
+
         setTimeout(function () {
             that.showShortcuts();
 
         });
+    },
+    copyMenus: function (mc) {
+        var that = this;
+        var newGroup = function (e) {
+            var nwcode = Util.getSQLValue("select nvl(max(to_number(code)),9998)+1 from  c6_main_groups");
+            txtToG.setValue(nwcode);
+        };
+
+        var newMenuCode = function (e) {
+            var grpCode = txtToG.getValue();
+            if (grpCode == "") FormView.err("Err! must enter first group !");
+            var defMenuCode = grpCode + "001";
+            var nwcode = Util.getSQLValue("select nvl(max(to_number(menu_code))," + defMenuCode + " )+1 from  c7_menus where group_code='" + grpCode + "' and type_of_exec='PARENT'");
+            txtToC.setValue(nwcode);
+        };
+        var do_copy = function () {
+            // validating first null values
+            var tcsGrp = txtToG.getValue();
+            var tcsC = txtToC.getValue();
+            var fcsC = txtFromC.getValue();
+            var fGrp = txtFromG.getValue();
+            if (fGrp == "" || tcsGrp == "") FormView.err("From group or To group must have value !");
+            if (tcsC == "" || fcsC == "") FormView.err("From Menu Code or To Code menu must have value !");
+            var toMenuPath = "";
+            var genPath = function (parent, cod) {
+                var ret = "XXX\\" + cod + "\\";
+                if (parent == "")
+                    return ret;
+
+                var pth = Util.getSQLValue("select nvl(max(menu_path),'') from c7_menus where menu_code=" + Util.quoted(parent) + " and group_code=" + Util.quoted(that.current_profile));
+                if (pth == "")
+                    return "";
+                return pth + cod + "\\";
+
+            }
+            var addGroup = function () {
+                var cntGrp = Util.getSQLValue("select nvl(count(*),0) from c6_main_groups where code=" + Util.quoted(tcsGrp));
+                if (cntGrp == 0) {
+                    if (Util.nvl(txtFromGName.getValue(), "") == "") FormView.err("Title for new group not specified !!");
+                    var sq = "insert into c6_main_groups(CODE, TITLE, PROFILES, PIC_NAME, FLAG, MENU_CLASS, MODULE_NAME) " +
+                        " values (:CODE, :TITLE, '\"0\"', '', 1, 'MAIN_MENUS', 'USER'); ";
+                    sq = sq.replaceAll(":CODE", Util.quoted(tcsGrp));
+                    sq = sq.replaceAll(":TITLE", Util.quoted(txtToGName.getValue()));
+                    return sq;
+                }
+                return "";
+            }
+            var addParentMenu = function () {
+                var cntMenu = Util.getSQLValue("select nvl(count(*),0) from c7_menus where group_code='" + tcsGrp + "' and menu_code=" + Util.quoted(tcsC));
+                if (cntMenu == 0) {
+                    sq = "insert into c7_menus(GROUP_CODE, MENU_CODE, MENU_TITLE, MENU_TITLEA, PARENT_MENUCODE, MENU_PATH, JS_COMMAND,TYPE_OF_EXEC ) " +
+                        " values (':GROUP_CODE', ':MENU_CODE', ':MENU_TITLE', ':MENU_TITLEA', ':PARENT_MENUCODE', ':MENU_PATH', ':JS_COMMAND','PARENT' );";
+                    sq = sq.replaceAll(":MENU_CODE", txtToC.getValue());
+                    sq = sq.replaceAll(":GROUP_CODE", txtToG.getValue());
+                    sq = sq.replaceAll(":MENU_TITLE", txtToCName.getValue());
+                    sq = sq.replaceAll(":MENU_TITLEA", "");
+                    sq = sq.replaceAll(":PARENT_MENUCODE", "");
+                    sq = sq.replaceAll(":MENU_PATH", "XXX\\" + txtToC.getValue() + "\\");
+                    sq = sq.replaceAll(":JS_COMMAND", "");
+                    toMenuPath = "XXX\\" + txtToC.getValue() + "\\";
+                    return sq;
+                } else
+                    toMenuPath = "";
+                return "";
+            }
+            var sqAdd = addGroup() + addParentMenu();
+
+            var sq = "select *from c7_menus where menu_code!=:menu_code and menu_path like (select max(menu_path||'%') from c7_menus where group_code=:group_code and menu_code=:menu_code) ";
+            sq = sq.replaceAll(":group_code", Util.quoted(txtFromG.getValue()));
+            sq = sq.replaceAll(":menu_code", Util.quoted(txtFromC.getValue()));
+
+            var getmenupath = "(select menu_path||'\\'||':add_code'||'\\' from c7_menus where menu_code=':menu_code' and group_code=':group_code')"
+            var sqIns = "";
+            var dt = Util.execSQL(sq);
+            if (dt.ret == "SUCCESS" && dt.data.length > 0) {
+                var dtx = JSON.parse("{" + dt.data + "}").data;
+                for (var di in dtx) {
+                    var code = txtToC.getValue() + dtx[di].MENU_CODE;
+                    var grp_code = txtToG.getValue();
+
+                    var tit = dtx[di].MENU_TITLE;
+                    var menupath = txtFromC.getValue() == dtx[di].PARENT_MENUCODE ? getmenupath.replaceAll(":menu_code", txtToC.getValue())
+                        .replaceAll(":add_code", code)
+                        .replaceAll(":group_code", txtToG.getValue()) :
+                        getmenupath.replaceAll(":menu_code", txtToC.getValue + dtx[di].PARENT_MENUCODE)
+                            .replaceAll(":add_code", code)
+                            .replaceAll(":group_code", txtToG.getValue());
+                    var js = dtx[di].JS_COMMAND;
+                    var parent_menucode = txtFromC.getValue() == dtx[di].PARENT_MENUCODE ? txtToC.getValue() : txtToC.getValue() + dtx[di].PARENT_MENUCODE;
+                    var sql = "insert into c7_menus(GROUP_CODE, MENU_CODE, MENU_TITLE, MENU_TITLEA, PARENT_MENUCODE, MENU_PATH, JS_COMMAND,TYPE_OF_EXEC ) " +
+                        " values (':GROUP_CODE', ':MENU_CODE', ':MENU_TITLE', ':MENU_TITLEA', ':PARENT_MENUCODE', :MENU_PATH, ':JS_COMMAND',':TYPE_OF_EXEC' );";
+                    sql = sql.replaceAll(":MENU_CODE", code);
+                    sql = sql.replaceAll(":GROUP_CODE", grp_code);
+                    sql = sql.replaceAll(":MENU_TITLE", tit);
+                    sql = sql.replaceAll(":MENU_TITLEA", "");
+                    sql = sql.replaceAll(":PARENT_MENUCODE", parent_menucode);
+                    sql = sql.replaceAll(":MENU_PATH", menupath);
+                    sql = sql.replaceAll(":JS_COMMAND", js);
+                    sql = sql.replaceAll(":TYPE_OF_EXEC", dtx[di].TYPE_OF_EXEC);
+                    sqIns += sql;
+                }
+                var dte = Util.execSQL("begin " + sqAdd + sqIns + " end;");
+                if (!dtx.ret == "SUCCESS")
+                    FormView.err("Not copied !");
+                else
+                    sap.m.MessageToast.show("Copied done !");
+            }
+        }
+        var txtFromG = new sap.m.Input({ textAlign: sap.ui.core.TextAlign.Begin, width: "30%", editable: false });
+        var txtFromGName = new sap.m.Input({ textAlign: sap.ui.core.TextAlign.Begin, width: "44%", editable: false });
+        var txtFromC = new sap.m.Input({ textAlign: sap.ui.core.TextAlign.Begin, width: "30%", editable: false });
+        var txtFromCName = new sap.m.Input({ textAlign: sap.ui.core.TextAlign.Begin, width: "44%", editable: false });
+
+        var txtToG = new sap.m.Input({
+            textAlign: sap.ui.core.TextAlign.Begin,
+            width: "30%", editable: true,
+            showValueHelp: true,
+            change: function (e) {
+                UtilGen.Search.getLOVSearchField("select title from c6_main_groups where code=:CODE ", txtToG, undefined, txtToGName);
+            },
+            valueHelpRequest: function (e) {
+                var sett = sap.ui.getCore().getModel("settings").getData();
+                var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
+
+                UtilGen.Search.do_quick_search(e, this,
+                    "select code,title from c6_main_groups order by code ",
+                    "select code,title from c6_main_groups where code=':CODE' order by code", txtToGName);
+            }
+        });
+        var txtToGName = new sap.m.Input({
+            textAlign: sap.ui.core.TextAlign.Begin,
+            width: "44%", editable: true,
+        });
+        var txtToC = new sap.m.Input(
+            {
+                textAlign: sap.ui.core.TextAlign.Begin,
+                width: "30%", editable: true,
+                showValueHelp: true,
+                change: function (e) {
+                    UtilGen.Search.getLOVSearchField("select menu_title from c7_menus where TYPE_OF_EXEC='PARENT' and group_code='" + txtToG.getValue() + "' and menu_code=':CODE' ", txtToC, undefined, txtToCName);
+                },
+                valueHelpRequest: function (e) {
+                    // var sett = sap.ui.getCore().getModel("settings").getData();
+                    // var df = new DecimalFormat(sett["FORMAT_MONEY_1"]);
+
+                    UtilGen.Search.do_quick_search(e, this,
+                        "select menu_code code,menu_title title from c7_menus where  TYPE_OF_EXEC='PARENT' and group_code='" + txtToG.getValue() + "' order by menu_path ",
+                        "select menu_code code ,menu_title title from c7_menus where  TYPE_OF_EXEC='PARENT' and group_code='" + txtToG.getValue() + "' and menu_code=':CODE' order by menu_path", txtToCName);
+                }
+            });
+        var txtToCName = new sap.m.Input({ textAlign: sap.ui.core.TextAlign.Begin, width: "44%", editable: true });
+
+        var fe = [
+            Util.getLabelTxt("fromMenuGroup", "25%"), txtFromG,
+            Util.getLabelTxt("f", "1%", "@"), txtFromGName,
+            Util.getLabelTxt("FromMenuCode", "25%"), txtFromC,
+            Util.getLabelTxt("", "1%", "@"), txtFromCName,
+            new sap.m.VBox({ height: "50px" }),
+            Util.getLabelTxt("toMenuGroup", "25%"), txtToG,
+            Util.getLabelTxt("", "1%", "@"), txtToGName,
+            Util.getLabelTxt("", "25%", ""), new sap.m.Button({ text: "Pick new Group", press: newGroup }),
+            Util.getLabelTxt("toMenuCode", "25%"), txtToC,
+            Util.getLabelTxt("", "1%", "@"), txtToCName,
+            Util.getLabelTxt("", "25%", ""), new sap.m.Button({ text: "Pick new Code", press: newMenuCode }),
+        ];
+
+        var cnt = UtilGen.formCreate2("", true, fe, undefined, sap.m.ScrollContainer, { width: "450px" }, "sapUiSizeCompact", "");
+        cnt.addContent(new sap.m.VBox({ height: "40px" }));
+        var dlg = new sap.m.Dialog({
+            title: Util.getLangText("copyMenusTitle"),
+            contentWidth: "500px",
+            content: cnt,
+            buttons: [
+                new sap.m.Button({
+                    text: Util.getLangText("saveTxt"),
+                    press: function () {
+                        do_copy();
+
+                    }
+                }),
+                new sap.m.Button({
+                    text: Util.getLangText("closeTxt"),
+                    press: function () {
+                        dlg.close();
+                    }
+                })
+
+            ]
+        });
+        txtFromG.setValue(that.current_profile);
+        txtFromGName.setValue(Util.getSQLValue("select title from c6_main_groups where code='" + that.current_profile + "'"));
+        txtFromC.setValue(mc);
+        txtFromCName.setValue(Util.getSQLValue("select menu_title from c7_menus where  group_code='" + that.current_profile + "' and menu_code='" + mc + "'"));
+
+        dlg.open();
+    },
+    deleteMenu: function (mc) {
+        var that = this;
+        if (mc == "") return;
+        if (sap.m.MessageBox == undefined)
+            jQuery.sap.require("sap.m.MessageBox");
+        var tit = Util.getSQLValue("select menu_title from c7_menus where group_code='" + that.current_profile + "' and menu_code=" + Util.quoted(mc));
+        sap.m.MessageBox.confirm("Are you sure to DELETE ?  #" + tit, {
+            title: "Confirm",                                    // default
+            onClose: function (oAction) {
+                if (oAction == sap.m.MessageBox.Action.OK) {
+                    var pth = Util.getSQLValue("select menu_path from c7_menus where group_code='" + that.current_profile + "' and menu_code=" + Util.quoted(mc));
+                    var dt = Util.execSQL("delete from c7_menus where group_code='" + that.current_profile + "' and menu_path like '" + pth + "%'");
+                    sap.m.MessageToast.show("Deleted... ");
+                    that.loadData(false, false);
+                }
+            },                                       // default
+            styleClass: "",                                      // default
+            initialFocus: null,                                  // default
+            textDirection: sap.ui.core.TextDirection.Inherit     // default
+        });
+
+    },
+    showMenuForm: function (pmc, prnt) {
+        var mc = Util.nvl(pmc, "");
+        var that = this;
+        // creating form.
+        var txtCode = new sap.m.Input({ textAlign: sap.ui.core.TextAlign.Begin, width: "20%", editable: false });
+        var txtName = new sap.m.Input({ textAlign: sap.ui.core.TextAlign.Begin, width: "49%", editable: false });
+        var txtName2 = new sap.m.Input({ textAlign: sap.ui.core.TextAlign.Begin, width: "49%", editable: false });
+        var txtParentName = new sap.m.Input({ textAlign: sap.ui.core.TextAlign.Begin, width: "49%", editable: false });
+        var txtJS = new sap.m.TextArea({ textAlign: sap.ui.core.TextAlign.Begin, width: "85%", height: "50px", editable: false });
+
+        var txtParent = new sap.m.Input({
+            showValueHelp: true, textAlign: sap.ui.core.TextAlign.Begin, width: "35%", editable: false, valueHelpRequest: function (e) {
+                if (e.getParameters().clearButtonPressed || e.getParameters().refreshButtonPressed) {
+                    UtilGen.setControlValue(this, "", "", true);
+                    UtilGen.setControlValue(txtParentName, "", "", true);
+                    return;
+                }
+                var control = this;
+                var pacnm = txtParentName
+                var sq = "select menu_code code,menu_title name from c7_menus where type_of_exec='PARENT' and group_code='" + that.current_profile + "' order by menu_path ";
+                Util.showSearchList(sq, "NAME", "CODE", function (valx, val) {
+                    UtilGen.setControlValue(control, valx, valx, true);
+                    UtilGen.setControlValue(pacnm, val, val, true);
+                }, "Select Parent Menus");
+            },
+            change: function (e) {
+
+                var control = this;
+                var vl = control.getValue();
+                var pacnm = txtParentName
+                UtilGen.setControlValue(pacnm, "", "", true);
+                var pnm = Util.getSQLValue("select menu_title from c7_menus where type_of_exec='PARENT' and  menu_code = " + Util.quoted(vl) +
+                    " and group_code='" + that.current_profile + "'");
+                UtilGen.setControlValue(pacnm, pnm, pnm, true);
+                UtilGen.setControlValue(control, vl, vl, false);
+            }
+        });
+        var fe = [
+            Util.getLabelTxt("codeTxt", "15%"), txtCode,
+            Util.getLabelTxt("nameTxt", "15%", "@"), txtName,
+            Util.getLabelTxt("nameTxt2", "50%", ""), txtName2,
+            Util.getLabelTxt("parentMenu", "15%", ""), txtParent,
+            Util.getLabelTxt("", "1%", "@"), txtParentName,
+            Util.getLabelTxt("JS Cmd", "15%", ""), txtJS,
+        ];
+        var cnt = UtilGen.formCreate2("", true, fe, undefined, sap.m.ScrollContainer, { width: "450px" }, "sapUiSizeCompact", "");
+        cnt.addContent(new sap.m.VBox({ height: "40px" }));
+        var dlg = new sap.m.Dialog({
+            title: Util.getLangText((mc == "" ? "newMenu" : "editMenu")),
+            contentWidth: "500px",
+            content: cnt,
+            buttons: [
+                new sap.m.Button({
+                    text: Util.getLangText("saveTxt"),
+                    press: function () {
+                        ;
+                        if (saveData() == "SUCCESS") {
+                            dlg.close();
+                            that.loadData(false, false);
+                            sap.m.MessageToast.show("Saved...");
+                        }
+
+                    }
+                }),
+                new sap.m.Button({
+                    text: Util.getLangText("closeTxt"),
+                    press: function () {
+                        dlg.close();
+                    }
+                })
+
+            ]
+        });
+        // helper sub funcitons..
+        var genPath = function (parent, cod) {
+            var ret = "XXX\\" + cod + "\\";
+            if (parent == "")
+                return ret;
+
+            var pth = Util.getSQLValue("select nvl(max(menu_path),'') from c7_menus where menu_code=" + Util.quoted(parent) + " and group_code=" + Util.quoted(that.current_profile));
+            if (pth == "")
+                return "";
+            return pth + cod + "\\";
+
+        }
+        var saveData = function () {
+            var sq = "UPDATE C7_MENUS " +
+                " SET  MENU_TITLE=':MENU_TITLE', MENU_TITLEA=':MENU_TITLEA', " +
+                " PARENT_MENUCODE=':PARENT_MENUCODE', MENU_PATH=':MENU_PATH', JS_COMMAND=':JS_COMMAND' " +
+                " WHERE MENU_CODE=':MENU_CODE' AND GROUP_CODE=':GROUP_CODE'";
+            if (mc == "") {
+                sq = "insert into c7_menus(GROUP_CODE, MENU_CODE, MENU_TITLE, MENU_TITLEA, PARENT_MENUCODE, MENU_PATH, JS_COMMAND ) " +
+                    " values (':GROUP_CODE', ':MENU_CODE', ':MENU_TITLE', ':MENU_TITLEA', ':PARENT_MENUCODE', ':MENU_PATH', ':JS_COMMAND')";
+            }
+            sq = sq.replaceAll(":MENU_CODE", txtCode.getValue());
+            sq = sq.replaceAll(":GROUP_CODE", that.current_profile);
+            sq = sq.replaceAll(":MENU_TITLE", txtName.getValue());
+            sq = sq.replaceAll(":MENU_TITLEA", txtName2.getValue());
+            sq = sq.replaceAll(":PARENT_MENUCODE", txtParent.getValue());
+            sq = sq.replaceAll(":MENU_PATH", genPath(txtParent.getValue(), txtCode.getValue()));
+            sq = sq.replaceAll(":JS_COMMAND", txtJS.getValue());
+            // sq=sq.replaceAll(":",);
+            var dt = Util.execSQL(sq);
+            return dt.ret;
+        }
+        var setEditable = function (tf) {
+            for (ky in fe) {
+                if (fe[ky] instanceof sap.m.InputBase)
+                    fe[ky].setEditable(tf);
+            }
+        }
+        var getData = function () {
+            var dt = Util.execSQL("select *from c7_menus where menu_code=" + Util.quoted(mc) + " and group_code=" + Util.quoted(that.current_profile));
+            if (dt.ret == "SUCCESS" && dt.data.length > 0) {
+                var dtx = JSON.parse("{" + dt.data + "}").data;
+                txtCode.setValue(dtx[0].MENU_CODE);
+                txtName.setValue(dtx[0].MENU_TITLE);
+                txtName2.setValue(dtx[0].MENU_TITLE2);
+                txtParent.setValue(dtx[0].PARENT_MENUCODE);
+                txtParentName.setValue(Util.getSQLValue("select menu_title from c7_menus where menu_code=" + Util.quoted(dtx[0].PARENT_MENUCODE) + " and group_code=" + Util.quoted(that.current_profile)));
+                txtJS.setValue(dtx[0].JS_COMMAND);
+            }
+        };
+        //---------
+
+        if (mc != "") {
+            setEditable(true);
+            txtCode.setEditable(false);
+            getData();
+        } else {
+            setEditable(true);
+            txtParent.setValue(prnt);
+            txtParentName.setValue(Util.getSQLValue("select menu_title from c7_menus where menu_code=" + Util.quoted(prnt) + " and group_code=" + Util.quoted(that.current_profile)));
+            var newcode = Util.getSQLValue("select nvl(max(menu_code),0)+1 from c7_menus where group_code=" + Util.quoted(that.current_profile));
+            if (newcode == "1" || newcode == 1)
+                txtCode.setValue(prnt + "000" + newCode);
+            else
+                txtCode.setValue(newcode);
+        }
+        dlg.open();
     }
+
     ,
     new_tile: function () {
         var that = this;

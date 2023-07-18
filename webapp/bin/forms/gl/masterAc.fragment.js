@@ -617,7 +617,7 @@ sap.ui.jsfragment("bin.forms.gl.masterAc", {
                             costcent: {
                                 colname: "costcent",
                                 data_type: FormView.DataType.String,
-                                class_name: FormView.ClassTypes.SEARCHFIELD,
+                                class_name: FormView.ClassTypes.TEXTFIELD,
                                 title: '@{\"text\":\"costCent\",\"width\":\"15%\","textAlign":"End","styleClass":""}',
                                 title2: "No",
                                 canvas: "default_canvas",

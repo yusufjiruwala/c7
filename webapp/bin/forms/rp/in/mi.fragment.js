@@ -123,7 +123,6 @@ sap.ui.jsfragment("bin.forms.rp.in.mi", {
                         var ht = "<div class='reportTitle'>" + tbstr + "</div > ";
                         return ht;
                     },
-
                     mainParaContainerSetting: {
                         width: "600px",
                         cssText: [
@@ -255,7 +254,7 @@ sap.ui.jsfragment("bin.forms.rp.in.mi", {
 
                                         //                                        var sq = thatForm.frm.getFieldValue("parameter.showstoreqty");
                                     }
-                                },                                
+                                },
                                 beforeLoadQry: function (sql) {
                                     var re = thatForm.frm.getFieldValue("parameter.recalc");
                                     var ac = (re == "Y" ? "get_item_cost(items.reference) pkaver  " : "pkaver/pack pkaver");
@@ -308,6 +307,8 @@ sap.ui.jsfragment("bin.forms.rp.in.mi", {
                                     }
 
                                     qv.updateDataToControl();
+
+
 
                                 },
                                 onRowRender: function (qv, dispRow, rowno, currentRowContext, startCell, endCell) {
@@ -584,7 +585,184 @@ sap.ui.jsfragment("bin.forms.rp.in.mi", {
                                     },
 
                                 }
-                            }
+                            },
+                            {
+                                type: "query",
+                                name: "qry3",
+                                showType: FormView.QueryShowType.FORM,
+                                dispRecords: -1,
+                                execOnShow: false,
+                                dml: "",
+                                beforeLoadQry: function (sql, qryObj) {
+                                    return "";
+                                },
+                                bat7CustomAddQry: function (qryObj, ps) {
+                                },
+                                bat7CustomGetData: function (qryObj) {
+                                    var thatObj = this;
+
+                                    if (thatForm.frm.getFieldValue("parameter.showbal") != "Y") {
+                                        Util.destroyID("graphAccnoPop" + thatForm.timeInLong, view);
+                                        Util.destroyID("graphAccno" + thatForm.timeInLong, view);
+
+                                        return;
+                                    }
+                                    thatForm.addGraphObj(thatForm.frm.objs["MI001@qry3.accno"]);
+
+                                    var ob = view.byId("graphAccno" + thatForm.timeInLong);//thatForm.frm.getObject("01@qry3.accno").obj.getContent()[0];
+                                    var dtit = thatForm.frm.objs["MI001@qry2"].obj.mLctb.getData(true);
+                                    var dtx = [];
+                                    for (var i = 0; i < dtit.length; i++) {
+                                        if (dtit[i].LEVELNO == 1)
+                                            dtx.push(
+                                                {
+                                                    DESCR: dtit[i].DESCR, COSTAMT: dtit[i].COSTAMT
+                                                });
+
+                                    }
+                                    var dimensions = [{
+                                        name: "DESCR",
+                                        value: "{DESCR}"
+                                    }];
+                                    var measures = [
+
+                                        {
+                                            name: Util.getLangText("totalText"),
+                                            value: "{COSTAMT}"
+                                        }];
+
+                                    thatObj.dataSetDone = (ob.getModel() != undefined);
+                                    var oModel = new sap.ui.model.json.JSONModel();
+                                    oModel.setData(dtx);
+                                    ob.setModel(undefined);
+                                    ob.setModel(oModel);
+
+
+                                    ob.setDataset(new sap.viz.ui5.data.FlattenedDataset({
+                                        dimensions: dimensions,
+                                        measures: measures,
+                                        data: {
+                                            path: "/"
+                                        }
+                                    }));
+
+                                    if (Util.nvl(thatObj.dataSetDone, false) == false) {
+                                        var formatPattern = sap.viz.ui5.format.DefaultPattern;
+
+                                        var feedValueAxis = new sap.viz.ui5.controls.common.feeds.FeedItem({
+                                            'uid': "valueAxis",
+                                            'type': "Measure",
+                                            'values': [Util.getLangText("totalText")]
+                                        });
+
+                                        var feedCategoryAxis = new sap.viz.ui5.controls.common.feeds.FeedItem({
+                                            'uid': "categoryAxis",
+                                            'type': "Dimension",
+                                            'values': ["DESCR"]
+                                        });
+                                        ob.addFeed(feedCategoryAxis);
+                                        ob.addFeed(feedValueAxis);
+
+                                        ob.setVizProperties({
+                                            general: {
+                                                layout: {
+                                                    padding: 0.04
+                                                }
+                                            },
+                                            valueAxis: {
+                                                label: {
+                                                    formatString: '',
+                                                },
+                                                title: {
+                                                    visible: true
+                                                }
+                                            },
+                                            categoryAxis: {
+                                                title: {
+                                                    visible: false
+                                                }
+                                            },
+                                            plotArea: {
+                                                dataLabel: {
+                                                    visible: true,
+                                                    formatString: '',
+                                                    style: {
+                                                        color: null
+                                                    }
+                                                }
+                                            },
+                                            legend: {
+                                                title: {
+                                                    visible: false
+                                                }
+                                            },
+                                            title: {
+                                                visible: false,
+                                                text: 'AMOUNT '
+                                            }
+                                        });
+                                        var pop = view.byId("graphAccnoPop" + thatForm.timeInLong);
+                                        pop.connect(ob.getVizUid());
+                                        thatObj.dataSetDone = true;
+                                    }
+
+
+                                },
+                                onCustomValueFields: function (qryObj) {
+
+                                }
+
+                                ,
+                                fields: {
+                                    accno: {
+                                        colname: "accno",
+                                        data_type:
+                                            FormView.DataType.String,
+                                        class_name:
+                                            ReportView.ClassTypes.PANEL,
+                                        title:
+                                            " ",
+                                        title2:
+                                            "",
+                                        canvas:
+                                            "default_canvas",
+                                        display_width:
+                                            "XL10 L12 M12 S12",
+                                        display_align:
+                                            "ALIGN_RIGHT",
+                                        display_style:
+                                            "",
+                                        display_format:
+                                            "",
+                                        default_value:
+                                            "",
+                                        onPrintField:
+                                            function () {
+                                                return this.obj.$().outerHTML();
+                                            }
+
+                                        ,
+                                        beforeAddObject: function () {
+                                            // Util.destroyID("graphAccnoPop" + thatForm.timeInLong);
+                                        }
+                                        ,
+                                        afterAddOBject: function () {
+                                            thatForm.addGraphObj(this);
+                                        }
+                                        ,
+                                        other_settings: {
+                                            height: "200px",
+                                            headerText:
+                                                "",
+                                            headerToolbar:
+                                                undefined,
+                                            content:
+                                                []
+
+                                        }
+                                    }
+                                }
+                            },
                         ]
                     }
                 },
@@ -874,6 +1052,23 @@ sap.ui.jsfragment("bin.forms.rp.in.mi", {
 
     }
     ,
+    addGraphObj: function (fld) {
+        Util.destroyID("graphAccnoPop" + this.timeInLong, this.view);
+        Util.destroyID("graphAccno" + this.timeInLong, this.view);
+        fld.obj.removeAllContent();
+        if (this.frm.getFieldValue("parameter.showbal") == "Y") {
+            fld.obj.addContent(
+                new sap.viz.ui5.controls.Popover(this.view.createId("graphAccnoPop" + this.timeInLong)));
+            fld.obj.addContent(
+                new sap.viz.ui5.controls.VizFrame(this.view.createId("graphAccno" + this.timeInLong), {
+                    uiConfig: { applicationSet: 'fiori' },
+                    vizType: "column",
+                    height: "100%",
+                    legendVisible: false
+
+                }));
+        }
+    },
     loadData: function () {
     }
 

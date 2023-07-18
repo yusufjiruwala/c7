@@ -932,6 +932,42 @@ th {
     color: white !important;
 }
 
+
+.lstRepTable2 {
+    padding-left: 1%;
+    padding-right: 1%;
+    margin-left: 1%;
+    margin-right: 1%;
+
+}
+
+.lstRepTable2 .sapUiTableCell {
+    box-sizing: border-box;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+
+.lstRepTable2 .sapUiTableCtrlRowScroll {}
+
+.lstRepTable2 .sapUiTableHeaderRow {
+    background-color: rgb(220, 220, 220) !important;
+}
+
+.lstRepTable2 .sapUiTableRowSel {
+background-color:#aaf0d1  !important;
+}
+
+.lstRepTable2 .sapUiTableRowFirstFixedBottom {
+    background-color: rgb(220, 220, 220) !important;
+}
+
+.lstRepTable2 .sapUiTableSelectAllCheckBox::after,
+.sapUiTableRowSelectionCell::after {
+    border: 0 !important;
+    background-color: rgb(220, 220, 220) !important;
+}
+
 .menuTable {
     padding-left: 5%;
     padding-right: 5%;
