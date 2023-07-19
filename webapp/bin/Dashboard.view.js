@@ -677,6 +677,14 @@ sap.ui.jsview('bin.Dashboard', {
                 sap.ui.getCore().setModel(oModel, "profiles");
             }
         });
+        Util.doAjaxGet("exe?command=get-fiscal-data", "", false).done(function (data) {
+            if (data != undefined) {
+                var dt = JSON.parse(data);
+                var oModel = new sap.ui.model.json.JSONModel(dt);
+                sap.ui.getCore().setModel(oModel, "fiscalData");
+                console.log(dt);
+            }
+        });
 
         //jQuery.sap.require("sap.viz.library");
 

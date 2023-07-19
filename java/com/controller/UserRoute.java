@@ -166,6 +166,11 @@ public class UserRoute {
 				ret = getInitFileData(params);
 				return ret;
 			}
+			if (params.get("command").equals("get-fiscal-data")) {
+				ret = getFiscalData(params);
+				return ret;
+			}
+
 			// ------------if-not-logon
 			if (!instanceInfo.isMlogonSuccessed())
 				throw new Exception("Access denied !");
@@ -815,7 +820,7 @@ public class UserRoute {
 			}
 
 			con.commit();
-			
+
 			return new ResponseEntity("Successfully uploaded ", HttpStatus.OK);
 
 		} catch (Exception e) {
@@ -956,6 +961,17 @@ public class UserRoute {
 
 		return ret;
 	}
+
+	private String getFiscalData(Map<String, String> params) {
+		String ret = "";
+		ret = utils.getJSONStr("fiscal_code", instanceInfo.getmFiscalCode(), false);
+		ret += "," + utils.getJSONStr("fiscal_title", instanceInfo.getmFiscalTit(), false);
+		ret += "," + utils.getJSONStr("fiscal_from", instanceInfo.getmFiscalFrom(), false);
+		ret += "," + utils.getJSONStr("fiscal_to", instanceInfo.getmFiscalTo(), false);
+
+		return "{" + ret + "}";
+	}
+
 	private String getInitFileData(Map<String, String> params) {
 		String ret = "";
 		String fn = "";

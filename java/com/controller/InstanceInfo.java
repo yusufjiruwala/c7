@@ -2,7 +2,9 @@ package com.controller;
 
 import java.io.FileOutputStream;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +30,12 @@ public class InstanceInfo {
 
 	private boolean mLogonSuccessed = false;
 	private String mLoginUser = "";
+	private String mCurrentSchema = "";
+	private String mFiscalCode = "";
+	private String mFiscalTit = "";
+	private Date mFiscalFrom = null;
+	private Date mFiscalTo = null;
+	private String mMasterOwner = "";
 	private String mLoginPassword = "";
 	private String mLoginLanguage = "EN";
 	private String mLoginFile = "";
@@ -41,9 +49,9 @@ public class InstanceInfo {
 	private Map<String, Object> mMapVars = new HashMap<String, Object>();
 	private Map<String, String> mMapProfiles = new HashMap<String, String>();
 	private List<String> mListProfiles = new ArrayList<String>();
-	
+
 	public InstanceInfo() {
-		
+
 	}
 
 	@Autowired
@@ -53,6 +61,62 @@ public class InstanceInfo {
 	private com.models.Notifications notifications;
 
 	// -----------------------------------set--get--funcitons---------------------
+
+	public String getMCurrentSchema() {
+		return this.mCurrentSchema;
+	}
+
+	public String getmFiscalTit() {
+		return mFiscalTit;
+	}
+
+	public void setmFiscalTit(String mFiscalTit) {
+		this.mFiscalTit = mFiscalTit;
+	}
+
+	public Date getmFiscalFrom() {
+		return mFiscalFrom;
+	}
+
+	public void setmFiscalFrom(Date mFiscalFrom) {
+		this.mFiscalFrom = mFiscalFrom;
+	}
+
+	public Date getmFiscalTo() {
+		return mFiscalTo;
+	}
+
+	public void setmFiscalTo(Date mFiscalTo) {
+		this.mFiscalTo = mFiscalTo;
+	}
+
+	public String getmFiscalCode() {
+		return mFiscalCode;
+	}
+
+	public void setmFiscalCode(String mFiscalCode) {
+		this.mFiscalCode = mFiscalCode;
+	}
+
+	public String getmMasterOwner() {
+		return mMasterOwner;
+	}
+
+	public void setmMasterOwner(String mMasterOwner) {
+		this.mMasterOwner = mMasterOwner;
+	}
+
+	public void setMCurrentSchema(String mCurrentSchema) {
+
+		try {
+			QueryExe.execute("ALTER SESSION SET CURRENT_SCHEMA=" + mCurrentSchema + "", this.mDbc.getDbConnection());
+			this.mCurrentSchema = mCurrentSchema;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	public String getmLoginUser() {
 		return mLoginUser;
 	}
@@ -164,10 +228,10 @@ public class InstanceInfo {
 				mOwner = mMapVars.get("ini_owner") + "";
 				mOwnerPassword = mMapVars.get("ini_password") + "";
 				mOwnerDBUrl = mMapVars.get("ini_dburl") + "";
-			} else{
-				
+			} else {
+
 			}
-			
+
 			mDbc = new DBClass(mOwnerDBUrl, mOwner, mOwnerPassword);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -190,14 +254,50 @@ public class InstanceInfo {
 		if (vl <= -1)
 			throw new Exception("Invalid user name or password !");
 
+		String cfcode = QueryExe.getSqlValue("select code from c7_fiscals where next_fiscal_code is null",
+				getmDbc().getDbConnection(), "").toString();
+		if (cfcode.equals("") || cfcode.isEmpty() || cfcode == null)
+			throw new Exception("No Current year found !");
+
+		ResultSet rst = QueryExe.getSqlRS("select *from c7_fiscals where code='" + cfcode + "'",
+				getmDbc().getDbConnection());
+
+		String csu = rst.getString("SCHEMA_OWNER");
+		String masterOwner = rst.getString("MASTER_OWNER");
+		String fiscaltit = rst.getString("TITLE");
+		Date fdt = new Date(rst.getDate("FROM_DATE").getTime());
+		Date tdt = new Date(rst.getDate("TO_DATE").getTime());
+
+		if (csu.equalsIgnoreCase("self"))
+			csu = owner;
+		rst.close();
+
+		String masterOwnerFromDB = QueryExe
+				.getSqlValue("select value from " + csu + ".setup where variable='MASTER_OWNER'",
+						getmDbc().getDbConnection(), "")
+				.toString();
+
+		if (!masterOwner.equalsIgnoreCase(masterOwnerFromDB))
+			throw new Exception(
+					"Master owner not matched with owner schema -> " + masterOwner + " # " + masterOwnerFromDB);
+
+		setMCurrentSchema(csu);
+		setmFiscalCode(cfcode);
+		setmFiscalTit(fiscaltit);
+		setmFiscalFrom(fdt);
+		setmFiscalTo(tdt);
+		setmMasterOwner(masterOwner);
 		setmLoginUserPN(vl);
 		setmLoginUser(user);
 		setmLoginPassword(password);
 		setmLoginLanguage(language);
+
 		buildProfiles();
+		setmCurrentProfile("");
 		setMlogonSuccessed(true);
+
 		ret = " \"login_state\":\"success\"";
-		ret = "{" + ret + "," + utils.getJSONMap(getMmapVar()) + "}";		
+		ret = "{" + ret + "," + utils.getJSONMap(getMmapVar()) + "}";
 		return ret;
 	}
 
@@ -271,7 +371,7 @@ public class InstanceInfo {
 		String fl = servletContext.getRealPath("") + "reports/";
 		fl = fl.replace("\\", "/");
 		map.put("SESSION_ID", this.getmLoginUser() + "_" + this.sessionId);
-		map.forEach((key, value) -> System.out.println(key + ":" + value));			
+		map.forEach((key, value) -> System.out.println(key + ":" + value));
 		b = JasperRunManager.runReportToPdf(fl + filename + ".jasper", map, con);
 		String pdffile = servletContext.getRealPath("") + "reports/" + filename + ".pdf";
 		if (useTimestamp) {

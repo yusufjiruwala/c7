@@ -121,7 +121,6 @@ public class DBClass implements Serializable {
 			throw ex;
 		}
 	}
-
 	public void setSqlString(String sqlstring) {
 		this.sqlString = sqlstring;
 	}
