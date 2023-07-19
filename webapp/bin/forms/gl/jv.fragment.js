@@ -45,6 +45,7 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
         return this.joApp;
     },
     createView: function () {
+        //testuing
         var that = this;
         var sett = sap.ui.getCore().getModel("settings").getData();
         var that2 = this;
