@@ -37,6 +37,7 @@ sap.ui.jsfragment("bin.forms.gl.jv", {
         };
         // UtilGen.setFormTitle(this.oController.getForm(), "Journal Voucher", this.mainPage);
         setTimeout(function () {
+            //testing
             if (that.oController.getForm().getParent() instanceof sap.m.Dialog)
                 that.oController.getForm().getParent().setShowHeader(false);
 
